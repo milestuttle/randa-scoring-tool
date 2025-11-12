@@ -14,6 +14,16 @@
   --color-text: #1e293b;
   --color-text-muted: #64748b;
   
+  /* Rating colors */
+  --rating-green: #1f8b4c;
+  --rating-blue: #1f5fe0;
+  --rating-orange: #d9822b;
+  --rating-red: #d93025;
+  --rating-green-bg: #e6f4ea;
+  --rating-blue-bg: #e8f0fe;
+  --rating-orange-bg: #fff4e5;
+  --rating-red-bg: #fde7e9;
+  
   --spacing-xs: 0.5rem;
   --spacing-sm: 0.75rem;
   --spacing-md: 1rem;
@@ -182,7 +192,8 @@ select {
   padding: var(--spacing-sm) var(--spacing-md);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-size: 1rem;
+  font-size: 16px;
+  min-height: 44px;
   transition: var(--transition);
   background: var(--color-surface);
 }
@@ -369,6 +380,10 @@ select option[value=""] {
   .msl-inputs {
     grid-template-columns: 1fr;
   }
+  
+  .table-scroll table {
+    min-width: 580px;
+  }
 }
 
 /* ===================================
@@ -385,6 +400,8 @@ select option[value=""] {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .btn:focus {
@@ -408,6 +425,8 @@ select option[value=""] {
   color: var(--color-text);
   padding: var(--spacing-xs) var(--spacing-md);
   font-size: 0.875rem;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .btn-remove:hover:not(:disabled) {
@@ -434,6 +453,23 @@ select option[value=""] {
 /* ===================================
    Results Table
    =================================== */
+/* Table scroll wrapper for mobile */
+.table-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+}
+
+.table-scroll table {
+  min-width: 640px;
+}
+
+.table-scroll:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .results-section {
   position: relative;
   min-height: 300px;
@@ -584,6 +620,10 @@ select option[value=""] {
   .results-table td {
     padding: var(--spacing-sm);
   }
+  
+  .table-scroll table {
+    min-width: 520px;
+  }
 }
 
 /* ===================================
@@ -649,6 +689,139 @@ select option[value=""] {
     border-top: 1px solid black;
   }
 }
+
+/* ===================================
+   Progress Indicator
+   =================================== */
+.progress-steps {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  margin: 0 0 var(--spacing-xl);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.progress-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: var(--transition);
+  border: 2px solid transparent;
+}
+
+.progress-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #d1d5db;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.progress-step.is-current {
+  background: #dbeafe;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.progress-step.is-current .progress-step-number {
+  background: var(--color-primary);
+}
+
+.progress-step.is-complete {
+  background: var(--rating-green-bg);
+  color: #065f46;
+}
+
+.progress-step.is-complete .progress-step-number {
+  background: var(--rating-green);
+  color: white;
+}
+
+.progress-step.is-complete .progress-step-number::after {
+  content: '✓';
+}
+
+/* Hide number text when complete, show checkmark instead */
+.progress-step.is-complete .progress-step-number {
+  font-size: 0;
+}
+
+.progress-step.is-complete .progress-step-number::after {
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .progress-steps {
+    gap: var(--spacing-xs);
+  }
+  
+  .progress-step {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.75rem;
+  }
+  
+  .progress-step-label {
+    display: none;
+  }
+  
+  .progress-step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+  }
+}
+
+/* ===================================
+   Rating Classes
+   =================================== */
+/* Background emphasis for larger blocks (rows, panels) */
+.rating-highly-effective { background-color: var(--rating-green-bg); }
+.rating-effective { background-color: var(--rating-blue-bg); }
+.rating-partially-effective { background-color: var(--rating-orange-bg); }
+.rating-ineffective { background-color: var(--rating-red-bg); }
+.rating-expected { background-color: var(--rating-blue-bg); }
+.rating-more-than-expected { background-color: var(--rating-green-bg); }
+.rating-less-than-expected { background-color: var(--rating-red-bg); }
+.rating-exemplary { background-color: var(--rating-green-bg); }
+.rating-accomplished { background-color: var(--rating-blue-bg); }
+.rating-proficient { background-color: var(--rating-blue-bg); }
+.rating-partially-proficient { background-color: var(--rating-orange-bg); }
+.rating-basic { background-color: var(--rating-red-bg); }
+
+/* Compact badge/chip variant for labels */
+.rating-badge {
+  display: inline-block;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1;
+  padding: 0.375rem 0.625rem;
+  vertical-align: middle;
+}
+.rating-badge.rating-highly-effective { color: #fff; background-color: var(--rating-green); }
+.rating-badge.rating-effective { color: #fff; background-color: var(--rating-blue); }
+.rating-badge.rating-partially-effective { color: #fff; background-color: var(--rating-orange); }
+.rating-badge.rating-ineffective { color: #fff; background-color: var(--rating-red); }
+.rating-badge.rating-expected { color: #fff; background-color: var(--rating-blue); }
+.rating-badge.rating-more-than-expected { color: #fff; background-color: var(--rating-green); }
+.rating-badge.rating-less-than-expected { color: #fff; background-color: var(--rating-red); }
+.rating-badge.rating-exemplary { color: #fff; background-color: var(--rating-green); }
+.rating-badge.rating-accomplished { color: #fff; background-color: var(--rating-blue); }
+.rating-badge.rating-proficient { color: #fff; background-color: var(--rating-blue); }
+.rating-badge.rating-partially-proficient { color: #fff; background-color: var(--rating-orange); }
+.rating-badge.rating-basic { color: #fff; background-color: var(--rating-red); }
 
 /* ===================================
    Accessibility

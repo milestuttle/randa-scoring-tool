@@ -153,6 +153,15 @@ function setValidationUI(elementId, valid, message) {
   
   elem.textContent = message;
   elem.className = valid ? 'validation-success' : 'validation-error';
+  
+  // Set ARIA attributes for live announcements
+  if (!valid) {
+    elem.setAttribute('role', 'alert');
+    elem.setAttribute('aria-live', 'polite');
+  } else {
+    elem.removeAttribute('role');
+    elem.setAttribute('aria-live', 'polite');
+  }
 }
 
 // ===================================
@@ -309,47 +318,122 @@ function updatePPUI(ppResult) {
   // Update per-standard summaries
   ppResult.standards.forEach((stdScore, idx) => {
     const std = stdScore.standard;
-    document.getElementById(`${std.id}-earned`)?.setTextContent(stdScore.earned.toString());
-    document.getElementById(`${std.id}-possible`)?.setTextContent(stdScore.possible.toString());
-    document.getElementById(`${std.id}-weighted`)?.setTextContent(stdScore.baseContribution.toString());
-    document.getElementById(`${std.id}-rating`)?.setTextContent(stdScore.rating);
+    safeTextContent(document.getElementById(`${std.id}-earned`), stdScore.earned.toString());
+    safeTextContent(document.getElementById(`${std.id}-possible`), stdScore.possible.toString());
+    safeTextContent(document.getElementById(`${std.id}-weighted`), stdScore.baseContribution.toString());
+    
+    const ratingEl = document.getElementById(`${std.id}-rating`);
+    safeTextContent(ratingEl, stdScore.rating);
+    applyRatingClass(ratingEl, stdScore.rating, true);
   });
   
   // Update overall PP summary
-  document.getElementById('pp-base')?.setTextContent(ppResult.base.toString());
-  document.getElementById('pp-score')?.setTextContent(ppResult.score.toString());
-  document.getElementById('pp-percentage')?.setTextContent(ppResult.percentage.toFixed(1) + '%');
-  document.getElementById('pp-rating')?.setTextContent(ppResult.rating);
+  safeTextContent(document.getElementById('pp-base'), ppResult.base.toString());
+  safeTextContent(document.getElementById('pp-score'), ppResult.score.toString());
+  safeTextContent(document.getElementById('pp-percentage'), ppResult.percentage.toFixed(1) + '%');
+  
+  const ppRatingEl = document.getElementById('pp-rating');
+  safeTextContent(ppRatingEl, ppResult.rating);
+  applyRatingClass(ppRatingEl, ppResult.rating, true);
+  
+  // Update progress indicator
+  updateProgressIndicator();
 }
 
 function updateMSLUI(mslResult) {
-  document.getElementById('msl-base')?.setTextContent(mslResult.base.toString());
-  document.getElementById('msl-score')?.setTextContent(mslResult.score.toString());
-  document.getElementById('msl-percentage')?.setTextContent(mslResult.percentage.toFixed(1) + '%');
-  document.getElementById('msl-rating')?.setTextContent(mslResult.rating);
+  safeTextContent(document.getElementById('msl-base'), mslResult.base.toString());
+  safeTextContent(document.getElementById('msl-score'), mslResult.score.toString());
+  safeTextContent(document.getElementById('msl-percentage'), mslResult.percentage.toFixed(1) + '%');
+  
+  const mslRatingEl = document.getElementById('msl-rating');
+  safeTextContent(mslRatingEl, mslResult.rating);
+  applyRatingClass(mslRatingEl, mslResult.rating, true);
+  
+  // Update progress indicator
+  updateProgressIndicator();
 }
 
 function updateFinalUI(finalResult, ppResult, mslResult) {
   // Professional Practices row
-  document.getElementById('final-pp-score')?.setTextContent(ppResult.score.toString());
-  document.getElementById('final-pp-pct')?.setTextContent(ppResult.percentage.toFixed(1) + '%');
-  document.getElementById('final-pp-rating')?.setTextContent(ppResult.rating);
+  safeTextContent(document.getElementById('final-pp-score'), ppResult.score.toString());
+  safeTextContent(document.getElementById('final-pp-pct'), ppResult.percentage.toFixed(1) + '%');
+  
+  const finalPpRatingEl = document.getElementById('final-pp-rating');
+  safeTextContent(finalPpRatingEl, ppResult.rating);
+  applyRatingClass(finalPpRatingEl, ppResult.rating, true);
   
   // MSL row
-  document.getElementById('final-msl-score')?.setTextContent(mslResult.score.toString());
-  document.getElementById('final-msl-pct')?.setTextContent(mslResult.percentage.toFixed(1) + '%');
-  document.getElementById('final-msl-rating')?.setTextContent(mslResult.rating);
+  safeTextContent(document.getElementById('final-msl-score'), mslResult.score.toString());
+  safeTextContent(document.getElementById('final-msl-pct'), mslResult.percentage.toFixed(1) + '%');
+  
+  const finalMslRatingEl = document.getElementById('final-msl-rating');
+  safeTextContent(finalMslRatingEl, mslResult.rating);
+  applyRatingClass(finalMslRatingEl, mslResult.rating, true);
   
   // Overall row
-  document.getElementById('final-total-score')?.setTextContent(finalResult.total.toString());
-  document.getElementById('final-total-pct')?.setTextContent(pct(finalResult.total / TOTAL_MAX_SCORE).toFixed(1) + '%');
-  document.getElementById('final-rating')?.setTextContent(finalResult.rating);
+  safeTextContent(document.getElementById('final-total-score'), finalResult.total.toString());
+  safeTextContent(document.getElementById('final-total-pct'), pct(finalResult.total / TOTAL_MAX_SCORE).toFixed(1) + '%');
+  
+  const finalRatingEl = document.getElementById('final-rating');
+  safeTextContent(finalRatingEl, finalResult.rating);
+  applyRatingClass(finalRatingEl, finalResult.rating, true);
+  
+  // Update progress indicator
+  updateProgressIndicator();
 }
 
 // Safe setText helper
-HTMLElement.prototype.setTextContent = function(text) {
-  this.textContent = text;
+function safeTextContent(el, value) {
+  if (el) {
+    el.textContent = value == null ? '' : String(value);
+  }
+}
+
+// ===================================
+// RATING CLASS HELPERS
+// ===================================
+
+const RATING_CLASS_MAP = {
+  'highly effective': 'rating-highly-effective',
+  'exemplary': 'rating-exemplary',
+  'effective': 'rating-effective',
+  'accomplished': 'rating-accomplished',
+  'proficient': 'rating-proficient',
+  'partially effective': 'rating-partially-effective',
+  'partially proficient': 'rating-partially-proficient',
+  'ineffective': 'rating-ineffective',
+  'basic': 'rating-basic',
+  'expected': 'rating-expected',
+  'more than expected': 'rating-more-than-expected',
+  'less than expected': 'rating-less-than-expected'
 };
+
+function normalizeRating(str) {
+  return (str || '').toString().trim().toLowerCase();
+}
+
+function ratingToClass(rating) {
+  return RATING_CLASS_MAP[normalizeRating(rating)] || null;
+}
+
+function stripRatingClasses(el) {
+  if (!el) return;
+  // Remove any class that starts with "rating-"
+  const classes = Array.from(el.classList);
+  classes.forEach(cls => {
+    if (cls.indexOf('rating-') === 0) el.classList.remove(cls);
+  });
+}
+
+function applyRatingClass(el, rating, asBadge = false) {
+  if (!el) return;
+  stripRatingClasses(el);
+  const cls = ratingToClass(rating);
+  if (cls) {
+    el.classList.add(cls);
+    if (asBadge) el.classList.add('rating-badge');
+  }
+}
 
 // ===================================
 // MAIN CALCULATION UPDATE
@@ -569,10 +653,145 @@ function resetAll() {
 }
 
 // ===================================
+// PROGRESS INDICATOR
+// ===================================
+
+// Track previous completion states for announcements
+let previousStates = {
+  step1: false,
+  step2: false,
+  step3: false,
+  step4: false
+};
+
+function updateProgressIndicator() {
+  const step1Valid = isStep1Valid();
+  const step2Complete = isStep2Complete();
+  const step3Valid = isStep3Valid();
+  const allValid = step1Valid && step2Complete && step3Valid;
+  
+  const step1El = document.getElementById('step-indicator-1');
+  const step2El = document.getElementById('step-indicator-2');
+  const step3El = document.getElementById('step-indicator-3');
+  const step4El = document.getElementById('step-indicator-4');
+  
+  // Step 1: PP Weights
+  if (step1El) {
+    step1El.classList.toggle('is-complete', step1Valid);
+    step1El.classList.toggle('is-current', !step1Valid);
+    if (step1Valid && !previousStates.step1) {
+      announce('Step 1 complete: Professional Practice weights set.');
+      previousStates.step1 = true;
+    }
+  }
+  
+  // Step 2: Element Ratings
+  if (step2El) {
+    step2El.classList.toggle('is-complete', step2Complete);
+    step2El.classList.toggle('is-current', step1Valid && !step2Complete);
+    if (step2Complete && !previousStates.step2) {
+      announce('Step 2 complete: All element ratings assigned.');
+      previousStates.step2 = true;
+    }
+  }
+  
+  // Step 3: MSL
+  if (step3El) {
+    step3El.classList.toggle('is-complete', step3Valid);
+    step3El.classList.toggle('is-current', step1Valid && step2Complete && !step3Valid);
+    if (step3Valid && !previousStates.step3) {
+      announce('Step 3 complete: Measures of Student Learning configured.');
+      previousStates.step3 = true;
+    }
+  }
+  
+  // Step 4: Final Rating
+  if (step4El) {
+    step4El.classList.toggle('is-complete', allValid);
+    step4El.classList.toggle('is-current', step1Valid && step2Complete && step3Valid && !allValid);
+    if (allValid && !previousStates.step4) {
+      announce('All steps complete: Final effectiveness rating calculated.');
+      previousStates.step4 = true;
+    }
+  }
+  
+  // Reset states if validation becomes invalid
+  if (!step1Valid) previousStates.step1 = false;
+  if (!step2Complete) previousStates.step2 = false;
+  if (!step3Valid) previousStates.step3 = false;
+  if (!allValid) previousStates.step4 = false;
+}
+
+// ===================================
+// ACCESSIBILITY HELPERS
+// ===================================
+
+// Create screen reader live region for announcements
+function ensureLiveRegion() {
+  if (document.getElementById('sr-announce')) return;
+  const live = document.createElement('div');
+  live.id = 'sr-announce';
+  live.setAttribute('role', 'status');
+  live.setAttribute('aria-live', 'polite');
+  live.className = 'sr-only';
+  document.body.appendChild(live);
+}
+
+function announce(msg) {
+  const live = document.getElementById('sr-announce');
+  if (live) live.textContent = msg;
+}
+
+// Wrap tables in scrollable containers for mobile
+function wrapScrollableTables() {
+  document.querySelectorAll('.results-table').forEach(tbl => {
+    if (tbl.parentElement && tbl.parentElement.classList.contains('table-scroll')) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-scroll';
+    wrapper.setAttribute('tabindex', '0');
+    wrapper.setAttribute('role', 'region');
+    wrapper.setAttribute('aria-label', 'Scrollable results table');
+    tbl.parentNode.insertBefore(wrapper, tbl);
+    wrapper.appendChild(tbl);
+  });
+}
+
+// Connect validation messages to inputs
+function attachValidationAria() {
+  // PP weight validation
+  const ppWeightMsg = document.getElementById('pp-weight-message');
+  if (ppWeightMsg && !ppWeightMsg.id) {
+    ppWeightMsg.id = 'pp-weight-message';
+  }
+  [1, 2, 3, 4].forEach(i => {
+    const input = document.getElementById(`pp-weight-s${i}`);
+    if (input && ppWeightMsg) {
+      const describedBy = input.getAttribute('aria-describedby') || '';
+      if (!describedBy.includes('pp-weight-message')) {
+        input.setAttribute('aria-describedby', describedBy ? `${describedBy} pp-weight-message` : 'pp-weight-message');
+      }
+    }
+  });
+  
+  // MSL weight validation
+  const mslWeightMsg = document.getElementById('msl-weight-message');
+  if (mslWeightMsg && !mslWeightMsg.id) {
+    mslWeightMsg.id = 'msl-weight-message';
+  }
+}
+
+// ===================================
 // INITIALIZATION
 // ===================================
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize accessibility features
+  ensureLiveRegion();
+  attachValidationAria();
+  
+  // Wrap tables for mobile scrolling
+  wrapScrollableTables();
+  
   // Attach listeners to PP weights
   [1, 2, 3, 4].forEach(i => {
     document.getElementById(`pp-weight-s${i}`)?.addEventListener('input', updateAllCalculations);
