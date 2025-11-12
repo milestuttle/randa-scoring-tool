@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RANDA Scoring Weight Web Tool</title>
+  <meta name="description" content="Calculate teacher effectiveness ratings using Colorado's State Model Evaluation System with revised 70:30 scoring per SB22-070.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>RANDA Scoring Weight Web Tool</h1>
+    <p class="subtitle">SB22-070 Revised Scoring (70% Professional Practices / 30% Measures of Student Learning)</p>
+    <div class="header-links">
+      <a href="https://ed.cde.state.co.us/educatoreffectiveness/smes-teacher" target="_blank" rel="noopener">CDE SMES Overview</a>
+      <a href="https://ed.cde.state.co.us/educatoreffectiveness/smes-revised-scoring-overview" target="_blank" rel="noopener">Revised Scoring Details</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- STEP 1: Professional Practices Weights -->
+    <section id="step1" class="card">
+      <h2>Step 1: Weights for Professional Practices</h2>
+      <p class="step-description">Assign each standard a weight (total must equal 100%) for calculating the overall Professional Practices rating.</p>
+      
+      <div class="weights-grid">
+        <div class="form-group">
+          <label for="pp-weight-s1">Standard 1 Weight (%)</label>
+          <input type="number" id="pp-weight-s1" min="0" max="100" step="0.1" placeholder="25.0">
+        </div>
+        <div class="form-group">
+          <label for="pp-weight-s2">Standard 2 Weight (%)</label>
+          <input type="number" id="pp-weight-s2" min="0" max="100" step="0.1" placeholder="25.0">
+        </div>
+        <div class="form-group">
+          <label for="pp-weight-s3">Standard 3 Weight (%)</label>
+          <input type="number" id="pp-weight-s3" min="0" max="100" step="0.1" placeholder="25.0">
+        </div>
+        <div class="form-group">
+          <label for="pp-weight-s4">Standard 4 Weight (%)</label>
+          <input type="number" id="pp-weight-s4" min="0" max="100" step="0.1" placeholder="25.0">
+        </div>
+      </div>
+      
+      <div class="validation-summary">
+        <strong>Total Weight:</strong> <span id="total-pp-weight">0.0</span>%
+        <div id="pp-weight-message" class="validation-error" role="status" aria-live="polite">⚠ Total must equal 100%</div>
+      </div>
+    </section>
+
+    <!-- STEP 2: Element Level Proficiency Ratings -->
+    <section id="step2" class="card">
+      <h2>Step 2: Assign Element Level Proficiency</h2>
+      <p class="step-description">Assign each element a proficiency rating of Level 1, 2, 3, 4, or 5.</p>
+      
+      <!-- Standard 1 -->
+      <div class="standard-section">
+        <h3>Standard 1: Teachers demonstrate mastery of and pedagogical expertise in the content they teach</h3>
+        <div class="elements-grid">
+          <div class="form-group">
+            <label for="s1a-level">Element a</label>
+            <select id="s1a-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s1b-level">Element b</label>
+            <select id="s1b-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s1c-level">Element c</label>
+            <select id="s1c-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+        </div>
+        <div class="standard-summary">
+          <span>Earned: <strong id="s1-earned">0</strong> / <strong id="s1-possible">12</strong> points</span>
+          <span>Weighted Score: <strong id="s1-weighted">0</strong> / 20</span>
+          <span>Rating: <strong id="s1-rating">—</strong></span>
+        </div>
+      </div>
+
+      <!-- Standard 2 -->
+      <div class="standard-section">
+        <h3>Standard 2: Teachers establish a safe, inclusive and respectful learning environment for a diverse population of students</h3>
+        <div class="elements-grid">
+          <div class="form-group">
+            <label for="s2a-level">Element a</label>
+            <select id="s2a-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s2b-level">Element b</label>
+            <select id="s2b-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s2c-level">Element c</label>
+            <select id="s2c-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s2d-level">Element d</label>
+            <select id="s2d-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+        </div>
+        <div class="standard-summary">
+          <span>Earned: <strong id="s2-earned">0</strong> / <strong id="s2-possible">16</strong> points</span>
+          <span>Weighted Score: <strong id="s2-weighted">0</strong> / 20</span>
+          <span>Rating: <strong id="s2-rating">—</strong></span>
+        </div>
+      </div>
+
+      <!-- Standard 3 -->
+      <div class="standard-section">
+        <h3>Standard 3: Teachers plan and deliver effective instruction and create an environment that facilitates learning for their students</h3>
+        <div class="elements-grid">
+          <div class="form-group">
+            <label for="s3a-level">Element a</label>
+            <select id="s3a-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s3b-level">Element b</label>
+            <select id="s3b-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s3c-level">Element c</label>
+            <select id="s3c-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s3d-level">Element d</label>
+            <select id="s3d-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s3e-level">Element e</label>
+            <select id="s3e-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s3f-level">Element f</label>
+            <select id="s3f-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+        </div>
+        <div class="standard-summary">
+          <span>Earned: <strong id="s3-earned">0</strong> / <strong id="s3-possible">24</strong> points</span>
+          <span>Weighted Score: <strong id="s3-weighted">0</strong> / 20</span>
+          <span>Rating: <strong id="s3-rating">—</strong></span>
+        </div>
+      </div>
+
+      <!-- Standard 4 -->
+      <div class="standard-section">
+        <h3>Standard 4: Teachers demonstrate professionalism through ethical conduct, reflection, and leadership</h3>
+        <div class="elements-grid">
+          <div class="form-group">
+            <label for="s4a-level">Element a</label>
+            <select id="s4a-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s4b-level">Element b</label>
+            <select id="s4b-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s4c-level">Element c</label>
+            <select id="s4c-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="s4d-level">Element d</label>
+            <select id="s4d-level">
+              <option value="">Select level</option>
+              <option value="1">Level 1 (0 points)</option>
+              <option value="2">Level 2 (1 point)</option>
+              <option value="3">Level 3 (2 points)</option>
+              <option value="4">Level 4 (3 points)</option>
+              <option value="5">Level 5 (4 points)</option>
+            </select>
+          </div>
+        </div>
+        <div class="standard-summary">
+          <span>Earned: <strong id="s4-earned">0</strong> / <strong id="s4-possible">16</strong> points</span>
+          <span>Weighted Score: <strong id="s4-weighted">0</strong> / 20</span>
+          <span>Rating: <strong id="s4-rating">—</strong></span>
+        </div>
+      </div>
+
+      <!-- Overall PP Summary -->
+      <div id="pp-results" class="overall-summary disabled">
+        <h3>Overall Professional Practices Summary</h3>
+        <div class="summary-stats">
+          <div class="stat">
+            <span class="label">Base Score:</span>
+            <span class="value"><strong id="pp-base">0</strong> / 20</span>
+          </div>
+          <div class="stat">
+            <span class="label">Scaled Score:</span>
+            <span class="value"><strong id="pp-score">0</strong> / 700</span>
+          </div>
+          <div class="stat">
+            <span class="label">Percentage:</span>
+            <span class="value"><strong id="pp-percentage">0.0%</strong></span>
+          </div>
+          <div class="stat highlight">
+            <span class="label">PP Rating:</span>
+            <span class="value rating"><strong id="pp-rating">—</strong></span>
+          </div>
+        </div>
+        <div id="pp-overlay" class="overlay">
+          <div class="overlay-content">
+            <p>⚠ Complete Steps 1-2 to view Professional Practices results:</p>
+            <ul>
+              <li>Step 1: PP weights must total 100%</li>
+              <li>Step 2: All 17 elements must be rated</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: Measures of Student Learning -->
+    <section id="step3" class="card">
+      <h2>Step 3: Weights and Ratings for Measures of Student Learning</h2>
+      <p class="step-description">Assign each measure of student learning (MSL) a weight (total must equal 30%) and a rating. You must have between 2 and 5 measures.</p>
+      
+      <div id="msl-list" class="msl-list"></div>
+      
+      <button type="button" id="btn-add-measure" class="btn btn-secondary">+ Add Measure</button>
+      
+      <div class="validation-summary">
+        <strong>Total MSL Weight:</strong> <span id="total-msl-weight">0.0</span>%
+        <div id="msl-weight-message" class="validation-error" role="status" aria-live="polite">⚠ Total must equal 30%</div>
+      </div>
+
+      <!-- Overall MSL Summary -->
+      <div id="msl-results" class="overall-summary disabled">
+        <h3>Overall Measures of Student Learning Summary</h3>
+        <div class="summary-stats">
+          <div class="stat">
+            <span class="label">Base Score:</span>
+            <span class="value"><strong id="msl-base">0</strong> / 3</span>
+          </div>
+          <div class="stat">
+            <span class="label">Scaled Score:</span>
+            <span class="value"><strong id="msl-score">0</strong> / 300</span>
+          </div>
+          <div class="stat">
+            <span class="label">Percentage:</span>
+            <span class="value"><strong id="msl-percentage">0.0%</strong></span>
+          </div>
+          <div class="stat highlight">
+            <span class="label">MSL Rating:</span>
+            <span class="value rating"><strong id="msl-rating">—</strong></span>
+          </div>
+        </div>
+        <div id="msl-overlay" class="overlay">
+          <div class="overlay-content">
+            <p>⚠ Complete Step 3 to view MSL results:</p>
+            <ul>
+              <li>Add 2-5 MSL measures</li>
+              <li>All measures must be rated</li>
+              <li>MSL weights must total 30%</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 4: Overall Effectiveness Rating -->
+    <section id="step4" class="card">
+      <h2>Step 4: Overall Effectiveness Rating</h2>
+      <p class="step-description">Once you have completed steps 1-3, the overall effectiveness rating will be calculated by adding the Professional Practices and the Measures of Student Learning scores.</p>
+      
+      <div id="step4-results" class="results-section disabled">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Points</th>
+              <th>Percentage</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Professional Practices</td>
+              <td><strong id="final-pp-score">0</strong> / 700</td>
+              <td><strong id="final-pp-pct">0.0%</strong></td>
+              <td><strong id="final-pp-rating">—</strong></td>
+            </tr>
+            <tr>
+              <td>Measures of Student Learning</td>
+              <td><strong id="final-msl-score">0</strong> / 300</td>
+              <td><strong id="final-msl-pct">0.0%</strong></td>
+              <td><strong id="final-msl-rating">—</strong></td>
+            </tr>
+            <tr class="final-row">
+              <td><strong>Overall Effectiveness</strong></td>
+              <td><strong id="final-total-score">0</strong> / 1000</td>
+              <td><strong id="final-total-pct">0.0%</strong></td>
+              <td class="final-rating"><strong id="final-rating">—</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div id="step4-overlay" class="overlay">
+          <div class="overlay-content">
+            <p>⚠ Complete all steps to view results:</p>
+            <ul>
+              <li>Step 1: PP weights must total 100%</li>
+              <li>Step 2: All 17 elements must be rated</li>
+              <li>Step 3: 2-5 MSL measures, all rated, weights total 30%</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reset Button -->
+    <div class="actions">
+      <button type="button" id="btn-reset" class="btn btn-danger">Reset All</button>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p><strong>Disclaimer:</strong> This calculator is for informational purposes only. It implements the Colorado State Model Evaluation System (SMES) scoring methodology per SB22-070. No data is stored or transmitted. Always verify calculations with official CDE resources.</p>
+    <p>&copy; 2024 | Based on <a href="https://ed.cde.state.co.us/educatoreffectiveness/smes-revised-scoring-overview" target="_blank" rel="noopener">CDE SMES Revised Scoring</a></p>
+  </footer>
+
+  <script src="calculator.js" defer></script>
+</body>
+</html>
