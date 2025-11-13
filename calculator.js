@@ -380,6 +380,58 @@ function updateFinalUI(finalResult, ppResult, mslResult) {
   
   // Update progress indicator
   updateProgressIndicator();
+  
+  // Update score range visualization
+  updateScoreRangeVisualization(finalResult.total, finalResult.rating);
+}
+
+// ===================================
+// SCORE RANGE VISUALIZATION
+// ===================================
+
+function updateScoreRangeVisualization(score, rating) {
+  const scoreMarker = document.getElementById('score-marker');
+  const markerScore = document.getElementById('marker-score');
+  const markerRating = document.getElementById('marker-rating');
+  const rangeInsights = document.getElementById('range-insights');
+  const insightText = document.getElementById('insight-text');
+  
+  if (!scoreMarker || !markerScore || !markerRating) return;
+  
+  // Show marker
+  scoreMarker.style.display = 'block';
+  
+  // Calculate position (0-1000 scale)
+  const percentage = (score / 1000) * 100;
+  scoreMarker.style.left = percentage + '%';
+  
+  // Update marker text
+  markerScore.textContent = Math.round(score);
+  markerRating.textContent = rating;
+  
+  // Calculate insights
+  if (rangeInsights && insightText) {
+    let insight = '';
+    
+    if (score >= 801) {
+      const pointsAbove = Math.round(score - 801);
+      insight = `You are ${pointsAbove} points above the minimum for Highly Effective (801).`;
+    } else if (score >= 407) {
+      const pointsToNext = Math.round(801 - score);
+      const pointsAbove = Math.round(score - 407);
+      insight = `You are ${pointsAbove} points above the minimum for Effective (407). You need ${pointsToNext} more points to reach Highly Effective.`;
+    } else if (score >= 188) {
+      const pointsToNext = Math.round(407 - score);
+      const pointsAbove = Math.round(score - 188);
+      insight = `You are ${pointsAbove} points above the minimum for Partially Effective (188). You need ${pointsToNext} more points to reach Effective.`;
+    } else {
+      const pointsToNext = Math.round(188 - score);
+      insight = `You need ${pointsToNext} more points to reach Partially Effective (188).`;
+    }
+    
+    insightText.textContent = insight;
+    rangeInsights.style.display = 'block';
+  }
 }
 
 // Safe setText helper

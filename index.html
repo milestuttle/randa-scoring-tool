@@ -453,6 +453,45 @@
           </tbody>
         </table>
 
+        <!-- Score Range Visualization -->
+        <div class="score-range-container">
+          <h3>Score Range Visualization</h3>
+          <p class="range-description">See where your score falls within the effectiveness rating categories</p>
+          
+          <div class="score-range-bar">
+            <div class="range-segment range-ineffective" data-range="0-187">
+              <span class="range-label">Ineffective</span>
+              <span class="range-values">0-187</span>
+            </div>
+            <div class="range-segment range-partially-effective" data-range="188-406">
+              <span class="range-label">Partially Effective</span>
+              <span class="range-values">188-406</span>
+            </div>
+            <div class="range-segment range-effective" data-range="407-800">
+              <span class="range-label">Effective</span>
+              <span class="range-values">407-800</span>
+            </div>
+            <div class="range-segment range-highly-effective" data-range="801-1000">
+              <span class="range-label">Highly Effective</span>
+              <span class="range-values">801-1000</span>
+            </div>
+          </div>
+          
+          <div class="score-marker-container">
+            <div id="score-marker" class="score-marker" style="display: none;">
+              <div class="marker-arrow"></div>
+              <div class="marker-label">
+                <span class="marker-score" id="marker-score">0</span>
+                <span class="marker-rating" id="marker-rating"></span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="range-insights" id="range-insights" style="display: none;">
+            <p id="insight-text"></p>
+          </div>
+        </div>
+
         <div id="step4-overlay" class="overlay">
           <div class="overlay-content">
             <p>⚠ Complete all steps to view results:</p>
