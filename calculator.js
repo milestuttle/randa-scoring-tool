@@ -929,6 +929,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Attach reset button
   document.getElementById('btn-reset')?.addEventListener('click', resetAll);
   
+  // Attach print button
+  document.getElementById('btn-print')?.addEventListener('click', () => window.print());
+  
   // Attach add measure button
   document.getElementById('btn-add-measure')?.addEventListener('click', addMSLMeasure);
   

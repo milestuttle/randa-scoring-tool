@@ -344,8 +344,10 @@ input[type="number"].valid {
 }
 
 .summary-card.collapsed h2 {
-  font-size: 1rem;
+  font-size: 0.875rem;
   margin-bottom: 0;
+  display: inline-block;
+  margin-right: var(--spacing-md);
 }
 
 .summary-card .summary-description {
@@ -379,14 +381,10 @@ input[type="number"].valid {
 }
 
 .summary-card.collapsed .summary-stats-row {
-  margin-bottom: var(--spacing-xs);
-}
-
-.summary-stats-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0;
+  gap: var(--spacing-sm);
+  grid-template-columns: auto auto;
+  justify-content: center;
 }
 
 .summary-stat {
@@ -399,7 +397,8 @@ input[type="number"].valid {
 }
 
 .summary-card.collapsed .summary-stat {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
 }
 
 .summary-range-bar {
@@ -414,7 +413,7 @@ input[type="number"].valid {
 }
 
 .summary-card.collapsed .summary-range-bar {
-  height: 40px;
+  height: 28px;
 }
 
 .summary-range-segment {
@@ -474,8 +473,8 @@ input[type="number"].valid {
 }
 
 .summary-card.collapsed .summary-marker-container {
-  height: 20px;
-  margin-top: var(--spacing-xs);
+  height: 16px;
+  margin-top: 4px;
 }
 
 .summary-score-marker {
@@ -513,7 +512,7 @@ input[type="number"].valid {
 
 .summary-card.collapsed .summary-label {
   font-size: 0.625rem;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .summary-value {
@@ -526,8 +525,8 @@ input[type="number"].valid {
 }
 
 .summary-card.collapsed .summary-value {
-  font-size: 1.5rem;
-  margin: 2px 0;
+  font-size: 1.125rem;
+  margin: 1px 0;
 }
 
 .summary-subtext {
@@ -1013,7 +1012,9 @@ input[type="number"].valid {
 .actions {
   display: flex;
   justify-content: center;
+  gap: var(--spacing-md);
   margin: var(--spacing-xl) 0;
+  flex-wrap: wrap;
 }
 
 /* ===================================
