@@ -486,6 +486,25 @@ function updateAllCalculations() {
   
   const allValid = step1Valid && step2Complete && step3Valid;
   
+  // Update summary box
+  const summaryOverlay = document.getElementById('summary-overlay');
+  const summaryTotalScore = document.getElementById('summary-total-score');
+  const summaryPercentage = document.getElementById('summary-percentage');
+  const summaryRating = document.getElementById('summary-rating');
+  
+  if (allValid) {
+    const finalResult = calculateFinalRating(ppResult.score, mslResult.score, mslResult.rating);
+    if (summaryTotalScore) summaryTotalScore.textContent = finalResult.total.toString();
+    if (summaryPercentage) summaryPercentage.textContent = pct(finalResult.total / TOTAL_MAX_SCORE).toFixed(1) + '%';
+    if (summaryRating) summaryRating.textContent = finalResult.rating;
+    if (summaryOverlay) summaryOverlay.style.display = 'none';
+  } else {
+    if (summaryTotalScore) summaryTotalScore.textContent = '—';
+    if (summaryPercentage) summaryPercentage.textContent = '—';
+    if (summaryRating) summaryRating.textContent = '—';
+    if (summaryOverlay) summaryOverlay.style.display = 'flex';
+  }
+  
   // Update PP overlay
   const ppValid = step1Valid && step2Complete;
   const ppSection = document.getElementById('pp-results');
