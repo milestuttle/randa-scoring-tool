@@ -1,6 +1,6 @@
-# Colorado SMES Teacher Evaluation Calculator
+# RANDA Scoring Weight Web Tool
 
-A web-based calculator for the Colorado State Model Evaluation System (SMES) implementing the revised 70:30 scoring methodology per SB22-070, effective for the 2023-24 school year.
+A web-based calculator for teacher evaluation implementing the 70:30 scoring methodology (70% Professional Practices / 30% Measures of Student Learning).
 
 ## Purpose
 
@@ -124,22 +124,20 @@ Teachers demonstrate professionalism through ethical conduct, reflection, and le
 - **Accessibility**: WCAG AA compliant with ARIA labels and keyboard navigation
 - **File Size**: ~70KB total (HTML + CSS + JS)
 
-## Official Resources
+## Resources
 
-- [CDE SMES Teacher Overview](https://ed.cde.state.co.us/educatoreffectiveness/smes-teacher)
-- [CDE Revised Scoring Overview](https://ed.cde.state.co.us/educatoreffectiveness/smes-revised-scoring-overview)
-- [Colorado Teacher Quality Standards](https://www.cde.state.co.us/educatoreffectiveness/teacherqualitystandards)
+This tool implements a standardized 70:30 evaluation methodology for Professional Practices and Measures of Student Learning.
 
 ## Disclaimer
 
-This calculator is for **informational purposes only**. It implements the Colorado State Model Evaluation System (SMES) scoring methodology based on publicly available CDE resources and SB22-070 legislation.
+This calculator is for **informational purposes only**. It implements a 70:30 scoring methodology for teacher evaluation.
 
 **Important Notes:**
 - No data is stored, transmitted, or saved
-- Always verify calculations with official CDE resources
-- Districts may have additional requirements or modifications to the SMES
+- Always verify calculations with official evaluation documentation
+- Organizations may have additional requirements or modifications to this methodology
 - This tool should be used in conjunction with, not as a replacement for, official evaluation processes
-- For official evaluations, use district-approved tools and procedures
+- For official evaluations, use organization-approved tools and procedures
 
 ## Testing & Verification
 
@@ -171,7 +169,7 @@ The calculator validates:
 - ✅ MSL has 2-5 measures
 - ✅ MSL weights sum to 30%
 - ✅ All MSL measures have ratings
-- ✅ Calculations match Colorado's official scoring formulas
+- ✅ Calculations follow the 70:30 scoring methodology
 
 ## Development
 
@@ -194,10 +192,10 @@ smes-calculator/
 ## License & Credits
 
 **Created:** 2024  
-**Based on:** Colorado Department of Education SMES Scoring Methodology (SB22-070)  
-**Author:** Educational Technology Tools  
+**Methodology:** 70:30 Teacher Evaluation Scoring (70% Professional Practices / 30% Measures of Student Learning)  
+**Author:** RANDA Educational Tools  
 
-This is an open educational resource. Feel free to use, modify, and distribute for educational purposes.
+This is an educational resource. Please verify all calculations with official evaluation documentation.
 
 ## Support
 

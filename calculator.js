@@ -1,6 +1,7 @@
 // ===================================
-// SMES Calculator - Colorado State Model Evaluation System
-// SB22-070 Revised Scoring (70:30 split)
+// RANDA Scoring Weight Web Tool
+// 70:30 Teacher Evaluation Scoring
+// (70% Professional Practices / 30% Measures of Student Learning)
 // ===================================
 
 // ===================================
@@ -97,6 +98,18 @@ function getRatingLabel(score, ranges) {
   }
   return 'N/A';
 }
+
+// Debounce function to prevent excessive recalculations
+function debounce(func, delay) {
+  let timeoutId;
+  return function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+// Create debounced version of updateAllCalculations
+const debouncedUpdate = debounce(updateAllCalculations, 150);
 
 // ===================================
 // VALIDATION FUNCTIONS
@@ -570,7 +583,10 @@ function updateAllCalculations() {
   if (allValid) {
     const finalResult = calculateFinalRating(ppResult.score, mslResult.score, mslResult.rating);
     if (summaryTotalScore) summaryTotalScore.textContent = finalResult.total.toString();
-    if (summaryRating) summaryRating.textContent = finalResult.rating;
+    if (summaryRating) {
+      summaryRating.textContent = finalResult.rating;
+      applyRatingClass(summaryRating, finalResult.rating, false);
+    }
     if (summaryOverlay) summaryOverlay.style.display = 'none';
     
     // Update summary marker position
@@ -581,7 +597,10 @@ function updateAllCalculations() {
     }
   } else {
     if (summaryTotalScore) summaryTotalScore.textContent = '—';
-    if (summaryRating) summaryRating.textContent = '—';
+    if (summaryRating) {
+      summaryRating.textContent = '—';
+      stripRatingClasses(summaryRating);
+    }
     if (summaryOverlay) summaryOverlay.style.display = 'flex';
     if (summaryScoreMarker) summaryScoreMarker.style.display = 'none';
   }
@@ -700,8 +719,27 @@ function createMSLRow(index) {
     </div>
   `;
   
-  // Attach listeners
-  row.querySelector('.msl-weight')?.addEventListener('input', updateAllCalculations);
+  // Attach listeners with debouncing and negative prevention
+  const weightInput = row.querySelector('.msl-weight');
+  if (weightInput) {
+    weightInput.addEventListener('input', (e) => {
+      // Prevent negative values
+      if (parseFloat(e.target.value) < 0) {
+        e.target.value = 0;
+      }
+      debouncedUpdate();
+    });
+    // Also prevent negatives on paste
+    weightInput.addEventListener('paste', (e) => {
+      setTimeout(() => {
+        if (parseFloat(e.target.value) < 0) {
+          e.target.value = 0;
+        }
+      }, 0);
+    });
+  }
+  
+  // Rating dropdown doesn't need debouncing (instant selection)
   row.querySelector('.msl-rating')?.addEventListener('change', updateAllCalculations);
   
   return row;
@@ -881,6 +919,173 @@ function attachValidationAria() {
 }
 
 // ===================================
+// CALCULATION MODAL
+// ===================================
+
+function generateCalculationBreakdown() {
+  if (!isStep1Valid() || !isStep2Complete() || !isStep3Valid()) {
+    return '<p class="modal-empty-state">Complete all steps to see detailed calculation breakdown.</p>';
+  }
+  
+  const ppResult = calculatePPScore();
+  const mslResult = calculateMSLScore();
+  const finalResult = calculateFinalRating(ppResult.score, mslResult.score, mslResult.rating);
+  
+  let html = '';
+  
+  // Professional Practices Section
+  html += '<div class="calc-section">';
+  html += '<h3>Professional Practices Calculation (70% of Final Score)</h3>';
+  
+  ppResult.standards.forEach((stdScore, idx) => {
+    const std = stdScore.standard;
+    const weight = parseNum(document.getElementById(`pp-weight-s${idx + 1}`)?.value);
+    
+    html += `<div class="calc-step"><strong>${std.name}:</strong></div>`;
+    html += `<div class="calc-formula">Earned Points: ${stdScore.earned} / ${stdScore.possible}</div>`;
+    html += `<div class="calc-formula">Ratio: ${stdScore.earned} ÷ ${stdScore.possible} = ${stdScore.ratio.toFixed(4)}</div>`;
+    html += `<div class="calc-formula">Weighted Score (700-scale): ${stdScore.ratio.toFixed(4)} × (${weight}% ÷ 100) × 700 = ${stdScore.weightedScore700}</div>`;
+    html += `<div class="calc-result">Standard Rating: ${stdScore.rating}</div>`;
+  });
+  
+  html += `<div class="calc-result" style="margin-top: var(--spacing-lg); background: var(--rating-blue-bg);">`;
+  html += `<strong>Total Professional Practices Score: ${ppResult.score} / 700</strong><br>`;
+  html += `Rating: <span class="rating-badge ${ratingToClass(ppResult.rating)}">${ppResult.rating}</span>`;
+  html += `</div>`;
+  html += '</div>';
+  
+  // MSL Section
+  html += '<div class="calc-section">';
+  html += '<h3>Measures of Student Learning Calculation (30% of Final Score)</h3>';
+  
+  mslResult.measures.forEach((measure, idx) => {
+    html += `<div class="calc-step"><strong>Measure ${idx + 1}:</strong></div>`;
+    html += `<div class="calc-formula">Rating: ${measure.rating} = ${measure.value} points</div>`;
+    html += `<div class="calc-formula">Weighted Score: (${measure.weight}% ÷ 30%) × ${measure.value} × 100 = ${measure.weightedScore300}</div>`;
+  });
+  
+  html += `<div class="calc-result" style="margin-top: var(--spacing-lg); background: var(--rating-blue-bg);">`;
+  html += `<strong>Total MSL Score: ${mslResult.score} / 300</strong><br>`;
+  html += `Rating: <span class="rating-badge ${ratingToClass(mslResult.rating)}">${mslResult.rating}</span>`;
+  html += `</div>`;
+  html += '</div>';
+  
+  // Final Rating Section
+  html += '<div class="calc-section">';
+  html += '<h3>Final Effectiveness Rating</h3>';
+  html += `<div class="calc-formula">Total Score: ${ppResult.score} + ${mslResult.score} = ${finalResult.total} / 1000</div>`;
+  html += `<div class="calc-formula">Percentage: ${((finalResult.total / 1000) * 100).toFixed(1)}%</div>`;
+  
+  if (mslResult.rating === 'Less Than Expected' && finalResult.total > 800) {
+    html += `<div class="calc-step" style="color: var(--color-warning); font-weight: 600;">`;
+    html += `⚠️ MSL Constraint Applied: Since MSL rating is "Less Than Expected", final rating is capped at "Effective"`;
+    html += `</div>`;
+  }
+  
+  html += `<div class="calc-result" style="margin-top: var(--spacing-lg); background: var(--rating-green-bg);">`;
+  html += `<strong style="font-size: 1.125rem;">Final Effectiveness Rating</strong><br>`;
+  html += `<span class="rating-badge ${ratingToClass(finalResult.rating)}" style="font-size: 1rem; padding: 0.5rem 1rem; margin-top: 0.5rem;">${finalResult.rating}</span>`;
+  html += `</div>`;
+  html += '</div>';
+  
+  return html;
+}
+
+function openCalculationModal() {
+  const modal = document.getElementById('calculation-modal');
+  const modalBody = document.getElementById('calculation-details');
+  
+  if (modal && modalBody) {
+    modalBody.innerHTML = generateCalculationBreakdown();
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    
+    // Focus the close button for accessibility
+    document.getElementById('modal-close')?.focus();
+  }
+}
+
+function closeCalculationModal() {
+  const modal = document.getElementById('calculation-modal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = ''; // Restore scrolling
+    
+    // Return focus to the button that opened the modal
+    document.getElementById('btn-show-calculations')?.focus();
+  }
+}
+
+// ===================================
+// TOOLTIP FUNCTIONALITY
+// ===================================
+
+function initializeTooltips() {
+  const triggers = document.querySelectorAll('.tooltip-trigger');
+  
+  triggers.forEach(trigger => {
+    const tooltipId = trigger.getAttribute('data-tooltip');
+    const tooltip = document.getElementById(`tooltip-${tooltipId}`);
+    
+    if (!tooltip) return;
+    
+    // Show on click (works for touch and mouse)
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Hide all other tooltips
+      document.querySelectorAll('.tooltip').forEach(t => {
+        if (t !== tooltip) t.style.display = 'none';
+      });
+      
+      // Toggle this tooltip
+      const isVisible = tooltip.style.display === 'block';
+      tooltip.style.display = isVisible ? 'none' : 'block';
+      
+      // Position tooltip near the trigger
+      if (!isVisible) {
+        const rect = trigger.getBoundingClientRect();
+        tooltip.style.position = 'absolute';
+        tooltip.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+        tooltip.style.left = (rect.left + window.scrollX - 20) + 'px';
+      }
+    });
+    
+    // Also show on hover for desktop
+    trigger.addEventListener('mouseenter', () => {
+      tooltip.style.display = 'block';
+      const rect = trigger.getBoundingClientRect();
+      tooltip.style.position = 'absolute';
+      tooltip.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+      tooltip.style.left = (rect.left + window.scrollX - 20) + 'px';
+    });
+    
+    trigger.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+  });
+  
+  // Hide tooltips when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.tooltip-trigger') && !e.target.closest('.tooltip')) {
+      document.querySelectorAll('.tooltip').forEach(t => {
+        t.style.display = 'none';
+      });
+    }
+  });
+  
+  // Hide tooltips on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.tooltip').forEach(t => {
+        t.style.display = 'none';
+      });
+    }
+  });
+}
+
+// ===================================
 // INITIALIZATION
 // ===================================
 
@@ -906,9 +1111,26 @@ document.addEventListener('DOMContentLoaded', () => {
   // Wrap tables for mobile scrolling
   wrapScrollableTables();
   
-  // Attach listeners to PP weights
+  // Attach listeners to PP weights with debouncing and negative prevention
   [1, 2, 3, 4].forEach(i => {
-    document.getElementById(`pp-weight-s${i}`)?.addEventListener('input', updateAllCalculations);
+    const input = document.getElementById(`pp-weight-s${i}`);
+    if (input) {
+      input.addEventListener('input', (e) => {
+        // Prevent negative values
+        if (parseFloat(e.target.value) < 0) {
+          e.target.value = 0;
+        }
+        debouncedUpdate();
+      });
+      // Also prevent negatives on paste
+      input.addEventListener('paste', (e) => {
+        setTimeout(() => {
+          if (parseFloat(e.target.value) < 0) {
+            e.target.value = 0;
+          }
+        }, 0);
+      });
+    }
   });
   
   // Attach listeners to all element dropdowns
@@ -934,6 +1156,26 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Attach add measure button
   document.getElementById('btn-add-measure')?.addEventListener('click', addMSLMeasure);
+  
+  // Attach modal button
+  document.getElementById('btn-show-calculations')?.addEventListener('click', openCalculationModal);
+  
+  // Attach modal close handlers
+  document.getElementById('modal-close')?.addEventListener('click', closeCalculationModal);
+  document.getElementById('modal-overlay')?.addEventListener('click', closeCalculationModal);
+  
+  // Close modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('calculation-modal');
+      if (modal && modal.style.display !== 'none') {
+        closeCalculationModal();
+      }
+    }
+  });
+  
+  // Initialize tooltips
+  initializeTooltips();
   
   // Attach quick fill buttons
   document.getElementById('btn-equal-weights')?.addEventListener('click', setEqualWeights);

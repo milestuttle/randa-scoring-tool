@@ -4,17 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RANDA Scoring Weight Web Tool</title>
-  <meta name="description" content="Calculate teacher effectiveness ratings using Colorado's State Model Evaluation System with revised 70:30 scoring per SB22-070.">
+  <meta name="description" content="Calculate teacher effectiveness ratings using the 70:30 scoring methodology (70% Professional Practices / 30% Measures of Student Learning).">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="app-header">
     <h1>RANDA Scoring Weight Web Tool</h1>
-    <p class="subtitle">SB22-070 Revised Scoring (70% Professional Practices / 30% Measures of Student Learning)</p>
-    <div class="header-links">
-      <a href="https://ed.cde.state.co.us/educatoreffectiveness/smes-teacher" target="_blank" rel="noopener">CDE SMES Overview</a>
-      <a href="https://ed.cde.state.co.us/educatoreffectiveness/smes-revised-scoring-overview" target="_blank" rel="noopener">Revised Scoring Details</a>
-    </div>
+    <p class="subtitle">70:30 Scoring Methodology (70% Professional Practices / 30% Measures of Student Learning)</p>
   </header>
 
   <main class="container">
@@ -59,15 +55,19 @@
         <div class="summary-range-bar">
           <div class="summary-range-segment summary-range-ineffective">
             <span class="summary-range-label">Ineffective</span>
+            <span class="summary-range-values">0-187</span>
           </div>
           <div class="summary-range-segment summary-range-partially-effective">
             <span class="summary-range-label">Partially Effective</span>
+            <span class="summary-range-values">188-406</span>
           </div>
           <div class="summary-range-segment summary-range-effective">
             <span class="summary-range-label">Effective</span>
+            <span class="summary-range-values">407-800</span>
           </div>
           <div class="summary-range-segment summary-range-highly-effective">
             <span class="summary-range-label">Highly Effective</span>
+            <span class="summary-range-values">801-1000</span>
           </div>
         </div>
         
@@ -86,8 +86,14 @@
 
     <!-- STEP 1: Professional Practices Weights -->
     <section id="step1" class="card">
-      <h2>Step 1: Weights for Professional Practices</h2>
+      <h2>Step 1: Weights for Professional Practices <button class="tooltip-trigger" data-tooltip="step1-weights" aria-label="Help: Weights for Professional Practices">ⓘ</button></h2>
       <p class="step-description">Assign each standard a weight (total must equal 100%) for calculating the overall Professional Practices rating.</p>
+      
+      <div class="tooltip" id="tooltip-step1-weights" role="tooltip" style="display: none;">
+        <div class="tooltip-content">
+          <strong>About Weighting:</strong> Each of the 4 standards can be weighted differently based on organizational priorities. Most commonly, equal weights (25% each) are used, but you can adjust these percentages to emphasize certain standards over others. The total must always equal 100%.
+        </div>
+      </div>
       
       <div class="weights-grid">
         <div class="form-group">
@@ -121,8 +127,20 @@
 
     <!-- STEP 2: Element Level Proficiency Ratings -->
     <section id="step2" class="card">
-      <h2>Step 2: Assign Professional Practices Element Level Proficiency</h2>
+      <h2>Step 2: Assign Professional Practices Element Level Proficiency <button class="tooltip-trigger" data-tooltip="step2-elements" aria-label="Help: Element Level Proficiency">ⓘ</button></h2>
       <p class="step-description">Assign each element a proficiency rating of Level 1, 2, 3, 4, or 5.</p>
+      
+      <div class="tooltip" id="tooltip-step2-elements" role="tooltip" style="display: none;">
+        <div class="tooltip-content">
+          <strong>Rating Scale:</strong><br>
+          <strong>Level 1:</strong> Not demonstrating (0 points)<br>
+          <strong>Level 2:</strong> Partially demonstrating (1 point)<br>
+          <strong>Level 3:</strong> Proficient (2 points)<br>
+          <strong>Level 4:</strong> Accomplished (3 points)<br>
+          <strong>Level 5:</strong> Exemplary (4 points)<br>
+          Each element contributes points that are weighted according to the percentages you set in Step 1.
+        </div>
+      </div>
       
       <!-- Standard 1 -->
       <div class="standard-section">
@@ -394,8 +412,17 @@
 
     <!-- STEP 3: Measures of Student Learning -->
     <section id="step3" class="card">
-      <h2>Step 3: Weights and Ratings for Measures of Student Learning</h2>
+      <h2>Step 3: Weights and Ratings for Measures of Student Learning <button class="tooltip-trigger" data-tooltip="step3-msl" aria-label="Help: Measures of Student Learning">ⓘ</button></h2>
       <p class="step-description">Assign each measure of student learning (MSL) a weight (total must equal 30%) and a rating. You must have between 2 and 5 measures.</p>
+      
+      <div class="tooltip" id="tooltip-step3-msl" role="tooltip" style="display: none;">
+        <div class="tooltip-content">
+          <strong>About MSL Measures:</strong> Measures of Student Learning represent 30% of your final effectiveness rating. You must include 2-5 different measures (such as standardized test scores, classroom assessments, student growth data, etc.). Each measure gets a weight (percentage of the 30%) and a rating:<br>
+          <strong>Less Than Expected:</strong> Students did not meet growth targets<br>
+          <strong>Expected:</strong> Students met growth targets<br>
+          <strong>More Than Expected:</strong> Students exceeded growth targets
+        </div>
+      </div>
       
       <div id="msl-list" class="msl-list"></div>
       
@@ -442,8 +469,20 @@
 
     <!-- STEP 4: Overall Effectiveness Rating -->
     <section id="step4" class="card">
-      <h2>Step 4: Final Effectiveness Rating</h2>
+      <h2>Step 4: Final Effectiveness Rating <button class="tooltip-trigger" data-tooltip="step4-final" aria-label="Help: Final Effectiveness Rating">ⓘ</button></h2>
       <p class="step-description">Once you have completed steps 1-3, the final effectiveness rating will be calculated by adding the Professional Practices and the Measures of Student Learning scores.</p>
+      
+      <div class="tooltip" id="tooltip-step4-final" role="tooltip" style="display: none;">
+        <div class="tooltip-content">
+          <strong>Final Rating Calculation:</strong> Your final score is the sum of Professional Practices (out of 700) and Measures of Student Learning (out of 300), for a total of 1000 points.<br><br>
+          <strong>Rating Ranges:</strong><br>
+          <strong>Highly Effective:</strong> 801-1000 points<br>
+          <strong>Effective:</strong> 407-800 points<br>
+          <strong>Partially Effective:</strong> 188-406 points<br>
+          <strong>Ineffective:</strong> 0-187 points<br><br>
+          <strong>Important:</strong> If your MSL rating is "Less Than Expected", your final rating is capped at "Effective" even if your point total is in the "Highly Effective" range.
+        </div>
+      </div>
       
       <div id="step4-results" class="results-section disabled">
         <table class="results-table">
@@ -531,14 +570,29 @@
 
     <!-- Action Buttons -->
     <div class="actions">
+      <button type="button" id="btn-show-calculations" class="btn btn-secondary">📊 Show Calculations</button>
       <button type="button" id="btn-print" class="btn btn-secondary">🖨️ Print Results</button>
       <button type="button" id="btn-reset" class="btn btn-danger">Reset All</button>
+    </div>
+
+    <!-- Calculation Modal -->
+    <div id="calculation-modal" class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true" style="display: none;">
+      <div class="modal-overlay" id="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modal-title">Calculation Breakdown</h2>
+          <button type="button" class="modal-close" id="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body" id="calculation-details">
+          <p class="modal-empty-state">Complete all steps to see detailed calculation breakdown.</p>
+        </div>
+      </div>
     </div>
   </main>
 
   <footer class="app-footer">
-    <p><strong>Disclaimer:</strong> This calculator is for informational purposes only. It implements the Colorado State Model Evaluation System (SMES) scoring methodology per SB22-070. No data is stored or transmitted. Always verify calculations with official CDE resources.</p>
-    <p>&copy; 2024 | Based on <a href="https://ed.cde.state.co.us/educatoreffectiveness/smes-revised-scoring-overview" target="_blank" rel="noopener">CDE SMES Revised Scoring</a></p>
+    <p><strong>Disclaimer:</strong> This calculator is for informational purposes only. It implements the 70:30 scoring methodology for teacher evaluation. No data is stored or transmitted. Always verify calculations with official evaluation documentation.</p>
+    <p>&copy; 2024 RANDA Educational Tools</p>
   </footer>
 
   <script src="calculator.js" defer></script>
