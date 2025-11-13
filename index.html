@@ -41,21 +41,39 @@
     <!-- Overall Effectiveness Summary -->
     <section id="overall-summary" class="card summary-card">
       <h2>Overall Effectiveness Rating</h2>
-      <div class="summary-grid">
-        <div class="summary-item">
-          <div class="summary-label">Total Score</div>
-          <div class="summary-value" id="summary-total-score" aria-live="polite">—</div>
-          <div class="summary-subtext">out of 1000</div>
+      <div class="summary-content">
+        <div class="summary-stats-row">
+          <div class="summary-stat">
+            <div class="summary-label">Total Score</div>
+            <div class="summary-value" id="summary-total-score" aria-live="polite">—</div>
+            <div class="summary-subtext">out of 1000</div>
+          </div>
+          <div class="summary-stat">
+            <div class="summary-label">Final Effectiveness Rating</div>
+            <div class="summary-value" id="summary-rating" aria-live="polite">—</div>
+            <div class="summary-subtext">&nbsp;</div>
+          </div>
         </div>
-        <div class="summary-item">
-          <div class="summary-label">Percentage</div>
-          <div class="summary-value" id="summary-percentage" aria-live="polite">—</div>
-          <div class="summary-subtext">&nbsp;</div>
+        
+        <div class="summary-range-bar">
+          <div class="summary-range-segment summary-range-ineffective">
+            <span class="summary-range-label">Ineffective</span>
+          </div>
+          <div class="summary-range-segment summary-range-partially-effective">
+            <span class="summary-range-label">Partially Effective</span>
+          </div>
+          <div class="summary-range-segment summary-range-effective">
+            <span class="summary-range-label">Effective</span>
+          </div>
+          <div class="summary-range-segment summary-range-highly-effective">
+            <span class="summary-range-label">Highly Effective</span>
+          </div>
         </div>
-        <div class="summary-item">
-          <div class="summary-label">Final Effectiveness Rating</div>
-          <div class="summary-value" id="summary-rating" aria-live="polite">—</div>
-          <div class="summary-subtext">&nbsp;</div>
+        
+        <div class="summary-marker-container">
+          <div id="summary-score-marker" class="summary-score-marker" style="display: none;">
+            <div class="summary-marker-arrow"></div>
+          </div>
         </div>
       </div>
       <div id="summary-overlay" class="overlay" role="status">

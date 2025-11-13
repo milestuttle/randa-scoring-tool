@@ -541,20 +541,26 @@ function updateAllCalculations() {
   // Update summary box
   const summaryOverlay = document.getElementById('summary-overlay');
   const summaryTotalScore = document.getElementById('summary-total-score');
-  const summaryPercentage = document.getElementById('summary-percentage');
   const summaryRating = document.getElementById('summary-rating');
+  const summaryScoreMarker = document.getElementById('summary-score-marker');
   
   if (allValid) {
     const finalResult = calculateFinalRating(ppResult.score, mslResult.score, mslResult.rating);
     if (summaryTotalScore) summaryTotalScore.textContent = finalResult.total.toString();
-    if (summaryPercentage) summaryPercentage.textContent = pct(finalResult.total / TOTAL_MAX_SCORE).toFixed(1) + '%';
     if (summaryRating) summaryRating.textContent = finalResult.rating;
     if (summaryOverlay) summaryOverlay.style.display = 'none';
+    
+    // Update summary marker position
+    if (summaryScoreMarker) {
+      const percentage = (finalResult.total / 1000) * 100;
+      summaryScoreMarker.style.left = percentage + '%';
+      summaryScoreMarker.style.display = 'block';
+    }
   } else {
     if (summaryTotalScore) summaryTotalScore.textContent = '—';
-    if (summaryPercentage) summaryPercentage.textContent = '—';
     if (summaryRating) summaryRating.textContent = '—';
     if (summaryOverlay) summaryOverlay.style.display = 'flex';
+    if (summaryScoreMarker) summaryScoreMarker.style.display = 'none';
   }
   
   // Update PP overlay
