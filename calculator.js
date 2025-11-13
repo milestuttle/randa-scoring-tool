@@ -939,9 +939,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add keyboard navigation
   setupKeyboardNavigation();
   
+  // Setup scroll collapse for summary card
+  setupSummaryCollapse();
+  
   updateRemoveButtons();
   updateAllCalculations();
 });
+
+// ===================================
+// SUMMARY CARD COLLAPSE ON SCROLL
+// ===================================
+
+function setupSummaryCollapse() {
+  const summaryCard = document.getElementById('overall-summary');
+  if (!summaryCard) return;
+  
+  let lastScrollTop = 0;
+  const scrollThreshold = 100; // Collapse after scrolling 100px down
+  
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    if (scrollTop > scrollThreshold) {
+      summaryCard.classList.add('collapsed');
+    } else {
+      summaryCard.classList.remove('collapsed');
+    }
+    
+    lastScrollTop = scrollTop;
+  }, { passive: true });
+}
 
 // ===================================
 // QUICK FILL FUNCTIONS

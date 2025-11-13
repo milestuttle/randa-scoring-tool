@@ -328,25 +328,58 @@ input[type="number"].valid {
   background: var(--color-surface);
   border: 2px solid var(--color-border);
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  transition: padding 0.3s ease, margin 0.3s ease;
+}
+
+.summary-card.collapsed {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .summary-card h2 {
   color: var(--color-primary-dark);
   text-align: center;
   margin-bottom: var(--spacing-xs);
+  transition: all 0.3s ease;
+}
+
+.summary-card.collapsed h2 {
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+.summary-card .summary-description {
+  transition: opacity 0.2s ease, max-height 0.3s ease;
+}
+
+.summary-card.collapsed .summary-description {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  margin: 0;
 }
 
 .summary-content {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
+  transition: gap 0.3s ease;
 }
 
-.summary-description {
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
+.summary-card.collapsed .summary-content {
+  gap: var(--spacing-sm);
+}
+
+.summary-stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
   margin-bottom: var(--spacing-md);
+  transition: margin 0.3s ease;
+}
+
+.summary-card.collapsed .summary-stats-row {
+  margin-bottom: var(--spacing-xs);
 }
 
 .summary-stats-row {
@@ -362,6 +395,11 @@ input[type="number"].valid {
   background: var(--color-bg);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
+  transition: padding 0.3s ease;
+}
+
+.summary-card.collapsed .summary-stat {
+  padding: var(--spacing-sm) var(--spacing-md);
 }
 
 .summary-range-bar {
@@ -372,6 +410,11 @@ input[type="number"].valid {
   overflow: hidden;
   box-shadow: var(--shadow-md);
   position: relative;
+  transition: height 0.3s ease;
+}
+
+.summary-card.collapsed .summary-range-bar {
+  height: 40px;
 }
 
 .summary-range-segment {
@@ -416,12 +459,23 @@ input[type="number"].valid {
   font-size: 0.8125rem;
   color: var(--color-text);
   text-align: center;
+  transition: font-size 0.3s ease;
+}
+
+.summary-card.collapsed .summary-range-label {
+  font-size: 0.625rem;
 }
 
 .summary-marker-container {
   position: relative;
   height: 30px;
   margin-top: var(--spacing-sm);
+  transition: all 0.3s ease;
+}
+
+.summary-card.collapsed .summary-marker-container {
+  height: 20px;
+  margin-top: var(--spacing-xs);
 }
 
 .summary-score-marker {
@@ -438,6 +492,13 @@ input[type="number"].valid {
   border-right: 12px solid transparent;
   border-top: 16px solid var(--color-primary);
   margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.summary-card.collapsed .summary-marker-arrow {
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 12px solid var(--color-primary);
 }
 
 .summary-label {
@@ -447,6 +508,12 @@ input[type="number"].valid {
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
   margin-bottom: var(--spacing-sm);
+  transition: all 0.3s ease;
+}
+
+.summary-card.collapsed .summary-label {
+  font-size: 0.625rem;
+  margin-bottom: 2px;
 }
 
 .summary-value {
@@ -455,12 +522,24 @@ input[type="number"].valid {
   line-height: 1;
   color: var(--color-primary);
   margin: var(--spacing-xs) 0;
+  transition: all 0.3s ease;
+}
+
+.summary-card.collapsed .summary-value {
+  font-size: 1.5rem;
+  margin: 2px 0;
 }
 
 .summary-subtext {
   font-size: 0.875rem;
   color: var(--color-text-muted);
   margin-top: var(--spacing-xs);
+  transition: all 0.3s ease;
+}
+
+.summary-card.collapsed .summary-subtext {
+  font-size: 0.625rem;
+  margin-top: 2px;
 }
 
 .overall-summary.disabled {
