@@ -108,6 +108,11 @@
         </div>
       </div>
       
+      <div class="quick-actions">
+        <button type="button" id="btn-equal-weights" class="btn btn-secondary btn-small">Equal Weights (25% each)</button>
+        <button type="button" id="btn-sample-data" class="btn btn-secondary btn-small">Load Sample Data</button>
+      </div>
+      
       <div class="validation-summary">
         <strong>Total Weight:</strong> <span id="total-pp-weight">0.0</span>%
         <div id="pp-weight-message" class="validation-error" role="status" aria-live="polite">⚠ Total must equal 100%</div>
@@ -493,6 +498,22 @@
             <div class="range-segment range-highly-effective" data-range="801-1000">
               <span class="range-label">Highly Effective</span>
               <span class="range-values">801-1000</span>
+            </div>
+          </div>
+          
+          <!-- Threshold markers -->
+          <div class="range-thresholds">
+            <div class="threshold-marker" style="left: 18.8%;">
+              <div class="threshold-line"></div>
+              <div class="threshold-label">188</div>
+            </div>
+            <div class="threshold-marker" style="left: 40.7%;">
+              <div class="threshold-line"></div>
+              <div class="threshold-label">407</div>
+            </div>
+            <div class="threshold-marker" style="left: 80.1%;">
+              <div class="threshold-line"></div>
+              <div class="threshold-label">801</div>
             </div>
           </div>
           

@@ -257,6 +257,31 @@ select option[value=""] {
   margin-top: var(--spacing-xs);
 }
 
+/* Input validation states */
+input[type="number"].invalid {
+  border-color: var(--color-error);
+  background-color: #fef2f2;
+}
+
+input[type="number"].valid {
+  border-color: var(--color-success);
+  background-color: #f0fdf4;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.875rem;
+  min-height: 36px;
+}
+
 /* ===================================
    Standards & Elements
    =================================== */
@@ -297,9 +322,12 @@ select option[value=""] {
 
 /* Summary Card at Top */
 .summary-card {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 20;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
 .summary-card h2 {
@@ -842,6 +870,42 @@ select option[value=""] {
   font-size: 0.9375rem;
 }
 
+.range-thresholds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  pointer-events: none;
+}
+
+.threshold-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+}
+
+.threshold-line {
+  width: 2px;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.2);
+  margin: 0 auto;
+}
+
+.threshold-label {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: white;
+  padding: 2px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) {
   .score-range-bar {
     height: 100px;
@@ -971,11 +1035,22 @@ select option[value=""] {
     display: none;
   }
   
+  .progress-steps,
+  .quick-actions {
+    display: none;
+  }
+  
+  .summary-card {
+    position: relative;
+    page-break-inside: avoid;
+  }
+  
   .card {
     box-shadow: none;
     border: 1px solid #ddd;
     page-break-inside: avoid;
     margin-bottom: var(--spacing-md);
+    position: relative;
   }
   
   .btn,
@@ -987,7 +1062,8 @@ select option[value=""] {
     display: none !important;
   }
   
-  .results-section.disabled {
+  .results-section.disabled,
+  .overall-summary.disabled {
     opacity: 1;
   }
   
@@ -1001,12 +1077,32 @@ select option[value=""] {
   
   .results-table thead {
     background: #333;
+    color: white;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .score-range-container,
+  .score-range-bar {
+    page-break-inside: avoid;
+  }
+  
+  .range-segment {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
   
   .app-footer {
     border-top: 1px solid black;
+  }
+  
+  /* Add print timestamp */
+  .app-footer::after {
+    content: "Printed: " attr(data-print-date);
+    display: block;
+    margin-top: 1em;
+    font-size: 0.75rem;
+    color: #666;
   }
 }
 
@@ -1149,6 +1245,57 @@ select option[value=""] {
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes celebrate {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.1) rotate(-5deg);
+  }
+  75% {
+    transform: scale(1.1) rotate(5deg);
+  }
+}
+
+.summary-card {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.progress-step.is-complete {
+  animation: pulse 0.5s ease-in-out;
+}
+
+.progress-step.is-highly-effective {
+  animation: celebrate 0.6s ease-in-out;
+  background: var(--rating-green-bg) !important;
+  border-color: var(--rating-green) !important;
+}
+
+.score-marker {
+  animation: slideInUp 0.4s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {

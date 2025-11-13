@@ -325,6 +325,18 @@ function updatePPUI(ppResult) {
     const ratingEl = document.getElementById(`${std.id}-rating`);
     safeTextContent(ratingEl, stdScore.rating);
     applyRatingClass(ratingEl, stdScore.rating, true);
+    
+    // Apply color tint to standard section
+    const standardSection = ratingEl?.closest('.standard-section');
+    if (standardSection) {
+      // Remove previous rating classes
+      standardSection.classList.remove('rating-exemplary', 'rating-accomplished', 'rating-proficient', 'rating-partially-proficient', 'rating-basic');
+      // Add new rating class
+      const ratingClass = ratingToClass(stdScore.rating);
+      if (ratingClass) {
+        standardSection.classList.add(ratingClass);
+      }
+    }
   });
   
   // Update overall PP summary
@@ -505,6 +517,17 @@ function updateAllCalculations() {
     ppWeightValidation.valid,
     ppWeightValidation.valid ? '✓ Total equals 100%' : `⚠ Total must equal 100% (currently ${ppWeightValidation.sum.toFixed(1)}%)`
   );
+  
+  // Add visual feedback to weight inputs
+  [1, 2, 3, 4].forEach(i => {
+    const input = document.getElementById(`pp-weight-s${i}`);
+    if (input) {
+      input.classList.remove('valid', 'invalid');
+      if (input.value && parseNum(input.value) > 0) {
+        input.classList.add(ppWeightValidation.valid ? 'valid' : 'invalid');
+      }
+    }
+  });
   
   // Step 2: Calculate PP scores
   const ppResult = calculatePPScore();
@@ -866,6 +889,20 @@ document.addEventListener('DOMContentLoaded', () => {
   ensureLiveRegion();
   attachValidationAria();
   
+  // Set print date
+  const footer = document.querySelector('.app-footer');
+  if (footer) {
+    footer.setAttribute('data-print-date', new Date().toLocaleDateString());
+  }
+  
+  // Add print handler
+  window.addEventListener('beforeprint', () => {
+    const footer = document.querySelector('.app-footer');
+    if (footer) {
+      footer.setAttribute('data-print-date', new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString());
+    }
+  });
+  
   // Wrap tables for mobile scrolling
   wrapScrollableTables();
   
@@ -895,6 +932,107 @@ document.addEventListener('DOMContentLoaded', () => {
   // Attach add measure button
   document.getElementById('btn-add-measure')?.addEventListener('click', addMSLMeasure);
   
+  // Attach quick fill buttons
+  document.getElementById('btn-equal-weights')?.addEventListener('click', setEqualWeights);
+  document.getElementById('btn-sample-data')?.addEventListener('click', loadSampleData);
+  
+  // Add keyboard navigation
+  setupKeyboardNavigation();
+  
   updateRemoveButtons();
   updateAllCalculations();
 });
+
+// ===================================
+// QUICK FILL FUNCTIONS
+// ===================================
+
+function setEqualWeights() {
+  [1, 2, 3, 4].forEach(i => {
+    const input = document.getElementById(`pp-weight-s${i}`);
+    if (input) input.value = '25';
+  });
+  updateAllCalculations();
+}
+
+function loadSampleData() {
+  // Set equal weights
+  setEqualWeights();
+  
+  // Set all elements to Level 4 (3 points each - a good "Accomplished" example)
+  const sampleLevels = {
+    's1a': '4', 's1b': '4', 's1c': '4',
+    's2a': '4', 's2b': '4', 's2c': '4', 's2d': '4',
+    's3a': '4', 's3b': '4', 's3c': '4', 's3d': '4', 's3e': '4', 's3f': '4',
+    's4a': '4', 's4b': '4', 's4c': '4', 's4d': '4'
+  };
+  
+  Object.keys(sampleLevels).forEach(id => {
+    const select = document.getElementById(`${id}-level`);
+    if (select) select.value = sampleLevels[id];
+  });
+  
+  // Set up 2 MSL measures with sample data
+  const container = document.getElementById('msl-list');
+  if (container) {
+    // Clear existing
+    container.innerHTML = '';
+    mslRowCounter = 0;
+    
+    // Add two sample measures
+    for (let i = 1; i <= 2; i++) {
+      mslRowCounter++;
+      const row = createMSLRow(mslRowCounter);
+      row.classList.add('visible');
+      container.appendChild(row);
+    }
+    
+    // Fill in sample values
+    setTimeout(() => {
+      const weight1 = document.getElementById('msl-weight-1');
+      const rating1 = document.getElementById('msl-rating-1');
+      const weight2 = document.getElementById('msl-weight-2');
+      const rating2 = document.getElementById('msl-rating-2');
+      
+      if (weight1) weight1.value = '15';
+      if (rating1) rating1.value = 'Expected';
+      if (weight2) weight2.value = '15';
+      if (rating2) rating2.value = 'More Than Expected';
+      
+      updateRemoveButtons();
+      updateAllCalculations();
+    }, 50);
+  }
+  
+  updateAllCalculations();
+  
+  // Scroll to summary
+  document.getElementById('overall-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ===================================
+// KEYBOARD NAVIGATION
+// ===================================
+
+function setupKeyboardNavigation() {
+  // Make progress steps clickable
+  document.querySelectorAll('.progress-step').forEach((step, index) => {
+    step.style.cursor = 'pointer';
+    step.setAttribute('tabindex', '0');
+    step.addEventListener('click', () => scrollToStep(index + 1));
+    step.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        scrollToStep(index + 1);
+      }
+    });
+  });
+}
+
+function scrollToStep(stepNum) {
+  const stepId = `step${stepNum}`;
+  const element = document.getElementById(stepId);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
