@@ -1165,16 +1165,6 @@ input[type="number"].valid {
   
   .score-range-container {
     page-break-inside: avoid;
-  }
-    position: relative;
-    page-break-inside: avoid;
-  }
-  
-  .card {
-    box-shadow: none;
-    border: 1px solid #ddd;
-    page-break-inside: avoid;
-    margin-bottom: var(--spacing-md);
     position: relative;
   }
   
@@ -1224,13 +1214,6 @@ input[type="number"].valid {
   }
   
   /* Add print date */
-  .app-footer::after {
-    content: " | Printed: " attr(data-print-date);
-    font-size: 0.75rem;
-    color: #666;
-  }
-}
-  /* Add print timestamp */
   .app-footer::after {
     content: "Printed: " attr(data-print-date);
     display: block;
