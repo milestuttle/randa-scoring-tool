@@ -1042,23 +1042,15 @@ function initializeTooltips() {
       // Toggle this tooltip
       const isVisible = tooltip.style.display === 'block';
       tooltip.style.display = isVisible ? 'none' : 'block';
-      
-      // Position tooltip near the trigger
-      if (!isVisible) {
-        const rect = trigger.getBoundingClientRect();
-        tooltip.style.position = 'absolute';
-        tooltip.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-        tooltip.style.left = (rect.left + window.scrollX - 20) + 'px';
-      }
     });
     
     // Also show on hover for desktop
     trigger.addEventListener('mouseenter', () => {
+      // Hide all other tooltips first
+      document.querySelectorAll('.tooltip').forEach(t => {
+        if (t !== tooltip) t.style.display = 'none';
+      });
       tooltip.style.display = 'block';
-      const rect = trigger.getBoundingClientRect();
-      tooltip.style.position = 'absolute';
-      tooltip.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-      tooltip.style.left = (rect.left + window.scrollX - 20) + 'px';
     });
     
     trigger.addEventListener('mouseleave', () => {
