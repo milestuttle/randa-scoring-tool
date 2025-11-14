@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smoke Test - RANDA Scoring Tool</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-container {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #2563eb;
+      margin-top: 0;
+    }
+    h2 {
+      color: #1e40af;
+      font-size: 1.25rem;
+      margin-top: 24px;
+    }
+    .test-result {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .test-result.pass {
+      background: #dcfce7;
+      border-left: 4px solid #16a34a;
+      color: #166534;
+    }
+    .test-result.fail {
+      background: #fee2e2;
+      border-left: 4px solid #dc2626;
+      color: #991b1b;
+    }
+    .test-result .icon {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    .summary {
+      background: #eff6ff;
+      border: 2px solid #2563eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 24px;
+      font-weight: 600;
+    }
+    .summary.all-pass {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #166534;
+    }
+    .summary.has-fail {
+      background: #fee2e2;
+      border-color: #dc2626;
+      color: #991b1b;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    .test-info {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🧪 Smoke Test: Action Buttons</h1>
+    <p>Testing visibility and functionality of Print, Reset, and Show Calculations buttons</p>
+    
+    <div id="test-results"></div>
+    
+    <div id="summary" class="summary"></div>
+    
+    <h2>Visual Inspection</h2>
+    <p class="test-info">Check the iframe below to visually confirm buttons are visible</p>
+    <iframe id="app-frame" src="index.html"></iframe>
+  </div>
+
+  <script>
+    const tests = [];
+    let passCount = 0;
+    let failCount = 0;
+
+    function addTest(name, passed, details = '') {
+      tests.push({ name, passed, details });
+      if (passed) passCount++;
+      else failCount++;
+    }
+
+    function renderResults() {
+      const container = document.getElementById('test-results');
+      const summaryEl = document.getElementById('summary');
+      
+      container.innerHTML = '<h2>Test Results</h2>';
+      
+      tests.forEach(test => {
+        const div = document.createElement('div');
+        div.className = `test-result ${test.passed ? 'pass' : 'fail'}`;
+        div.innerHTML = `
+          <span class="icon">${test.passed ? '✓' : '✗'}</span>
+          <div>
+            <strong>${test.name}</strong>
+            ${test.details ? `<div class="test-info">${test.details}</div>` : ''}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      const total = tests.length;
+      summaryEl.className = `summary ${failCount === 0 ? 'all-pass' : 'has-fail'}`;
+      summaryEl.innerHTML = `
+        <strong>Results:</strong> ${passCount}/${total} tests passed
+        ${failCount === 0 ? ' 🎉' : ' ⚠️'}
+      `;
+    }
+
+    // Wait for iframe to load
+    function runTests() {
+      const iframe = document.getElementById('app-frame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        
+        // Test 1: Check if .actions div exists
+        const actionsDiv = iframeDoc.querySelector('.actions');
+        addTest(
+          'Actions container exists',
+          actionsDiv !== null,
+          actionsDiv ? 'Found .actions div' : 'Missing .actions div'
+        );
+
+        // Test 2: Check Show Calculations button
+        const btnShowCalc = iframeDoc.getElementById('btn-show-calculations');
+        addTest(
+          'Show Calculations button exists',
+          btnShowCalc !== null,
+          btnShowCalc ? `Text: "${btnShowCalc.textContent.trim()}"` : 'Button not found'
+        );
+
+        // Test 3: Check Print button
+        const btnPrint = iframeDoc.getElementById('btn-print');
+        addTest(
+          'Print button exists',
+          btnPrint !== null,
+          btnPrint ? `Text: "${btnPrint.textContent.trim()}"` : 'Button not found'
+        );
+
+        // Test 4: Check Reset button
+        const btnReset = iframeDoc.getElementById('btn-reset');
+        addTest(
+          'Reset button exists',
+          btnReset !== null,
+          btnReset ? `Text: "${btnReset.textContent.trim()}"` : 'Button not found'
+        );
+
+        // Test 5: Check if buttons are visible (not display:none)
+        const iframeWindow = iframe.contentWindow;
+        
+        if (btnShowCalc) {
+          const calcStyle = iframeWindow.getComputedStyle(btnShowCalc);
+          const isVisible = calcStyle.display !== 'none' && calcStyle.visibility !== 'hidden';
+          addTest(
+            'Show Calculations button is visible',
+            isVisible,
+            `display: ${calcStyle.display}, visibility: ${calcStyle.visibility}`
+          );
+        }
+
+        if (btnPrint) {
+          const printStyle = iframeWindow.getComputedStyle(btnPrint);
+          const isVisible = printStyle.display !== 'none' && printStyle.visibility !== 'hidden';
+          addTest(
+            'Print button is visible',
+            isVisible,
+            `display: ${printStyle.display}, visibility: ${printStyle.visibility}`
+          );
+        }
+
+        if (btnReset) {
+          const resetStyle = iframeWindow.getComputedStyle(btnReset);
+          const isVisible = resetStyle.display !== 'none' && resetStyle.visibility !== 'hidden';
+          addTest(
+            'Reset button is visible',
+            isVisible,
+            `display: ${resetStyle.display}, visibility: ${resetStyle.visibility}`
+          );
+        }
+
+        // Test 6: Check if .actions container is visible
+        if (actionsDiv) {
+          const actionsStyle = iframeWindow.getComputedStyle(actionsDiv);
+          const isVisible = actionsStyle.display !== 'none' && actionsStyle.visibility !== 'hidden';
+          addTest(
+            'Actions container is visible',
+            isVisible,
+            `display: ${actionsStyle.display}, visibility: ${actionsStyle.visibility}`
+          );
+        }
+
+        // Test 7: Check if buttons have click event listeners
+        // (Check if they're in the DOM and have expected classes)
+        if (btnShowCalc) {
+          const hasClasses = btnShowCalc.classList.contains('btn') && 
+                           btnShowCalc.classList.contains('btn-secondary');
+          addTest(
+            'Show Calculations button has correct classes',
+            hasClasses,
+            `Classes: ${btnShowCalc.className}`
+          );
+        }
+
+        if (btnPrint) {
+          const hasClasses = btnPrint.classList.contains('btn') && 
+                           btnPrint.classList.contains('btn-secondary');
+          addTest(
+            'Print button has correct classes',
+            hasClasses,
+            `Classes: ${btnPrint.className}`
+          );
+        }
+
+        if (btnReset) {
+          const hasClasses = btnReset.classList.contains('btn') && 
+                           btnReset.classList.contains('btn-danger');
+          addTest(
+            'Reset button has correct classes',
+            hasClasses,
+            `Classes: ${btnReset.className}`
+          );
+        }
+
+        // Test 8: Check if modal exists
+        const modal = iframeDoc.getElementById('calculation-modal');
+        addTest(
+          'Calculation modal exists',
+          modal !== null,
+          modal ? 'Modal element found in DOM' : 'Modal not found'
+        );
+
+        // Test 9: Check if modal is initially hidden
+        if (modal) {
+          const modalStyle = window.getComputedStyle(modal);
+          const isHidden = modalStyle.display === 'none';
+          addTest(
+            'Modal is initially hidden',
+            isHidden,
+            `display: ${modalStyle.display}`
+          );
+        }
+
+        // Test 10: Verify button positioning (exists in DOM and has valid position)
+        if (btnPrint && actionsDiv) {
+          const rect = btnPrint.getBoundingClientRect();
+          const hasValidPosition = rect.width > 0 && rect.height > 0 && rect.left >= 0;
+          addTest(
+            'Print button has valid dimensions and position',
+            hasValidPosition,
+            `Position: top=${Math.round(rect.top)}px, left=${Math.round(rect.left)}px, size: ${Math.round(rect.width)}x${Math.round(rect.height)}px`
+          );
+        }
+
+        renderResults();
+    }
+
+    // Wait for window and iframe to load
+    window.addEventListener('load', () => {
+      const iframe = document.getElementById('app-frame');
+      
+      // Check if iframe is already loaded
+      if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+        runTests();
+      } else {
+        iframe.addEventListener('load', runTests);
+      }
+    });
+  </script>
+</body>
+</html>
