@@ -607,7 +607,7 @@ input[type="number"].valid {
 
 .msl-measure-row.visible {
   opacity: 1;
-  max-height: 500px;
+  max-height: 1200px; /* Increased for more fields */
 }
 
 .msl-measure-number {
@@ -623,8 +623,147 @@ input[type="number"].valid {
   align-items: end;
 }
 
+/* Precise MSL version with grid layout */
+.msl-measure-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.msl-measure-number {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #2c5282;
+}
+
+/* MSL Section Layout */
+.msl-section {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+  background-color: #ffffff;
+}
+
+.msl-identification {
+  background-color: #f8f9fa;
+}
+
+.msl-identification .form-group {
+  margin-bottom: 0;
+}
+
+.msl-identification input {
+  font-weight: 500;
+  font-size: 1.05em;
+}
+
+.msl-weight-section {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+.msl-weight-section .form-group {
+  margin-bottom: 0;
+}
+
+.msl-weight-section label {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.msl-weight-section input {
+  font-weight: 600;
+  font-size: 1.1em;
+  border: 2px solid #2196f3;
+}
+
+/* Cutscore Configuration Section */
+.msl-cutscores {
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+}
+
+.msl-cutscores-header {
+  font-weight: 600;
+  font-size: 0.95em;
+  color: #424242;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.msl-cutscores-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.msl-cutscores-grid .form-group {
+  margin-bottom: 0;
+}
+
+.range-indicator {
+  display: inline-block;
+  font-size: 0.8em;
+  margin-right: 0.25rem;
+}
+
+.range-indicator.less-range {
+  color: #f44336;
+}
+
+.range-indicator.expected-range {
+  color: #ff9800;
+}
+
+.range-indicator.higher-range {
+  color: #4caf50;
+}
+
+/* Actual Score Section */
+.msl-actual-section {
+  background-color: #fff3e0;
+  border-left: 4px solid #ff9800;
+}
+
+.msl-actual-section .form-group {
+  margin-bottom: 0;
+}
+
+.msl-actual-section label {
+  font-weight: 600;
+  color: #e65100;
+}
+
+.msl-actual-section input {
+  font-weight: 600;
+  font-size: 1.1em;
+  border: 2px solid #ff9800;
+}
+
+/* Readonly Field Styling */
+.readonly-field {
+  background-color: #e0e0e0 !important;
+  color: #616161 !important;
+  border: 1px solid #bdbdbd !important;
+  cursor: not-allowed;
+  font-style: italic;
+}
+
+.readonly-field:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 @media (max-width: 768px) {
   .msl-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .msl-cutscores-grid {
     grid-template-columns: 1fr;
   }
   
