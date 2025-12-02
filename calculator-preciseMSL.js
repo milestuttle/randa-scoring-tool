@@ -799,6 +799,7 @@ function createMSLRow(index, isIPR = false) {
   //   - Scores 50-89 map to 100-200 points (Expected)
   //   - Scores 90-100 map to 201-300 points (Higher Than Expected)
   const iprName = isIPR ? 'IPR (Instructional Program Review)' : '';
+  const iprWeight = isIPR ? '10' : ''; // IPR always weighted at 10%
   const iprMax = isIPR ? '100' : '';
   const iprLessUpper = isIPR ? '49' : ''; // Top of "Somewhat Effective" (Less Than Expected)
   const iprExpected = isIPR ? '70' : ''; // Middle of "Effective" range (50-89)
@@ -824,8 +825,8 @@ function createMSLRow(index, isIPR = false) {
     <div class="msl-section msl-weight-section">
       <div class="form-group">
         <label for="msl-weight-${index}">Weight (% of 30)</label>
-        <input type="number" id="msl-weight-${index}" class="msl-weight" 
-               min="0" max="30" step="0.1" placeholder="15.0">
+        <input type="number" id="msl-weight-${index}" class="msl-weight${iprReadonly ? ' readonly-field' : ''}" 
+               min="0" max="30" step="0.1" placeholder="15.0" value="${iprWeight}"${iprReadonly}>
       </div>
     </div>
     
@@ -1418,11 +1419,9 @@ function loadSampleData() {
     
     // Fill in sample values
     setTimeout(() => {
-      // IPR sample values
-      const iprWeight = document.getElementById('msl-weight-1');
+      // IPR sample values (weight is pre-filled and locked at 10%)
       const iprActual = document.getElementById('msl-actual-score-1');
       
-      if (iprWeight) iprWeight.value = '15';
       if (iprActual) iprActual.value = '85'; // Sample IPR score (Effective range)
       
       // Second measure sample values
@@ -1434,7 +1433,7 @@ function loadSampleData() {
       const higher2 = document.getElementById('msl-higher-threshold-2');
       const actual2 = document.getElementById('msl-actual-score-2');
       
-      if (weight2) weight2.value = '15';
+      if (weight2) weight2.value = '20';
       if (name2) name2.value = 'STAR Reading';
       if (max2) max2.value = '600';
       if (less2) less2.value = '200';
