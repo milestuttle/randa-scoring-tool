@@ -13,7 +13,7 @@
   --color-border: #e2e8f0;
   --color-text: #1e293b;
   --color-text-muted: #64748b;
-  
+
   /* Rating colors */
   --rating-green: #1f8b4c;
   --rating-blue: #1f5fe0;
@@ -23,22 +23,22 @@
   --rating-blue-bg: #e8f0fe;
   --rating-orange-bg: #fff4e5;
   --rating-red-bg: #fde7e9;
-  
+
   --spacing-xs: 0.5rem;
   --spacing-sm: 0.75rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
-  
+
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
-  
+
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  
+
   --transition: all 0.2s ease;
 }
 
@@ -166,6 +166,12 @@ strong {
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
   position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .step-description {
@@ -189,21 +195,32 @@ label {
 }
 
 input[type="number"],
+input[type="text"],
 select {
-  padding: var(--spacing-sm) var(--spacing-md);
+  height: 44px;
+  /* Enforce strict height */
+  line-height: normal;
+  /* Reset line height */
+  padding: 0 var(--spacing-md);
+  /* Vertical padding handled by height/flex */
+  display: inline-flex;
+  align-items: center;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   font-size: 16px;
   min-height: 44px;
   transition: var(--transition);
   background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  /* Subtle inner depth */
 }
 
 input[type="number"]:focus,
 select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  /* Softer, wider glow */
 }
 
 input[type="number"]::placeholder {
@@ -267,6 +284,11 @@ input[type="number"].invalid {
 input[type="number"].valid {
   border-color: var(--color-success);
   background-color: #f0fdf4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23059669'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 32px;
 }
 
 /* Quick Actions */
@@ -323,9 +345,9 @@ input[type="number"].valid {
 
 /* Summary Card at Top */
 .summary-card {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  position: relative;
+  /* top: 0; removed to prevent floating */
+  z-index: 1;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
@@ -607,7 +629,8 @@ input[type="number"].valid {
 
 .msl-measure-row.visible {
   opacity: 1;
-  max-height: 1200px; /* Increased for more fields */
+  max-height: 1200px;
+  /* Increased for more fields */
 }
 
 .msl-measure-number {
@@ -762,11 +785,11 @@ input[type="number"].valid {
   .msl-inputs {
     grid-template-columns: 1fr;
   }
-  
+
   .msl-cutscores-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .table-scroll table {
     min-width: 580px;
   }
@@ -1128,19 +1151,19 @@ input[type="number"].valid {
   .score-range-bar {
     height: 100px;
   }
-  
+
   .range-label {
     font-size: 0.75rem;
   }
-  
+
   .range-values {
     font-size: 0.6875rem;
   }
-  
+
   .marker-score {
     font-size: 1rem;
   }
-  
+
   .marker-label {
     padding: var(--spacing-xs) var(--spacing-sm);
   }
@@ -1180,51 +1203,51 @@ input[type="number"].valid {
   h1 {
     font-size: 1.5rem;
   }
-  
+
   h2 {
     font-size: 1.25rem;
   }
-  
+
   .card {
     padding: var(--spacing-lg);
   }
-  
+
   .weights-grid,
   .elements-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .summary-stats {
     grid-template-columns: 1fr;
   }
-  
+
   .summary-stats-row {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
   }
-  
+
   .summary-value {
     font-size: 2rem;
   }
-  
+
   .summary-range-label {
     font-size: 0.6875rem;
   }
-  
+
   .standard-summary {
     flex-direction: column;
     gap: var(--spacing-sm);
   }
-  
+
   .results-table {
     font-size: 0.875rem;
   }
-  
+
   .results-table th,
   .results-table td {
     padding: var(--spacing-sm);
   }
-  
+
   .table-scroll table {
     min-width: 520px;
   }
@@ -1234,132 +1257,198 @@ input[type="number"].valid {
    Print Styles
    =================================== */
 @media print {
+  @page {
+    margin: 1cm;
+    size: portrait;
+  }
+
   body {
     background: white;
     color: black;
+    font-size: 11pt;
+    line-height: 1.3;
+    padding-bottom: 0 !important;
+    /* Remove padding for sticky footer */
   }
-  
+
+  /* Hide UI Elements */
+  .tooltip-trigger,
+  .tooltip,
+  .quick-actions,
+  .actions,
+  .app-footer,
+  .progress-steps,
+  .sticky-footer,
+  #modal-overlay,
+  .modal-close,
+  button {
+    display: none !important;
+  }
+
+  /* Header */
   .app-header {
-    background: white;
-    color: black;
+    background: none;
     box-shadow: none;
-    border-bottom: 2px solid black;
-    page-break-after: avoid;
+    border-bottom: 2px solid #000;
+    padding: 10px 0;
+    margin-bottom: 20px;
+    text-align: center;
   }
-  
-  .app-header h1,
+
+  .app-header h1 {
+    font-size: 18pt;
+    margin: 0;
+    color: #000;
+  }
+
   .subtitle {
-    color: black;
+    font-size: 10pt;
+    color: #444;
   }
-  
-  .header-links {
-    display: none;
-  }
-  
-  /* Progress indicator can be hidden or kept compact */
-  .progress-steps {
-    page-break-after: avoid;
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  /* Summary card at top - keep on first page */
-  #overall-summary {
-    page-break-before: avoid;
-    page-break-after: auto;
-    page-break-inside: avoid;
-  }
-  
-  /* Each step section */
+
+  /* Cards */
   .card {
-    box-shadow: none;
+    box-shadow: none !important;
     border: 1px solid #ddd;
-    page-break-inside: avoid;
-    margin-bottom: var(--spacing-md);
+    border-radius: 4px;
+    /* Smaller radius */
+    margin-bottom: 15px;
+    break-inside: avoid;
+    padding: 15px;
   }
-  
-  /* Force Step 2 to start on new page if needed (it's usually long) */
-  #step2 {
-    page-break-before: auto;
+
+  /* Inputs & Selects - make them look more like static text */
+  input[type="number"],
+  input[type="text"],
+  select {
+    border: none;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0;
+    height: auto;
+    width: auto;
+    font-weight: bold;
+    color: #000;
+    /* For selects, browser print rendering varies, but this helps */
+    -webkit-appearance: none;
+    appearance: none;
   }
-  
-  /* Standard sections within Step 2 */
-  .standard-section {
-    page-break-inside: avoid;
-    margin-bottom: var(--spacing-md);
+
+  /* Add underline to inputs to show they are values */
+  input[type="number"] {
+    border-bottom: 1px dotted #ccc;
+    text-align: right;
+    padding-right: 2px;
   }
-  
-  /* Step 3 and 4 should try to stay together if possible */
-  #step3 {
-    page-break-before: auto;
+
+  /* Specific Sections */
+  .summary-card {
+    border: 2px solid #000;
+    background: #fdfdfd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  
-  /* Final results should ideally be on one page */
-  #step4 {
-    page-break-before: auto;
+
+  /* Progress Bars - force print colors */
+  .progress-container {
+    border: 1px solid #ccc;
+    background: #eee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  
-  .results-table {
-    page-break-inside: avoid;
+
+  .progress-fill {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  
-  .score-range-container {
-    page-break-inside: avoid;
+
+  /* Results Table */
+  .results-table th,
+  .results-table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+  }
+
+  .results-table thead th {
+    background: #eee !important;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Rating Badges in Print */
+  .rating-badge {
+    border: 1px solid #ccc;
+    background-color: transparent !important;
+    /* Save ink */
+    color: #000 !important;
+    padding: 2px 8px;
+    font-weight: bold;
+  }
+
+  /* Show content of modal if it's open, otherwise hide modal */
+  /* If modal is open, we could try to make it the main content, but generally users print the form.
+     Let's just ensure if the modal IS open, it prints nicely over everything else or as a page. */
+  .modal[style*="block"],
+  .modal[style*="flex"] {
     position: relative;
+    display: block !important;
+    z-index: 10000;
+    width: 100%;
+    height: auto;
+    background: white;
   }
-  
-  .btn,
-  .actions {
-    display: none !important;
+
+  .modal-content {
+    box-shadow: none;
+    border: none;
+    width: 100%;
+    max-width: none;
+    padding: 0;
   }
-  
-  .overlay {
-    display: none !important;
+
+  .modal-header {
+    border-bottom: 1px solid #000;
   }
-  
-  .results-section.disabled,
-  .overall-summary.disabled {
-    opacity: 1;
-  }
-  
-  .overall-summary {
-    background: #f5f5f5;
-  }
-  
-  .results-table {
-    border: 1px solid black;
-  }
-  
-  .results-table thead {
-    background: #333;
-    color: white;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .score-range-container,
-  .score-range-bar {
-    page-break-inside: avoid;
-  }
-  
-  .range-segment {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .app-footer {
-    border-top: 1px solid black;
-    page-break-before: avoid;
-    margin-top: var(--spacing-xl);
-  }
-  
-  /* Add print date */
-  .app-footer::after {
-    content: "Printed: " attr(data-print-date);
-    display: block;
-    margin-top: 1em;
-    font-size: 0.75rem;
-    color: #666;
-  }
+
+  /* If we print successfully, maybe we want to hide everything separation */
+}
+
+.results-table {
+  border: 1px solid black;
+}
+
+.results-table thead {
+  background: #333;
+  color: white;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.score-range-container,
+.score-range-bar {
+  page-break-inside: avoid;
+}
+
+.range-segment {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.app-footer {
+  border-top: 1px solid black;
+  page-break-before: avoid;
+  margin-top: var(--spacing-xl);
+}
+
+/* Add print date */
+.app-footer::after {
+  content: "Printed: " attr(data-print-date);
+  display: block;
+  margin-top: 1em;
+  font-size: 0.75rem;
+  color: #666;
+}
 }
 
 /* ===================================
@@ -1367,11 +1456,16 @@ input[type="number"].valid {
    =================================== */
 .progress-steps {
   display: flex;
-  gap: var(--spacing-sm);
-  align-items: center;
-  margin: 0 0 var(--spacing-xl);
+  margin: 0 auto var(--spacing-xl);
+  /* Center the container itself */
   flex-wrap: wrap;
-  justify-content: center;
+  padding-bottom: var(--spacing-sm);
+  gap: var(--spacing-md);
+  justify-content: center !important;
+  width: -moz-fit-content;
+  width: fit-content;
+  /* Ensure container is only as wide as content */
+  max-width: 100%;
 }
 
 .progress-step {
@@ -1437,17 +1531,18 @@ input[type="number"].valid {
 @media (max-width: 768px) {
   .progress-steps {
     gap: var(--spacing-xs);
+    justify-content: center !important;
   }
-  
+
   .progress-step {
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: 0.75rem;
   }
-  
+
   .progress-step-label {
     display: none;
   }
-  
+
   .progress-step-number {
     width: 32px;
     height: 32px;
@@ -1459,9 +1554,8 @@ input[type="number"].valid {
    Summary Card (Sticky)
    =================================== */
 .summary-card {
-  position: sticky;
-  top: var(--spacing-md);
-  z-index: 50;
+  position: relative;
+  z-index: 1;
   background: var(--color-surface);
   box-shadow: var(--shadow-lg);
   transition: all 0.3s ease;
@@ -1664,20 +1758,65 @@ input[type="number"].valid {
     position: relative;
     top: 0;
   }
-  
+
   .summary-value {
     font-size: 2rem;
   }
-  
+
   .summary-range-segment {
     font-size: 0.65rem;
     padding: var(--spacing-xs) 2px;
   }
-  
+
   .quick-actions {
     flex-direction: column;
   }
-  
+
+  /* Rating Badges */
+  .rating-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    /* Pill shape */
+    font-weight: 600;
+    font-size: 0.9em;
+    line-height: 1;
+    text-transform: capitalize;
+  }
+
+  /* Badge specific colors */
+  .rating-badge.rating-highly-effective,
+  .rating-badge.rating-exemplary {
+    background-color: var(--rating-green-bg);
+    color: var(--rating-green);
+    border: 1px solid rgba(31, 139, 76, 0.2);
+  }
+
+  .rating-badge.rating-effective,
+  .rating-badge.rating-accomplished,
+  .rating-badge.rating-proficient {
+    background-color: var(--rating-blue-bg);
+    color: var(--rating-blue);
+    border: 1px solid rgba(31, 95, 224, 0.2);
+  }
+
+  .rating-badge.rating-partially-effective,
+  .rating-badge.rating-partially-proficient,
+  .rating-badge.rating-expected {
+    background-color: var(--rating-orange-bg);
+    color: var(--rating-orange);
+    border: 1px solid rgba(217, 130, 43, 0.2);
+  }
+
+  .rating-badge.rating-ineffective,
+  .rating-badge.rating-basic,
+  .rating-badge.rating-less-than-expected {
+    background-color: var(--rating-red-bg);
+    color: var(--rating-red);
+    border: 1px solid rgba(217, 48, 37, 0.2);
+  }
+
   .btn-small {
     width: 100%;
   }
@@ -1687,18 +1826,53 @@ input[type="number"].valid {
    Rating Classes
    =================================== */
 /* Background emphasis for larger blocks (rows, panels) */
-.rating-highly-effective { background-color: var(--rating-green-bg); }
-.rating-effective { background-color: var(--rating-blue-bg); }
-.rating-partially-effective { background-color: var(--rating-orange-bg); }
-.rating-ineffective { background-color: var(--rating-red-bg); }
-.rating-expected { background-color: var(--rating-blue-bg); }
-.rating-more-than-expected { background-color: var(--rating-green-bg); }
-.rating-less-than-expected { background-color: var(--rating-red-bg); }
-.rating-exemplary { background-color: var(--rating-green-bg); }
-.rating-accomplished { background-color: var(--rating-blue-bg); }
-.rating-proficient { background-color: var(--rating-blue-bg); }
-.rating-partially-proficient { background-color: var(--rating-orange-bg); }
-.rating-basic { background-color: var(--rating-red-bg); }
+.rating-highly-effective {
+  background-color: var(--rating-green-bg);
+}
+
+.rating-effective {
+  background-color: var(--rating-blue-bg);
+}
+
+.rating-partially-effective {
+  background-color: var(--rating-orange-bg);
+}
+
+.rating-ineffective {
+  background-color: var(--rating-red-bg);
+}
+
+.rating-expected {
+  background-color: var(--rating-blue-bg);
+}
+
+.rating-more-than-expected {
+  background-color: var(--rating-green-bg);
+}
+
+.rating-less-than-expected {
+  background-color: var(--rating-red-bg);
+}
+
+.rating-exemplary {
+  background-color: var(--rating-green-bg);
+}
+
+.rating-accomplished {
+  background-color: var(--rating-blue-bg);
+}
+
+.rating-proficient {
+  background-color: var(--rating-blue-bg);
+}
+
+.rating-partially-proficient {
+  background-color: var(--rating-orange-bg);
+}
+
+.rating-basic {
+  background-color: var(--rating-red-bg);
+}
 
 /* Compact badge/chip variant for labels */
 .rating-badge {
@@ -1710,18 +1884,66 @@ input[type="number"].valid {
   padding: 0.375rem 0.625rem;
   vertical-align: middle;
 }
-.rating-badge.rating-highly-effective { color: #fff; background-color: var(--rating-green); }
-.rating-badge.rating-effective { color: #fff; background-color: var(--rating-blue); }
-.rating-badge.rating-partially-effective { color: #fff; background-color: var(--rating-orange); }
-.rating-badge.rating-ineffective { color: #fff; background-color: var(--rating-red); }
-.rating-badge.rating-expected { color: #fff; background-color: var(--rating-blue); }
-.rating-badge.rating-more-than-expected { color: #fff; background-color: var(--rating-green); }
-.rating-badge.rating-less-than-expected { color: #fff; background-color: var(--rating-red); }
-.rating-badge.rating-exemplary { color: #fff; background-color: var(--rating-green); }
-.rating-badge.rating-accomplished { color: #fff; background-color: var(--rating-blue); }
-.rating-badge.rating-proficient { color: #fff; background-color: var(--rating-blue); }
-.rating-badge.rating-partially-proficient { color: #fff; background-color: var(--rating-orange); }
-.rating-badge.rating-basic { color: #fff; background-color: var(--rating-red); }
+
+.rating-badge.rating-highly-effective {
+  color: #fff;
+  background-color: var(--rating-green);
+}
+
+.rating-badge.rating-effective {
+  color: #fff;
+  background-color: var(--rating-blue);
+}
+
+.rating-badge.rating-partially-effective {
+  color: #fff;
+  background-color: var(--rating-orange);
+}
+
+.rating-badge.rating-ineffective {
+  color: #fff;
+  background-color: var(--rating-red);
+}
+
+.rating-badge.rating-expected {
+  color: #fff;
+  background-color: var(--rating-blue);
+}
+
+.rating-badge.rating-more-than-expected {
+  color: #fff;
+  background-color: var(--rating-green);
+}
+
+.rating-badge.rating-less-than-expected {
+  color: #fff;
+  background-color: var(--rating-red);
+}
+
+.rating-badge.rating-exemplary {
+  color: #fff;
+  background-color: var(--rating-green);
+}
+
+.rating-badge.rating-accomplished {
+  color: #fff;
+  background-color: var(--rating-blue);
+}
+
+.rating-badge.rating-proficient {
+  color: #fff;
+  background-color: var(--rating-blue);
+}
+
+.rating-badge.rating-partially-proficient {
+  color: #fff;
+  background-color: var(--rating-orange);
+}
+
+.rating-badge.rating-basic {
+  color: #fff;
+  background-color: var(--rating-red);
+}
 
 /* ===================================
    Modal
@@ -1913,12 +2135,12 @@ input[type="number"].valid {
     width: 95%;
     max-height: 90vh;
   }
-  
+
   .modal-header,
   .modal-body {
     padding: var(--spacing-md);
   }
-  
+
   .tooltip {
     max-width: 280px;
   }
@@ -1938,6 +2160,7 @@ input[type="number"].valid {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1945,21 +2168,28 @@ input[type="number"].valid {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }
 }
 
 @keyframes celebrate {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1) rotate(0deg);
   }
+
   25% {
     transform: scale(1.1) rotate(-5deg);
   }
+
   75% {
     transform: scale(1.1) rotate(5deg);
   }
@@ -2002,4 +2232,257 @@ input[type="number"].valid {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* ===================================
+   Progress Bars (Recommendation 3)
+   =================================== */
+.progress-container {
+  height: 8px;
+  background-color: var(--color-border);
+  border-radius: 99px;
+  margin-top: var(--spacing-sm);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+  width: 0%;
+}
+
+/* Color code the progress bar based on rating */
+.rating-exemplary .progress-fill,
+.rating-highly-effective .progress-fill {
+  background-color: var(--rating-green);
+}
+
+.rating-accomplished .progress-fill,
+.rating-effective .progress-fill {
+  background-color: var(--rating-blue);
+}
+
+.rating-proficient .progress-fill,
+.rating-partially-effective .progress-fill {
+  background-color: var(--rating-orange);
+  /* Or yellow/orange mix */
+}
+
+.rating-partially-proficient .progress-fill,
+.rating-basic .progress-fill {
+  background-color: var(--rating-red);
+  /* Or orange/red mix */
+}
+
+.standard-section .progress-container {
+  max-width: 200px;
+  /* Keep it compact in the summary */
+}
+
+/* ===================================
+   Sticky Footer Summary (Recommendation 1)
+   =================================== */
+.sticky-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-out;
+}
+
+.sticky-footer.visible {
+  transform: translateY(0);
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.footer-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.footer-value {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--color-text);
+}
+
+.footer-rating-badge {
+  margin-left: auto;
+}
+
+.footer-rating-badge .rating-badge {
+  font-size: 1rem;
+  padding: 6px 16px;
+}
+
+/* Add padding to body so footer doesn't cover content */
+body {
+  padding-bottom: 80px;
+}
+
+/* Make footer visible by default but perhaps different content? */
+/* Actually, let's keep it hidden until JS logic decides. */
+/* ===================================
+   Modal Cleanup (User Request)
+   =================================== */
+
+.calc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-md) 0;
+  font-size: 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  /* For border radius */
+}
+
+/* Ensure border radius works on table by wrapping or separate borders */
+.calc-table th,
+.calc-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.calc-table thead th {
+  background-color: #f1f5f9;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.calc-table tfoot th {
+  background-color: #f8fafc;
+  font-weight: 700;
+  border-top: 2px solid var(--color-border);
+}
+
+.calc-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.calc-formula {
+  background-color: #f0f9ff;
+  /* Light blue tint */
+  border-left-color: var(--color-primary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+  color: var(--color-primary-dark);
+}
+
+.final-calc-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  margin-top: var(--spacing-md);
+}
+
+.calc-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.calc-row:last-child {
+  border-bottom: none;
+}
+
+.calc-row.total {
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-top: 2px solid var(--color-border);
+  border-bottom: none;
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+}
+
+.calc-row.result {
+  align-items: center;
+  margin-top: var(--spacing-md);
+}
+
+/* ===================================
+   Usability Enhancements
+   =================================== */
+
+/* Accordion */
+.accordion-header {
+  cursor: pointer;
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s;
+  padding: var(--spacing-sm);
+  margin: calc(var(--spacing-sm) * -1);
+  margin-bottom: var(--spacing-sm) !important;
+  border-radius: var(--radius-sm);
+}
+
+.accordion-header:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.accordion-header::after {
+  content: '▼';
+  font-size: 0.8em;
+  transition: transform 0.3s ease;
+  color: var(--color-text-light);
+}
+
+.standard-section.collapsed .accordion-header::after {
+  transform: rotate(-90deg);
+}
+
+.standard-section.collapsed> :not(h3) {
+  display: none !important;
+}
+
+.standard-section.collapsed {
+  padding-bottom: var(--spacing-md);
+}
+
+/* Copy Button */
+#btn-copy-summary {
+  background: white;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+#btn-copy-summary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
