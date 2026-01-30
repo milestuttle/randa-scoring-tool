@@ -640,6 +640,17 @@ function closeModal() {
   if (modal) modal.style.display = 'none';
 }
 
+function openAboutModal() {
+  const modal = document.getElementById('about-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeAboutModal() {
+  const modal = document.getElementById('about-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+
 // ===================================
 // INITIALIZATION
 // ===================================
@@ -844,6 +855,12 @@ function init() {
   document.getElementById('btn-print')?.addEventListener('click', () => window.print());
   document.getElementById('btn-show-calculations')?.addEventListener('click', showCalculationDetails);
   document.getElementById('modal-close')?.addEventListener('click', closeModal);
+
+  // About modal listeners
+  document.getElementById('btn-about-tool')?.addEventListener('click', openAboutModal);
+  document.getElementById('about-modal-close')?.addEventListener('click', closeAboutModal);
+  document.getElementById('about-modal-overlay')?.addEventListener('click', closeAboutModal);
+
 
   // Tooltip toggles for mobile
   document.querySelectorAll('.tooltip-trigger').forEach(trigger => {

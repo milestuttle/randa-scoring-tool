@@ -12,9 +12,17 @@
 
 <body>
   <header class="app-header">
-    <h1>RANDA Scoring Weight Web Tool - Precise MSL</h1>
-    <p class="subtitle">70:30 Scoring Methodology with Cutscore-Based MSL (70% Professional Practices / 30% Measures of
-      Student Learning)</p>
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto;">
+      <div>
+        <h1>RANDA Scoring Weight Web Tool - Precise MSL</h1>
+        <p class="subtitle">70:30 Scoring Methodology with Cutscore-Based MSL (70% Professional Practices / 30% Measures
+          of
+          Student Learning)</p>
+      </div>
+      <button type="button" id="btn-about-tool" class="btn btn-secondary" style="white-space: nowrap;">ℹ️ About This
+        Tool</button>
+    </div>
   </header>
 
   <main class="container">
@@ -628,6 +636,161 @@
         </div>
         <div class="modal-body" id="calculation-details">
           <p class="modal-empty-state">Complete all steps to see detailed calculation breakdown.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- About This Tool Modal -->
+    <div id="about-modal" class="modal" role="dialog" aria-labelledby="about-modal-title" aria-modal="true"
+      style="display: none;">
+      <div class="modal-overlay" id="about-modal-overlay"></div>
+      <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+          <h2 id="about-modal-title">About This Tool</h2>
+          <button type="button" class="modal-close" id="about-modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body" id="about-modal-body" style="max-height: 70vh; overflow-y: auto;">
+          <h3>Purpose</h3>
+          <p>This calculator helps administrators and teachers compute teacher effectiveness ratings by:</p>
+          <ul>
+            <li>Assigning weights to Professional Practices standards</li>
+            <li>Rating element-level proficiency</li>
+            <li>Calculating Measures of Student Learning scores</li>
+            <li>Determining Overall Effectiveness ratings</li>
+          </ul>
+
+          <h3>How to Use</h3>
+          <ol>
+            <li><strong>Open the Calculator</strong> - Simply open this page in any modern web browser. No installation,
+              server, or internet connection required.</li>
+            <li><strong>Complete the 4-Step Process</strong></li>
+          </ol>
+
+          <h4>Step 1: Weights for Professional Practices</h4>
+          <ul>
+            <li>Assign percentage weights to each of the 4 Quality Standards</li>
+            <li><strong>Total must equal 100%</strong></li>
+            <li>Typical distribution: 25% each, but can be customized based on district priorities</li>
+          </ul>
+
+          <h4>Step 2: Element Level Proficiency</h4>
+          <ul>
+            <li>Rate each of the 17 elements across all standards (Level 1-5)
+              <ul>
+                <li>Standard 1: 3 elements (a, b, c)</li>
+                <li>Standard 2: 4 elements (a, b, c, d)</li>
+                <li>Standard 3: 6 elements (a, b, c, d, e, f)</li>
+                <li>Standard 4: 4 elements (a, b, c, d)</li>
+              </ul>
+            </li>
+            <li>Each element contributes points based on its level:
+              <ul>
+                <li>Level 1 = 0 points</li>
+                <li>Level 2 = 1 point</li>
+                <li>Level 3 = 2 points</li>
+                <li>Level 4 = 3 points</li>
+                <li>Level 5 = 4 points (maximum per element)</li>
+              </ul>
+            </li>
+            <li>View per-standard and overall Professional Practices ratings in real-time</li>
+          </ul>
+
+          <h4>Step 3: Measures of Student Learning (MSL)</h4>
+          <ul>
+            <li>Add 2-5 MSL measures using the "+ Add Measure" button</li>
+            <li>For each measure:
+              <ul>
+                <li>Assign a weight (percentage of 30%)</li>
+                <li>Select a rating: Less Than Expected, Expected, or More Than Expected</li>
+              </ul>
+            </li>
+            <li><strong>Total weights must equal 30%</strong></li>
+          </ul>
+
+          <h4>Step 4: Overall Effectiveness Rating</h4>
+          <ul>
+            <li>Once Steps 1-3 are complete and valid, your final rating will automatically calculate</li>
+            <li>View breakdown of Professional Practices and MSL scores</li>
+            <li>See your Overall Effectiveness rating (Ineffective, Partially Effective, Effective, or Highly Effective)
+            </li>
+          </ul>
+
+          <h3>Scoring Methodology</h3>
+
+          <h4>Professional Practices (700 points, 70% of final score)</h4>
+          <p><strong>Calculation:</strong></p>
+          <ol>
+            <li>For each standard: <code>(Elements Earned / Elements Possible) × (Standard Weight / 100) × 20</code>
+            </li>
+            <li>Sum all 4 standards → Professional Practices Base Score (out of 20)</li>
+            <li>Scale to 700: <code>Base Score × 35</code></li>
+          </ol>
+          <p><strong>Rating Ranges (700-point scale):</strong></p>
+          <ul>
+            <li><strong>Exemplary:</strong> 657-700</li>
+            <li><strong>Accomplished:</strong> 482-656</li>
+            <li><strong>Proficient:</strong> 307-481 (meets state standard)</li>
+            <li><strong>Partially Proficient:</strong> 132-306</li>
+            <li><strong>Basic:</strong> 0-131</li>
+          </ul>
+
+          <h4>Measures of Student Learning (300 points, 30% of final score)</h4>
+          <p><strong>Calculation:</strong></p>
+          <ol>
+            <li>For each measure: <code>Rating Value × (Measure Weight / 30) × 3</code>
+              <ul>
+                <li>Less Than Expected = 0</li>
+                <li>Expected = 1.5</li>
+                <li>More Than Expected = 3</li>
+              </ul>
+            </li>
+            <li>Sum all measures → MSL Base Score (out of 3)</li>
+            <li>Scale to 300: <code>Base Score × 100</code></li>
+          </ol>
+          <p><strong>Rating Ranges (300-point scale):</strong></p>
+          <ul>
+            <li><strong>More Than Expected:</strong> 201-300</li>
+            <li><strong>Expected:</strong> 100-200 (meets state standard)</li>
+            <li><strong>Less Than Expected:</strong> 0-99</li>
+          </ul>
+
+          <h4>Final Effectiveness Rating (1000 points)</h4>
+          <p><strong>Calculation:</strong> <code>Final Score = Professional Practices Score + MSL Score</code></p>
+          <p><strong>Rating Ranges (1000-point scale):</strong></p>
+          <ul>
+            <li><strong>Highly Effective:</strong> 801-1000</li>
+            <li><strong>Effective:</strong> 407-800 (meets state standard)</li>
+            <li><strong>Partially Effective:</strong> 188-406</li>
+            <li><strong>Ineffective:</strong> 0-187</li>
+          </ul>
+          <p><strong>Important Constraint:</strong> If MSL rating is "Less Than Expected," the maximum Final
+            Effectiveness rating is capped at "Effective," even if the point total falls in the "Highly Effective"
+            range.</p>
+
+          <h3>Quality Standards Overview</h3>
+          <ul>
+            <li><strong>Standard 1: Content Knowledge</strong> - Teachers demonstrate mastery of and pedagogical
+              expertise in the content they teach.</li>
+            <li><strong>Standard 2: Learning Environment</strong> - Teachers establish a safe, inclusive, and respectful
+              learning environment for a diverse population of students.</li>
+            <li><strong>Standard 3: Facilitation of Learning</strong> - Teachers plan and deliver effective instruction
+              and create an environment that facilitates learning for their students.</li>
+            <li><strong>Standard 4: Professionalism</strong> - Teachers demonstrate professionalism through ethical
+              conduct, reflection, and leadership.</li>
+          </ul>
+
+          <h3>Disclaimer</h3>
+          <p>This calculator is for <strong>informational purposes only</strong>. It implements a 70:30 scoring
+            methodology for teacher evaluation.</p>
+          <p><strong>Important Notes:</strong></p>
+          <ul>
+            <li>No data is stored, transmitted, or saved</li>
+            <li>Always verify calculations with official evaluation documentation</li>
+            <li>Organizations may have additional requirements or modifications to this methodology</li>
+            <li>This tool should be used in conjunction with, not as a replacement for, official evaluation processes
+            </li>
+            <li>For official evaluations, use organization-approved tools and procedures</li>
+          </ul>
         </div>
       </div>
     </div>
