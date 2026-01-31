@@ -1441,7 +1441,6 @@ input[type="number"].valid {
   margin-top: var(--spacing-xl);
 }
 
-/* Add print date */
 .app-footer::after {
   content: "Printed: " attr(data-print-date);
   display: block;
@@ -1449,7 +1448,7 @@ input[type="number"].valid {
   font-size: 0.75rem;
   color: #666;
 }
-}
+
 
 /* ===================================
    Progress Indicator
@@ -2022,6 +2021,68 @@ input[type="number"].valid {
   padding: var(--spacing-lg);
   overflow-y: auto;
   flex: 1;
+  line-height: 1.6;
+}
+
+/* About Modal Content Formatting */
+.modal-body h3 {
+  color: var(--color-primary-dark);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.modal-body h3:first-child {
+  margin-top: 0;
+}
+
+.modal-body h4 {
+  color: var(--color-text);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.modal-body p {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text);
+}
+
+.modal-body ul,
+.modal-body ol {
+  margin-bottom: var(--spacing-md);
+  padding-left: var(--spacing-xl);
+}
+
+.modal-body li {
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text);
+}
+
+.modal-body ul ul,
+.modal-body ol ul,
+.modal-body ul ol,
+.modal-body ol ol {
+  margin-top: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.modal-body code {
+  background-color: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  color: var(--color-primary-dark);
+}
+
+.modal-body strong {
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .modal-empty-state {
