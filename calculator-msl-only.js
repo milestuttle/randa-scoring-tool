@@ -1,0 +1,632 @@
+// ===================================
+// MSL-Only Calculator - Precise Cutscore Method
+// Simplified version focusing only on MSL calculation
+// ===================================
+
+// ===================================
+// UTILITY FUNCTIONS
+// ===================================
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Create debounced version of updateAllCalculations
+const debouncedUpdate = debounce(updateAllCalculations, 150);
+
+// ===================================
+// VALIDATION FUNCTIONS
+// ===================================
+
+function isMSLValid() {
+    const measures = document.querySelectorAll('.msl-measure-row');
+    if (measures.length < 2 || measures.length > 5) return false;
+
+    let totalWeight = 0;
+    for (const measure of measures) {
+        const index = measure.dataset.index;
+        const weight = parseFloat(document.getElementById(`msl-weight-${index}`)?.value || 0);
+        const actualScore = parseFloat(document.getElementById(`msl-actual-${index}`)?.value || '');
+
+        if (isNaN(actualScore) || actualScore === '') return false;
+        totalWeight += weight;
+    }
+
+    return Math.abs(totalWeight - 30) < 0.01;
+}
+
+// ===================================
+// MSL CALCULATIONS - CUTSCORE-BASED
+// ===================================
+
+// Maps actual score to 300-point scale using cutscores and linear interpolation
+function mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit) {
+    // Validate inputs
+    if (actualScore < 0 || actualScore > maxScore) {
+        console.warn(`Actual score ${actualScore} is out of range [0, ${maxScore}]`);
+        return 0;
+    }
+
+    // Less Than Expected range: 0 to lessUpperLimit → maps to 0 to 100
+    if (actualScore <= lessUpperLimit) {
+        return (actualScore / lessUpperLimit) * 100;
+    }
+
+    // Expected range: lessUpperLimit to higherThreshold → maps to 100 to 200
+    // Use expectedScore as the midpoint (maps to 150)
+    if (actualScore <= higherThreshold) {
+        if (actualScore <= expectedScore) {
+            // Lower half of Expected range
+            const range = expectedScore - lessUpperLimit;
+            const position = actualScore - lessUpperLimit;
+            return 100 + (position / range) * 50;
+        } else {
+            // Upper half of Expected range
+            const range = higherThreshold - expectedScore;
+            const position = actualScore - expectedScore;
+            return 150 + (position / range) * 50;
+        }
+    }
+
+    // Higher Than Expected range: higherThreshold to maxScore → maps to 201 to 300
+    const range = maxScore - higherThreshold;
+    const position = actualScore - higherThreshold;
+    return 201 + (position / range) * 99;
+}
+
+function calculateMSLScore() {
+    const measures = document.querySelectorAll('.msl-measure-row');
+    if (measures.length === 0) {
+        return { baseScore: 0, scaledScore: 0, percentage: 0, rating: '—', valid: false };
+    }
+
+    let totalWeightedScore = 0;
+    let totalWeight = 0;
+    const measureDetails = [];
+
+    for (const measure of measures) {
+        const index = measure.dataset.index;
+        const name = document.getElementById(`msl-name-${index}`)?.value || `Measure ${index}`;
+        const weight = parseFloat(document.getElementById(`msl-weight-${index}`)?.value || 0);
+        const maxScore = parseFloat(document.getElementById(`msl-max-${index}`)?.value || 100);
+        const expectedScore = parseFloat(document.getElementById(`msl-expected-${index}`)?.value || 50);
+        const higherThreshold = parseFloat(document.getElementById(`msl-higher-${index}`)?.value || 90);
+        const lessUpperLimit = parseFloat(document.getElementById(`msl-less-${index}`)?.value || 30);
+        const actualScore = parseFloat(document.getElementById(`msl-actual-${index}`)?.value || '');
+
+        if (isNaN(actualScore) || actualScore === '') {
+            return { baseScore: 0, scaledScore: 0, percentage: 0, rating: '—', valid: false };
+        }
+
+        // Map actual score to 300-point scale
+        const scaledScore = mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit);
+
+        // Weight this measure's contribution (scale from 30% to 100% for calculation)
+        const normalizedWeight = (weight / 30) * 100;
+        const weightedScore = scaledScore * (normalizedWeight / 100);
+        totalWeightedScore += weightedScore;
+        totalWeight += weight;
+
+        measureDetails.push({
+            name,
+            weight,
+            actualScore,
+            maxScore,
+            scaledScore,
+            weightedScore
+        });
+    }
+
+    // Validate total weight (should be 30%)
+    if (Math.abs(totalWeight - 30) > 0.01) {
+        return { baseScore: 0, scaledScore: 0, percentage: 0, rating: '—', valid: false, details: measureDetails };
+    }
+
+    const mslScore = Math.round(totalWeightedScore);
+    const percentage = (mslScore / 300) * 100;
+
+    // Determine rating
+    let rating;
+    if (mslScore >= 201) rating = 'More Than Expected';
+    else if (mslScore >= 100) rating = 'Expected';
+    else rating = 'Less Than Expected';
+
+    return {
+        baseScore: totalWeightedScore / 100, // Base score out of 3
+        scaledScore: mslScore,
+        percentage: percentage,
+        rating: rating,
+        valid: true,
+        details: measureDetails
+    };
+}
+
+// ===================================
+// UI UPDATE FUNCTIONS
+// ===================================
+
+function updateMSLUI(mslResult) {
+    document.getElementById('msl-base').textContent = mslResult.baseScore.toFixed(2);
+    document.getElementById('msl-score').textContent = mslResult.scaledScore;
+    document.getElementById('msl-percentage').textContent = mslResult.percentage.toFixed(1) + '%';
+    document.getElementById('msl-rating').textContent = mslResult.rating;
+
+    const mslResults = document.getElementById('msl-results');
+    const mslOverlay = document.getElementById('msl-overlay');
+
+    if (mslResult.valid) {
+        mslResults.classList.remove('disabled');
+        mslOverlay.style.display = 'none';
+    } else {
+        mslResults.classList.add('disabled');
+        mslOverlay.style.display = 'flex';
+    }
+}
+
+function updateSummaryUI(mslResult) {
+    const summaryScore = document.getElementById('summary-total-score');
+    const summaryRating = document.getElementById('summary-rating');
+    const summaryOverlay = document.getElementById('summary-overlay');
+    const summaryMarker = document.getElementById('summary-score-marker');
+
+    if (mslResult.valid) {
+        summaryScore.textContent = mslResult.scaledScore;
+        summaryRating.textContent = mslResult.rating;
+        summaryOverlay.style.display = 'none';
+
+        // Position marker
+        const percentage = (mslResult.scaledScore / 300) * 100;
+        summaryMarker.style.left = percentage + '%';
+        summaryMarker.style.display = 'block';
+    } else {
+        summaryScore.textContent = '—';
+        summaryRating.textContent = '—';
+        summaryOverlay.style.display = 'flex';
+        summaryMarker.style.display = 'none';
+    }
+}
+
+// ===================================
+// MAIN CALCULATION UPDATE
+// ===================================
+
+function updateAllCalculations() {
+    // Calculate MSL
+    const mslResult = calculateMSLScore();
+
+    // Update UI
+    updateMSLUI(mslResult);
+    updateSummaryUI(mslResult);
+
+    // Update weight validation
+    updateWeightValidation();
+}
+
+function updateWeightValidation() {
+    const measures = document.querySelectorAll('.msl-measure-row');
+    let totalWeight = 0;
+
+    for (const measure of measures) {
+        const index = measure.dataset.index;
+        const weight = parseFloat(document.getElementById(`msl-weight-${index}`)?.value || 0);
+        totalWeight += weight;
+    }
+
+    const totalWeightSpan = document.getElementById('total-msl-weight');
+    const messageDiv = document.getElementById('msl-weight-message');
+
+    totalWeightSpan.textContent = totalWeight.toFixed(1);
+
+    if (Math.abs(totalWeight - 30) < 0.01) {
+        messageDiv.textContent = '✓ Weight total is valid';
+        messageDiv.className = 'validation-success';
+    } else {
+        messageDiv.textContent = '⚠ Total must equal 30%';
+        messageDiv.className = 'validation-error';
+    }
+}
+
+// ===================================
+// MSL ROW MANAGEMENT
+// ===================================
+
+let mslRowCounter = 2;
+
+function addMSLMeasure() {
+    const mslList = document.getElementById('msl-list');
+    const currentCount = mslList.querySelectorAll('.msl-measure-row').length;
+
+    if (currentCount >= 5) {
+        alert('Maximum of 5 MSL measures allowed');
+        return;
+    }
+
+    const newRow = createMSLRow(mslRowCounter, false);
+    mslList.appendChild(newRow);
+
+    setTimeout(() => newRow.classList.add('visible'), 10);
+
+    mslRowCounter++;
+    updateRemoveButtons();
+    debouncedUpdate();
+}
+
+function removeMSLMeasure(index) {
+    const row = document.querySelector(`.msl-measure-row[data-index="${index}"]`);
+    if (!row) return;
+
+    row.classList.remove('visible');
+    setTimeout(() => {
+        row.remove();
+        updateRemoveButtons();
+        debouncedUpdate();
+    }, 300);
+}
+
+function createMSLRow(index, isIPR = false) {
+    const row = document.createElement('div');
+    row.className = 'msl-measure-row';
+    row.dataset.index = index;
+
+    const defaultName = isIPR ? 'IPR (Instructional Program Review)' : `Measure ${index}`;
+    const defaultMax = 100;
+    const defaultLess = isIPR ? 30 : 30;
+    const defaultExpected = isIPR ? 50 : 50;
+    const defaultHigher = isIPR ? 90 : 90;
+    const defaultWeight = isIPR ? 15 : 15;
+
+    row.innerHTML = `
+    <div class="msl-measure-header">
+      <div class="msl-measure-number">MSL Measure ${index}</div>
+      ${!isIPR ? `<button type="button" class="btn-remove" onclick="removeMSLMeasure(${index})" aria-label="Remove measure ${index}">Remove</button>` : ''}
+    </div>
+
+    <div class="msl-section msl-identification">
+      <div class="form-group">
+        <label for="msl-name-${index}">Measure Name</label>
+        <input type="text" id="msl-name-${index}" value="${defaultName}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
+      </div>
+    </div>
+
+    <div class="msl-section msl-weight-section">
+      <div class="form-group">
+        <label for="msl-weight-${index}">Weight (% of 30%)</label>
+        <input type="number" id="msl-weight-${index}" min="0" max="30" step="0.1" value="${defaultWeight}">
+      </div>
+    </div>
+
+    <div class="msl-section msl-cutscores">
+      <div class="msl-cutscores-header">Cutscore Configuration</div>
+      <div class="msl-cutscores-grid">
+        <div class="form-group">
+          <label for="msl-max-${index}">Maximum Score</label>
+          <input type="number" id="msl-max-${index}" min="1" step="1" value="${defaultMax}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
+        </div>
+        <div class="form-group">
+          <label for="msl-less-${index}"><span class="range-indicator less-range">●</span>Less Than Expected Upper Limit</label>
+          <input type="number" id="msl-less-${index}" min="0" step="0.1" value="${defaultLess}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
+        </div>
+        <div class="form-group">
+          <label for="msl-expected-${index}"><span class="range-indicator expected-range">●</span>Expected Score (Midpoint)</label>
+          <input type="number" id="msl-expected-${index}" min="0" step="0.1" value="${defaultExpected}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
+        </div>
+        <div class="form-group">
+          <label for="msl-higher-${index}"><span class="range-indicator higher-range">●</span>Higher Than Expected Threshold</label>
+          <input type="number" id="msl-higher-${index}" min="0" step="0.1" value="${defaultHigher}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
+        </div>
+      </div>
+    </div>
+
+    <div class="msl-section msl-actual-section">
+      <div class="form-group">
+        <label for="msl-actual-${index}">Actual Score Achieved</label>
+        <input type="number" id="msl-actual-${index}" min="0" step="0.1" placeholder="Enter score">
+      </div>
+    </div>
+  `;
+
+    // Add event listeners
+    const inputs = row.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('input', debouncedUpdate);
+    });
+
+    return row;
+}
+
+function updateRemoveButtons() {
+    const rows = document.querySelectorAll('.msl-measure-row');
+    const removeButtons = document.querySelectorAll('.btn-remove');
+
+    removeButtons.forEach(btn => {
+        btn.disabled = rows.length <= 2;
+    });
+}
+
+// ===================================
+// RESET FUNCTIONALITY
+// ===================================
+
+function resetAll() {
+    if (!confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+        return;
+    }
+
+    // Clear MSL measures
+    const mslList = document.getElementById('msl-list');
+    mslList.innerHTML = '';
+
+    // Reset counter
+    mslRowCounter = 2;
+
+    // Add default IPR measure
+    const iprRow = createMSLRow(1, true);
+    mslList.appendChild(iprRow);
+    setTimeout(() => iprRow.classList.add('visible'), 10);
+
+    // Clear localStorage
+    localStorage.removeItem('mslOnlyCalculatorState');
+
+    // Update calculations
+    updateAllCalculations();
+}
+
+// ===================================
+// SHOW CALCS MODAL
+// ===================================
+
+function showCalculationDetails() {
+    const mslResult = calculateMSLScore();
+
+    if (!mslResult.valid) {
+        alert('Please complete all MSL measures before viewing calculation details.');
+        return;
+    }
+
+    let html = '<div class="calc-section">';
+    html += '<h3>MSL Calculation Breakdown</h3>';
+
+    html += '<h4>Individual Measures</h4>';
+    html += '<table class="calc-table"><thead><tr>';
+    html += '<th>Measure</th><th>Actual Score</th><th>Max Score</th><th>Scaled (0-300)</th><th>Weight</th><th>Weighted Score</th>';
+    html += '</tr></thead><tbody>';
+
+    mslResult.details.forEach(detail => {
+        html += '<tr>';
+        html += `<td>${detail.name}</td>`;
+        html += `<td>${detail.actualScore.toFixed(1)}</td>`;
+        html += `<td>${detail.maxScore}</td>`;
+        html += `<td>${detail.scaledScore.toFixed(2)}</td>`;
+        html += `<td>${detail.weight.toFixed(1)}%</td>`;
+        html += `<td>${detail.weightedScore.toFixed(2)}</td>`;
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+
+    html += '<h4>Final MSL Score</h4>';
+    html += '<table class="calc-table"><tbody>';
+    html += `<tr><td>Total Weighted Score</td><td><strong>${mslResult.scaledScore}</strong> / 300</td></tr>`;
+    html += `<tr><td>Percentage</td><td><strong>${mslResult.percentage.toFixed(1)}%</strong></td></tr>`;
+    html += `<tr><td>MSL Rating</td><td><strong>${mslResult.rating}</strong></td></tr>`;
+    html += '</tbody></table>';
+
+    html += '</div>';
+
+    document.getElementById('calculation-details').innerHTML = html;
+    document.getElementById('calculation-modal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('calculation-modal').style.display = 'none';
+}
+
+function openAboutModal() {
+    document.getElementById('about-modal').style.display = 'flex';
+}
+
+function closeAboutModal() {
+    document.getElementById('about-modal').style.display = 'none';
+}
+
+// ===================================
+// COPY SUMMARY
+// ===================================
+
+function copySummary() {
+    const mslResult = calculateMSLScore();
+
+    if (!mslResult.valid) {
+        alert('Please complete all MSL measures before copying summary.');
+        return;
+    }
+
+    let summary = 'MSL Calculator - Summary\n';
+    summary += '========================\n\n';
+
+    summary += 'MSL Score: ' + mslResult.scaledScore + ' / 300\n';
+    summary += 'MSL Rating: ' + mslResult.rating + '\n';
+    summary += 'Percentage: ' + mslResult.percentage.toFixed(1) + '%\n\n';
+
+    summary += 'Individual Measures:\n';
+    mslResult.details.forEach(detail => {
+        summary += `- ${detail.name}: ${detail.actualScore}/${detail.maxScore} (${detail.weight}% weight) → ${detail.scaledScore.toFixed(2)}/300\n`;
+    });
+
+    navigator.clipboard.writeText(summary).then(() => {
+        alert('Summary copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy summary. Please try again.');
+    });
+}
+
+// ===================================
+// PRINT FUNCTIONALITY
+// ===================================
+
+function printResults() {
+    window.print();
+}
+
+// ===================================
+// AUTO-SAVE AND LOAD
+// ===================================
+
+function saveState() {
+    const measures = document.querySelectorAll('.msl-measure-row');
+    const state = {
+        measures: []
+    };
+
+    measures.forEach(measure => {
+        const index = measure.dataset.index;
+        state.measures.push({
+            index: index,
+            name: document.getElementById(`msl-name-${index}`)?.value || '',
+            weight: document.getElementById(`msl-weight-${index}`)?.value || '',
+            max: document.getElementById(`msl-max-${index}`)?.value || '',
+            less: document.getElementById(`msl-less-${index}`)?.value || '',
+            expected: document.getElementById(`msl-expected-${index}`)?.value || '',
+            higher: document.getElementById(`msl-higher-${index}`)?.value || '',
+            actual: document.getElementById(`msl-actual-${index}`)?.value || ''
+        });
+    });
+
+    localStorage.setItem('mslOnlyCalculatorState', JSON.stringify(state));
+}
+
+function loadState() {
+    const saved = localStorage.getItem('mslOnlyCalculatorState');
+    if (!saved) return false;
+
+    try {
+        const state = JSON.parse(saved);
+        const mslList = document.getElementById('msl-list');
+
+        // Clear existing measures
+        mslList.innerHTML = '';
+
+        // Recreate measures
+        state.measures.forEach((measure, idx) => {
+            const isIPR = idx === 0;
+            const row = createMSLRow(measure.index, isIPR);
+            mslList.appendChild(row);
+
+            // Restore values
+            if (document.getElementById(`msl-name-${measure.index}`)) {
+                document.getElementById(`msl-name-${measure.index}`).value = measure.name;
+            }
+            if (document.getElementById(`msl-weight-${measure.index}`)) {
+                document.getElementById(`msl-weight-${measure.index}`).value = measure.weight;
+            }
+            if (document.getElementById(`msl-max-${measure.index}`)) {
+                document.getElementById(`msl-max-${measure.index}`).value = measure.max;
+            }
+            if (document.getElementById(`msl-less-${measure.index}`)) {
+                document.getElementById(`msl-less-${measure.index}`).value = measure.less;
+            }
+            if (document.getElementById(`msl-expected-${measure.index}`)) {
+                document.getElementById(`msl-expected-${measure.index}`).value = measure.expected;
+            }
+            if (document.getElementById(`msl-higher-${measure.index}`)) {
+                document.getElementById(`msl-higher-${measure.index}`).value = measure.higher;
+            }
+            if (document.getElementById(`msl-actual-${measure.index}`)) {
+                document.getElementById(`msl-actual-${measure.index}`).value = measure.actual;
+            }
+
+            setTimeout(() => row.classList.add('visible'), 10);
+        });
+
+        // Update counter
+        const maxIndex = Math.max(...state.measures.map(m => parseInt(m.index)));
+        mslRowCounter = maxIndex + 1;
+
+        return true;
+    } catch (e) {
+        console.error('Failed to load state:', e);
+        return false;
+    }
+}
+
+// ===================================
+// INITIALIZATION
+// ===================================
+
+function init() {
+    // Try to load saved state
+    const loaded = loadState();
+
+    // If no saved state, create default IPR measure
+    if (!loaded) {
+        const mslList = document.getElementById('msl-list');
+        const iprRow = createMSLRow(1, true);
+        mslList.appendChild(iprRow);
+        setTimeout(() => iprRow.classList.add('visible'), 10);
+    }
+
+    // Event listeners
+    document.getElementById('btn-add-measure')?.addEventListener('click', addMSLMeasure);
+    document.getElementById('btn-reset')?.addEventListener('click', resetAll);
+    document.getElementById('btn-show-calculations')?.addEventListener('click', showCalculationDetails);
+    document.getElementById('btn-copy-summary')?.addEventListener('click', copySummary);
+    document.getElementById('btn-print')?.addEventListener('click', printResults);
+    document.getElementById('btn-about-tool')?.addEventListener('click', openAboutModal);
+
+    // Modal close buttons
+    document.getElementById('modal-close')?.addEventListener('click', closeModal);
+    document.getElementById('modal-overlay')?.addEventListener('click', closeModal);
+    document.getElementById('about-modal-close')?.addEventListener('click', closeAboutModal);
+    document.getElementById('about-modal-overlay')?.addEventListener('click', closeAboutModal);
+
+    // Tooltip functionality
+    document.querySelectorAll('.tooltip-trigger').forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tooltipId = 'tooltip-' + trigger.dataset.tooltip;
+            const tooltip = document.getElementById(tooltipId);
+            if (tooltip) {
+                tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+    });
+
+    // Close tooltips when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.tooltip-trigger')) {
+            document.querySelectorAll('.tooltip').forEach(tooltip => {
+                tooltip.style.display = 'none';
+            });
+        }
+    });
+
+    // Auto-save on input
+    document.addEventListener('input', (e) => {
+        if (e.target.matches('input, select')) {
+            saveState();
+        }
+    });
+
+    // Initial calculation
+    updateAllCalculations();
+    updateRemoveButtons();
+}
+
+// Make functions global for HTML onclick attributes
+window.removeMSLMeasure = removeMSLMeasure;
+
+// Run init when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
