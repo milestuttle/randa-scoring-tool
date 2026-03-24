@@ -2,27 +2,48 @@
    CSS Variables
    =================================== */
 :root {
-  --color-primary: #2563eb;
-  --color-primary-dark: #1e40af;
-  --color-secondary: #0891b2;
+  /* Modern Indigo & Teal Theme */
+  --color-primary: #4f46e5;
+  /* Indigo 600 */
+  --color-primary-dark: #3730a3;
+  /* Indigo 800 */
+  --color-secondary: #0d9488;
+  /* Teal 600 */
   --color-success: #059669;
+  /* Emerald 600 */
   --color-warning: #d97706;
+  /* Amber 600 */
   --color-error: #dc2626;
-  --color-bg: #f8fafc;
+  /* Red 600 */
+
+  --color-bg: #f9fafb;
+  /* Gray 50 (Warmer) */
   --color-surface: #ffffff;
   --color-border: #e2e8f0;
-  --color-text: #1e293b;
+  /* Slate 200 */
+  --color-text: #0f172a;
+  /* Slate 900 */
   --color-text-muted: #64748b;
+  /* Slate 500 */
 
-  /* Rating colors */
-  --rating-green: #1f8b4c;
-  --rating-blue: #1f5fe0;
-  --rating-orange: #d9822b;
-  --rating-red: #d93025;
-  --rating-green-bg: #e6f4ea;
-  --rating-blue-bg: #e8f0fe;
-  --rating-orange-bg: #fff4e5;
-  --rating-red-bg: #fde7e9;
+  /* Rating colors - More vibrant */
+  --rating-green: #10b981;
+  /* Emerald 500 */
+  --rating-blue: #3b82f6;
+  /* Blue 500 */
+  --rating-orange: #f59e0b;
+  /* Amber 500 */
+  --rating-red: #ef4444;
+  /* Red 500 */
+
+  --rating-green-bg: #ecfdf5;
+  /* Emerald 50 */
+  --rating-blue-bg: #eff6ff;
+  /* Blue 50 */
+  --rating-orange-bg: #fffbeb;
+  /* Amber 50 */
+  --rating-red-bg: #fef2f2;
+  /* Red 50 */
 
   --spacing-xs: 0.5rem;
   --spacing-sm: 0.75rem;
@@ -36,10 +57,10 @@
   --radius-lg: 0.75rem;
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
 
-  --transition: all 0.2s ease;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ===================================
@@ -219,7 +240,7 @@ input[type="number"]:focus,
 select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
   /* Softer, wider glow */
 }
 
@@ -336,7 +357,7 @@ input[type="number"].valid {
    =================================== */
 .overall-summary {
   position: relative;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
   padding: var(--spacing-lg);
   border-radius: var(--radius-md);
   margin-top: var(--spacing-xl);
@@ -1789,7 +1810,7 @@ input[type="number"].valid {
   .rating-badge.rating-exemplary {
     background-color: var(--rating-green-bg);
     color: var(--rating-green);
-    border: 1px solid rgba(31, 139, 76, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.2);
   }
 
   .rating-badge.rating-effective,
@@ -1797,7 +1818,7 @@ input[type="number"].valid {
   .rating-badge.rating-proficient {
     background-color: var(--rating-blue-bg);
     color: var(--rating-blue);
-    border: 1px solid rgba(31, 95, 224, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.2);
   }
 
   .rating-badge.rating-partially-effective,
@@ -1805,7 +1826,7 @@ input[type="number"].valid {
   .rating-badge.rating-expected {
     background-color: var(--rating-orange-bg);
     color: var(--rating-orange);
-    border: 1px solid rgba(217, 130, 43, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.2);
   }
 
   .rating-badge.rating-ineffective,
@@ -1813,7 +1834,7 @@ input[type="number"].valid {
   .rating-badge.rating-less-than-expected {
     background-color: var(--rating-red-bg);
     color: var(--rating-red);
-    border: 1px solid rgba(217, 48, 37, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.2);
   }
 
   .btn-small {
