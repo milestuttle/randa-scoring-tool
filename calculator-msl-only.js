@@ -443,6 +443,12 @@ function createMSLRow(index, isIPR = false) {
     <div class="msl-section msl-band-viz" id="msl-band-viz-${index}">
       <div class="msl-band-header">Score Band Placement</div>
       <div class="msl-band-bar-wrap">
+        <div class="msl-band-marker-row">
+          <div class="msl-band-marker" id="msl-band-marker-${index}" style="display:none;">
+            <div class="msl-band-marker-label" id="msl-band-marker-label-${index}"></div>
+            <div class="msl-band-marker-arrow"></div>
+          </div>
+        </div>
         <div class="msl-band-bar" id="msl-band-bar-${index}">
           <div class="msl-band-segment msl-band-less" id="msl-band-less-${index}">
             <span class="msl-band-label">Less Than Expected</span>
@@ -452,12 +458,6 @@ function createMSLRow(index, isIPR = false) {
           </div>
           <div class="msl-band-segment msl-band-higher" id="msl-band-higher-${index}">
             <span class="msl-band-label">Higher Than Expected</span>
-          </div>
-        </div>
-        <div class="msl-band-marker-row">
-          <div class="msl-band-marker" id="msl-band-marker-${index}" style="display:none;">
-            <div class="msl-band-marker-arrow"></div>
-            <div class="msl-band-marker-label" id="msl-band-marker-label-${index}"></div>
           </div>
         </div>
       </div>

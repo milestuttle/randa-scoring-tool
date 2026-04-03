@@ -918,16 +918,16 @@ input[type="number"].valid {
   pointer-events: none;
 }
 
-/* Marker row sits below the bar, same width, for clean positioning */
+/* Marker row sits ABOVE the bar */
 .msl-band-marker-row {
   position: relative;
-  height: 28px;
-  margin-top: 2px;
+  height: 32px;
+  margin-bottom: 2px;
 }
 
 .msl-band-marker {
   position: absolute;
-  top: 0;
+  bottom: 0;
   transform: translateX(-50%);
   transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -939,9 +939,9 @@ input[type="number"].valid {
 .msl-band-marker-arrow {
   width: 0;
   height: 0;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-bottom: 11px solid var(--color-primary);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid var(--color-primary);
 }
 
 .msl-band-marker-label {
@@ -951,7 +951,7 @@ input[type="number"].valid {
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 4px;
-  margin-top: 1px;
+  margin-bottom: 2px;
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
 }
