@@ -49,7 +49,8 @@ function isMSLValid() {
 
 // Maps actual score to 300-point scale using cutscores and linear interpolation
 // minScore: the floor of the measure's raw score range (default 0)
-function mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit, minScore = 0) {
+// expectedScore is computed as the midpoint of (lessUpperLimit + higherThreshold) / 2
+function mapScoreTo300Scale(actualScore, maxScore, higherThreshold, lessUpperLimit, minScore = 0) {
     // Validate inputs
     if (actualScore < minScore || actualScore > maxScore) {
         console.warn(`Actual score ${actualScore} is out of range [${minScore}, ${maxScore}]`);
@@ -62,20 +63,11 @@ function mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshol
         return range === 0 ? 0 : ((actualScore - minScore) / range) * 100;
     }
 
-    // Expected range: lessUpperLimit to higherThreshold → maps to 100 to 200
-    // Use expectedScore as the midpoint (maps to 150)
+    // Expected range: lessUpperLimit to higherThreshold → maps to 100 to 200 (single linear interpolation)
     if (actualScore <= higherThreshold) {
-        if (actualScore <= expectedScore) {
-            // Lower half of Expected range
-            const range = expectedScore - lessUpperLimit;
-            const position = actualScore - lessUpperLimit;
-            return 100 + (position / range) * 50;
-        } else {
-            // Upper half of Expected range
-            const range = higherThreshold - expectedScore;
-            const position = actualScore - expectedScore;
-            return 150 + (position / range) * 50;
-        }
+        const range = higherThreshold - lessUpperLimit;
+        const position = actualScore - lessUpperLimit;
+        return 100 + (position / range) * 100;
     }
 
     // Higher Than Expected range: higherThreshold to maxScore → maps to 201 to 300
@@ -100,7 +92,6 @@ function calculateMSLScore() {
         const weight = parseFloat(document.getElementById(`msl-weight-${index}`)?.value || 0);
         const minScore = parseFloat(document.getElementById(`msl-min-${index}`)?.value || 0);
         const maxScore = parseFloat(document.getElementById(`msl-max-${index}`)?.value || 100);
-        const expectedScore = parseFloat(document.getElementById(`msl-expected-${index}`)?.value || 50);
         const higherThreshold = parseFloat(document.getElementById(`msl-higher-${index}`)?.value || 90);
         const lessUpperLimit = parseFloat(document.getElementById(`msl-less-${index}`)?.value || 30);
         const actualScore = parseFloat(document.getElementById(`msl-actual-${index}`)?.value || '');
@@ -110,7 +101,7 @@ function calculateMSLScore() {
         }
 
         // Map actual score to 300-point scale
-        const scaledScore = mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit, minScore);
+        const scaledScore = mapScoreTo300Scale(actualScore, maxScore, higherThreshold, lessUpperLimit, minScore);
 
         // Weight this measure's contribution (scale from 30% to 100% for calculation)
         const normalizedWeight = (weight / 30) * 100;
@@ -283,7 +274,6 @@ function createMSLRow(index, isIPR = false) {
     const defaultName = isIPR ? 'IPR (Instructional Program Review)' : `Measure ${index}`;
     const defaultMax = 100;
     const defaultLess = isIPR ? 30 : 30;
-    const defaultExpected = isIPR ? 50 : 50;
     const defaultHigher = isIPR ? 90 : 90;
     const defaultWeight = isIPR ? 15 : 15;
 
@@ -321,10 +311,6 @@ function createMSLRow(index, isIPR = false) {
         <div class="form-group">
           <label for="msl-less-${index}"><span class="range-indicator less-range">●</span>Less Than Expected Upper Limit</label>
           <input type="number" id="msl-less-${index}" min="0" step="0.1" value="${defaultLess}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
-        </div>
-        <div class="form-group">
-          <label for="msl-expected-${index}"><span class="range-indicator expected-range">●</span>Expected Score (Midpoint)</label>
-          <input type="number" id="msl-expected-${index}" min="0" step="0.1" value="${defaultExpected}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
         </div>
         <div class="form-group">
           <label for="msl-higher-${index}"><span class="range-indicator higher-range">●</span>Higher Than Expected Threshold</label>
