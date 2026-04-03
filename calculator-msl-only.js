@@ -48,16 +48,18 @@ function isMSLValid() {
 // ===================================
 
 // Maps actual score to 300-point scale using cutscores and linear interpolation
-function mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit) {
+// minScore: the floor of the measure's raw score range (default 0)
+function mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit, minScore = 0) {
     // Validate inputs
-    if (actualScore < 0 || actualScore > maxScore) {
-        console.warn(`Actual score ${actualScore} is out of range [0, ${maxScore}]`);
+    if (actualScore < minScore || actualScore > maxScore) {
+        console.warn(`Actual score ${actualScore} is out of range [${minScore}, ${maxScore}]`);
         return 0;
     }
 
-    // Less Than Expected range: 0 to lessUpperLimit → maps to 0 to 100
+    // Less Than Expected range: minScore to lessUpperLimit → maps to 0 to 100
     if (actualScore <= lessUpperLimit) {
-        return (actualScore / lessUpperLimit) * 100;
+        const range = lessUpperLimit - minScore;
+        return range === 0 ? 0 : ((actualScore - minScore) / range) * 100;
     }
 
     // Expected range: lessUpperLimit to higherThreshold → maps to 100 to 200
@@ -96,6 +98,7 @@ function calculateMSLScore() {
         const index = measure.dataset.index;
         const name = document.getElementById(`msl-name-${index}`)?.value || `Measure ${index}`;
         const weight = parseFloat(document.getElementById(`msl-weight-${index}`)?.value || 0);
+        const minScore = parseFloat(document.getElementById(`msl-min-${index}`)?.value || 0);
         const maxScore = parseFloat(document.getElementById(`msl-max-${index}`)?.value || 100);
         const expectedScore = parseFloat(document.getElementById(`msl-expected-${index}`)?.value || 50);
         const higherThreshold = parseFloat(document.getElementById(`msl-higher-${index}`)?.value || 90);
@@ -107,7 +110,7 @@ function calculateMSLScore() {
         }
 
         // Map actual score to 300-point scale
-        const scaledScore = mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit);
+        const scaledScore = mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit, minScore);
 
         // Weight this measure's contribution (scale from 30% to 100% for calculation)
         const normalizedWeight = (weight / 30) * 100;
@@ -119,6 +122,7 @@ function calculateMSLScore() {
             name,
             weight,
             actualScore,
+            minScore,
             maxScore,
             scaledScore,
             weightedScore
@@ -307,6 +311,10 @@ function createMSLRow(index, isIPR = false) {
       <div class="msl-cutscores-header">Cutscore Configuration</div>
       <div class="msl-cutscores-grid">
         <div class="form-group">
+          <label for="msl-min-${index}">Minimum Score</label>
+          <input type="number" id="msl-min-${index}" min="0" step="1" value="0" ${isIPR ? 'readonly class="readonly-field"' : ''}>
+        </div>
+        <div class="form-group">
           <label for="msl-max-${index}">Maximum Score</label>
           <input type="number" id="msl-max-${index}" min="1" step="1" value="${defaultMax}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
         </div>
@@ -493,6 +501,7 @@ function saveState() {
             index: index,
             name: document.getElementById(`msl-name-${index}`)?.value || '',
             weight: document.getElementById(`msl-weight-${index}`)?.value || '',
+            min: document.getElementById(`msl-min-${index}`)?.value || '0',
             max: document.getElementById(`msl-max-${index}`)?.value || '',
             less: document.getElementById(`msl-less-${index}`)?.value || '',
             expected: document.getElementById(`msl-expected-${index}`)?.value || '',
@@ -527,6 +536,9 @@ function loadState() {
             }
             if (document.getElementById(`msl-weight-${measure.index}`)) {
                 document.getElementById(`msl-weight-${measure.index}`).value = measure.weight;
+            }
+            if (document.getElementById(`msl-min-${measure.index}`)) {
+                document.getElementById(`msl-min-${measure.index}`).value = measure.min ?? '0';
             }
             if (document.getElementById(`msl-max-${measure.index}`)) {
                 document.getElementById(`msl-max-${measure.index}`).value = measure.max;
