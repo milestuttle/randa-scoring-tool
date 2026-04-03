@@ -201,8 +201,122 @@ function updateAllCalculations() {
     updateMSLUI(mslResult);
     updateSummaryUI(mslResult);
 
+    // Update per-measure band bars
+    updateMeasureBandBars();
+
     // Update weight validation
     updateWeightValidation();
+}
+
+// Updates the visual band bar for every measure row
+function updateMeasureBandBars() {
+    const measures = document.querySelectorAll('.msl-measure-row');
+    measures.forEach(measure => {
+        const index = measure.dataset.index;
+        updateMeasureBandBar(index);
+    });
+}
+
+function updateMeasureBandBar(index) {
+    const minScore    = parseFloat(document.getElementById(`msl-min-${index}`)?.value ?? 0);
+    const maxScore    = parseFloat(document.getElementById(`msl-max-${index}`)?.value ?? 100);
+    const lessLimit   = parseFloat(document.getElementById(`msl-less-${index}`)?.value ?? '');
+    const higherThresh = parseFloat(document.getElementById(`msl-higher-${index}`)?.value ?? '');
+    const actualScore = parseFloat(document.getElementById(`msl-actual-${index}`)?.value ?? '');
+
+    const segLess     = document.getElementById(`msl-band-less-${index}`);
+    const segExpected = document.getElementById(`msl-band-expected-${index}`);
+    const segHigher   = document.getElementById(`msl-band-higher-${index}`);
+    const marker      = document.getElementById(`msl-band-marker-${index}`);
+    const markerLabel = document.getElementById(`msl-band-marker-label-${index}`);
+    const scaleMin    = document.getElementById(`msl-band-scale-min-${index}`);
+    const scaleMax    = document.getElementById(`msl-band-scale-max-${index}`);
+    const scaleCut1   = document.getElementById(`msl-band-scale-cut1-${index}`);
+    const scaleCut2   = document.getElementById(`msl-band-scale-cut2-${index}`);
+
+    if (!segLess || !segExpected || !segHigher) return;
+
+    const totalRange = maxScore - minScore;
+    if (isNaN(minScore) || isNaN(maxScore) || totalRange <= 0) return;
+
+    // Update scale labels
+    if (scaleMin) scaleMin.textContent = minScore;
+    if (scaleMax) scaleMax.textContent = maxScore;
+
+    // Compute segment widths as percentages of totalRange
+    const lessValid    = !isNaN(lessLimit)   && lessLimit   >= minScore && lessLimit   <= maxScore;
+    const higherValid  = !isNaN(higherThresh) && higherThresh >= minScore && higherThresh <= maxScore;
+
+    let lessWidth, expectedWidth, higherWidth;
+
+    if (lessValid && higherValid && lessLimit < higherThresh) {
+        lessWidth     = ((lessLimit   - minScore) / totalRange) * 100;
+        expectedWidth = ((higherThresh - lessLimit) / totalRange) * 100;
+        higherWidth   = ((maxScore    - higherThresh) / totalRange) * 100;
+    } else if (lessValid) {
+        // Only less cutscore defined
+        lessWidth     = ((lessLimit - minScore) / totalRange) * 100;
+        expectedWidth = 100 - lessWidth;
+        higherWidth   = 0;
+    } else if (higherValid) {
+        // Only higher cutscore defined
+        lessWidth     = 0;
+        expectedWidth = ((higherThresh - minScore) / totalRange) * 100;
+        higherWidth   = 100 - expectedWidth;
+    } else {
+        // No valid cutscores — equal thirds
+        lessWidth = expectedWidth = higherWidth = 33.33;
+    }
+
+    segLess.style.width     = lessWidth     + '%';
+    segExpected.style.width = expectedWidth + '%';
+    segHigher.style.width   = higherWidth   + '%';
+
+    // Update cutscore tick labels
+    if (scaleCut1) {
+        if (lessValid) {
+            scaleCut1.textContent = lessLimit;
+            scaleCut1.style.left  = ((lessLimit - minScore) / totalRange * 100) + '%';
+            scaleCut1.style.display = 'block';
+        } else {
+            scaleCut1.style.display = 'none';
+        }
+    }
+    if (scaleCut2) {
+        if (higherValid) {
+            scaleCut2.textContent = higherThresh;
+            scaleCut2.style.left  = ((higherThresh - minScore) / totalRange * 100) + '%';
+            scaleCut2.style.display = 'block';
+        } else {
+            scaleCut2.style.display = 'none';
+        }
+    }
+
+    // Position the score marker
+    if (!isNaN(actualScore) && actualScore >= minScore && actualScore <= maxScore && marker) {
+        const pct = ((actualScore - minScore) / totalRange) * 100;
+        marker.style.left    = pct + '%';
+        marker.style.display = 'block';
+        if (markerLabel) markerLabel.textContent = actualScore;
+
+        // Highlight the active band segment
+        segLess.classList.remove('msl-band-active');
+        segExpected.classList.remove('msl-band-active');
+        segHigher.classList.remove('msl-band-active');
+
+        if (lessValid && actualScore <= lessLimit) {
+            segLess.classList.add('msl-band-active');
+        } else if (higherValid && actualScore >= higherThresh) {
+            segHigher.classList.add('msl-band-active');
+        } else {
+            segExpected.classList.add('msl-band-active');
+        }
+    } else if (marker) {
+        marker.style.display = 'none';
+        segLess.classList.remove('msl-band-active');
+        segExpected.classList.remove('msl-band-active');
+        segHigher.classList.remove('msl-band-active');
+    }
 }
 
 function updateWeightValidation() {
@@ -323,6 +437,35 @@ function createMSLRow(index, isIPR = false) {
       <div class="form-group">
         <label for="msl-actual-${index}">Actual Score Achieved</label>
         <input type="number" id="msl-actual-${index}" min="0" step="0.1" placeholder="Enter score">
+      </div>
+    </div>
+
+    <div class="msl-section msl-band-viz" id="msl-band-viz-${index}">
+      <div class="msl-band-header">Score Band Placement</div>
+      <div class="msl-band-bar-wrap">
+        <div class="msl-band-bar" id="msl-band-bar-${index}">
+          <div class="msl-band-segment msl-band-less" id="msl-band-less-${index}">
+            <span class="msl-band-label">Less Than Expected</span>
+          </div>
+          <div class="msl-band-segment msl-band-expected" id="msl-band-expected-${index}">
+            <span class="msl-band-label">Expected</span>
+          </div>
+          <div class="msl-band-segment msl-band-higher" id="msl-band-higher-${index}">
+            <span class="msl-band-label">Higher Than Expected</span>
+          </div>
+        </div>
+        <div class="msl-band-marker-row">
+          <div class="msl-band-marker" id="msl-band-marker-${index}" style="display:none;">
+            <div class="msl-band-marker-arrow"></div>
+            <div class="msl-band-marker-label" id="msl-band-marker-label-${index}"></div>
+          </div>
+        </div>
+      </div>
+      <div class="msl-band-scale" id="msl-band-scale-${index}">
+        <span class="msl-band-scale-min" id="msl-band-scale-min-${index}">0</span>
+        <span class="msl-band-scale-cut1" id="msl-band-scale-cut1-${index}"></span>
+        <span class="msl-band-scale-cut2" id="msl-band-scale-cut2-${index}"></span>
+        <span class="msl-band-scale-max" id="msl-band-scale-max-${index}">100</span>
       </div>
     </div>
   `;

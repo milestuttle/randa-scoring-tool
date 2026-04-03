@@ -236,6 +236,33 @@ select {
   /* Subtle inner depth */
 }
 
+textarea.msl-desc {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: var(--transition);
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: var(--color-text);
+}
+
+textarea.msl-desc:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+}
+
+textarea.msl-desc::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+  font-style: italic;
+}
+
 input[type="number"]:focus,
 select:focus {
   outline: none;
@@ -418,7 +445,7 @@ input[type="number"].valid {
 
 .summary-stats-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-md);
   transition: margin 0.3s ease;
@@ -801,6 +828,165 @@ input[type="number"].valid {
   outline: none;
   box-shadow: none;
 }
+
+/* ===================================
+   Per-Measure Band Visualization
+   =================================== */
+.msl-band-viz {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
+  border: 1px solid #c5cae9;
+  padding: 1rem 1rem 0.75rem;
+}
+
+.msl-band-header {
+  font-weight: 600;
+  font-size: 0.82em;
+  color: #5c6bc0;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 0.6rem;
+}
+
+/* The outer wrapper provides the positioning context for the marker row */
+.msl-band-bar-wrap {
+  position: relative;
+}
+
+/* The three-segment bar */
+.msl-band-bar {
+  display: flex;
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.msl-band-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease, box-shadow 0.25s ease;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.msl-band-less {
+  background: linear-gradient(135deg, #ffcdd2, #ef9a9a);
+  border-right: 2px solid rgba(255,255,255,0.5);
+}
+
+.msl-band-expected {
+  background: linear-gradient(135deg, #fff9c4, #ffe082);
+  border-right: 2px solid rgba(255,255,255,0.5);
+}
+
+.msl-band-higher {
+  background: linear-gradient(135deg, #c8e6c9, #81c784);
+}
+
+/* Active band glows and lifts slightly */
+.msl-band-segment.msl-band-active {
+  filter: brightness(1.12) saturate(1.3);
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.18), 0 0 12px rgba(0,0,0,0.15);
+  z-index: 1;
+}
+
+.msl-band-label {
+  font-size: 0.72em;
+  font-weight: 700;
+  color: rgba(0,0,0,0.65);
+  text-align: center;
+  line-height: 1.2;
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* Marker row sits below the bar, same width, for clean positioning */
+.msl-band-marker-row {
+  position: relative;
+  height: 28px;
+  margin-top: 2px;
+}
+
+.msl-band-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.msl-band-marker-arrow {
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 11px solid #3949ab;
+}
+
+.msl-band-marker-label {
+  background: #3949ab;
+  color: white;
+  font-size: 0.72em;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 1px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(57,73,171,0.4);
+}
+
+/* Scale ruler below */
+.msl-band-scale {
+  position: relative;
+  height: 18px;
+  margin-top: 2px;
+  font-size: 0.72em;
+  color: #78909c;
+  font-weight: 500;
+}
+
+.msl-band-scale-min {
+  position: absolute;
+  left: 0;
+}
+
+.msl-band-scale-max {
+  position: absolute;
+  right: 0;
+}
+
+/* Cutscore ticks are absolutely positioned by JS */
+.msl-band-scale-cut1,
+.msl-band-scale-cut2 {
+  position: absolute;
+  transform: translateX(-50%);
+  background: rgba(57,73,171,0.12);
+  border: 1px solid #9fa8da;
+  border-radius: 3px;
+  padding: 0 4px;
+  color: #3949ab;
+  font-weight: 700;
+  font-size: 0.95em;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .msl-band-label {
+    font-size: 0.62em;
+  }
+  .msl-band-bar {
+    height: 40px;
+  }
+}
+
 
 @media (max-width: 768px) {
   .msl-inputs {
@@ -2516,6 +2702,43 @@ body {
   align-items: center;
   margin-top: var(--spacing-md);
 }
+
+.calc-row.randa {
+  background: #f0fdfa;
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: var(--spacing-xs) 0;
+  border: 1px solid #99f6e4;
+  font-weight: 600;
+}
+
+.randa-value {
+  color: var(--color-secondary);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* RANDA stat card in top summary */
+.summary-stat-randa {
+  background: linear-gradient(135deg, #f0fdfa, #ccfbf1) !important;
+  border: 2px solid #5eead4 !important;
+}
+
+.summary-value-randa {
+  color: var(--color-secondary) !important;
+}
+
+/* RANDA stat in MSL results section */
+.randa-stat {
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+}
+
+.randa-entry {
+  color: var(--color-secondary);
+  font-size: 1.375rem;
+}
+
 
 /* ===================================
    Usability Enhancements
