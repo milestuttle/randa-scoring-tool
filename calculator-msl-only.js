@@ -305,16 +305,16 @@ function createMSLRow(index, isIPR = false) {
           <input type="number" id="msl-min-${index}" min="0" step="1" value="0" ${isIPR ? 'readonly class="readonly-field"' : ''}>
         </div>
         <div class="form-group">
-          <label for="msl-max-${index}">Maximum Score</label>
-          <input type="number" id="msl-max-${index}" min="1" step="1" value="${defaultMax}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
-        </div>
-        <div class="form-group">
           <label for="msl-less-${index}"><span class="range-indicator less-range">●</span>Less Than Expected Upper Limit</label>
           <input type="number" id="msl-less-${index}" min="0" step="0.1" value="${defaultLess}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
         </div>
         <div class="form-group">
           <label for="msl-higher-${index}"><span class="range-indicator higher-range">●</span>Higher Than Expected Threshold</label>
           <input type="number" id="msl-higher-${index}" min="0" step="0.1" value="${defaultHigher}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
+        </div>
+        <div class="form-group">
+          <label for="msl-max-${index}">Maximum Score</label>
+          <input type="number" id="msl-max-${index}" min="1" step="1" value="${defaultMax}" ${isIPR ? 'readonly class="readonly-field"' : ''}>
         </div>
       </div>
     </div>
