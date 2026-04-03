@@ -833,15 +833,15 @@ input[type="number"].valid {
    Per-Measure Band Visualization
    =================================== */
 .msl-band-viz {
-  background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
-  border: 1px solid #c5cae9;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   padding: 1rem 1rem 0.75rem;
 }
 
 .msl-band-header {
   font-weight: 600;
   font-size: 0.82em;
-  color: #5c6bc0;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
   margin-bottom: 0.6rem;
@@ -872,24 +872,37 @@ input[type="number"].valid {
 }
 
 .msl-band-less {
-  background: linear-gradient(135deg, #ffcdd2, #ef9a9a);
-  border-right: 2px solid rgba(255,255,255,0.5);
+  background-color: var(--rating-red-bg);
+  border-right: 2px solid rgba(0,0,0,0.06);
 }
 
 .msl-band-expected {
-  background: linear-gradient(135deg, #fff9c4, #ffe082);
-  border-right: 2px solid rgba(255,255,255,0.5);
+  background-color: var(--rating-orange-bg);
+  border-right: 2px solid rgba(0,0,0,0.06);
 }
 
 .msl-band-higher {
-  background: linear-gradient(135deg, #c8e6c9, #81c784);
+  background-color: var(--rating-green-bg);
 }
 
-/* Active band glows and lifts slightly */
+/* Active band — solid border highlight matching the rating color */
 .msl-band-segment.msl-band-active {
-  filter: brightness(1.12) saturate(1.3);
-  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.18), 0 0 12px rgba(0,0,0,0.15);
   z-index: 1;
+}
+
+.msl-band-less.msl-band-active {
+  background-color: var(--rating-red-bg);
+  box-shadow: inset 0 0 0 2px var(--rating-red);
+}
+
+.msl-band-expected.msl-band-active {
+  background-color: var(--rating-orange-bg);
+  box-shadow: inset 0 0 0 2px var(--rating-orange);
+}
+
+.msl-band-higher.msl-band-active {
+  background-color: var(--rating-green-bg);
+  box-shadow: inset 0 0 0 2px var(--rating-green);
 }
 
 .msl-band-label {
@@ -928,11 +941,11 @@ input[type="number"].valid {
   height: 0;
   border-left: 9px solid transparent;
   border-right: 9px solid transparent;
-  border-bottom: 11px solid #3949ab;
+  border-bottom: 11px solid var(--color-primary);
 }
 
 .msl-band-marker-label {
-  background: #3949ab;
+  background: var(--color-primary);
   color: white;
   font-size: 0.72em;
   font-weight: 700;
@@ -940,7 +953,7 @@ input[type="number"].valid {
   border-radius: 4px;
   margin-top: 1px;
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(57,73,171,0.4);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Scale ruler below */
@@ -968,12 +981,12 @@ input[type="number"].valid {
 .msl-band-scale-cut2 {
   position: absolute;
   transform: translateX(-50%);
-  background: rgba(57,73,171,0.12);
-  border: 1px solid #9fa8da;
-  border-radius: 3px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 0 4px;
-  color: #3949ab;
-  font-weight: 700;
+  color: var(--color-primary);
+  font-weight: 600;
   font-size: 0.95em;
   white-space: nowrap;
 }
