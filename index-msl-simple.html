@@ -24,6 +24,18 @@
   </header>
 
   <main class="container">
+    <!-- Print-Only Header -->
+    <div class="print-only print-header">
+      <div class="print-header-row">
+        <div class="print-field"><strong>Teacher:</strong> ________________________________</div>
+        <div class="print-field"><strong>School Year:</strong> 2024-2025</div>
+      </div>
+      <div class="print-header-row">
+        <div class="print-field"><strong>Evaluator:</strong> _____________________________</div>
+        <div class="print-field"><strong>Date:</strong> <span id="print-date"></span></div>
+      </div>
+    </div>
+
     <!-- Overall MSL Summary -->
     <section id="overall-summary" class="card summary-card">
       <h2>MSL Score</h2>
@@ -233,6 +245,23 @@
         </div>
       </div>
     </div>
+    <!-- Print-Only Methodology -->
+    <section class="print-only print-methodology card">
+      <h3>Scoring Methodology & Verification</h3>
+      <p>This report was generated using the RANDA MSL Simple Proportional Calculator. Each measure's actual score is
+        linearly normalized within its defined minimum and maximum range, then scaled to a 300-point total and weighted
+        according to its contribution to the overall MSL score (30% of total evaluation).</p>
+      <div class="print-signature-box">
+        <div class="signature-line">
+          <span>Evaluator Signature:</span>
+          <div class="line"></div>
+        </div>
+        <div class="signature-line">
+          <span>Date:</span>
+          <div class="line" style="width: 150px;"></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="app-footer">

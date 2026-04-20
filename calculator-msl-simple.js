@@ -579,7 +579,18 @@ function init() {
   document.getElementById('btn-reset')?.addEventListener('click', resetAll);
   document.getElementById('btn-show-calculations')?.addEventListener('click', showCalculationDetails);
   document.getElementById('btn-copy-summary')?.addEventListener('click', copySummary);
-  document.getElementById('btn-print')?.addEventListener('click', () => window.print());
+  document.getElementById('btn-print')?.addEventListener('click', () => {
+    const dateEl = document.getElementById('print-date');
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    window.print();
+  });
+
   document.getElementById('btn-about-tool')?.addEventListener('click', openAboutModal);
 
   // Modal close
