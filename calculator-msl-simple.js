@@ -295,26 +295,27 @@ function createMeasureRow(index, isIPR = false) {
       </div>
       ` : ''}
 
-      <div class="form-group">
-        <label for="msl-weight-${index}">Weight (%)</label>
+      <div class="form-group field-weight">
+        <label for="msl-weight-${index}">⚖️ Weight (%)</label>
         <input type="number" id="msl-weight-${index}" min="0" max="30" step="0.1" value="${weight}" ${weightReadonly} placeholder="0">
       </div>
 
-      <div class="form-group">
-        <label for="msl-min-${index}">Minimum Score</label>
+      <div class="form-group field-range">
+        <label for="msl-min-${index}">Min Score</label>
         <input type="number" id="msl-min-${index}" step="any" value="${minVal}" ${isIPR ? readonlyAttr : `placeholder="0"`}>
       </div>
 
-      <div class="form-group">
-        <label for="msl-max-${index}">Maximum Score</label>
+      <div class="form-group field-range">
+        <label for="msl-max-${index}">Max Score</label>
         <input type="number" id="msl-max-${index}" step="any" value="${maxVal}" ${isIPR ? readonlyAttr : `placeholder="100"`}>
       </div>
 
-      <div class="form-group">
-        <label for="msl-actual-${index}">Score Achieved</label>
+      <div class="form-group field-actual">
+        <label for="msl-actual-${index}">🎯 Score Achieved</label>
         <input type="number" id="msl-actual-${index}" step="any" placeholder="Enter score">
       </div>
     </div>
+
 
     <div class="measure-feedback"></div>
   `;

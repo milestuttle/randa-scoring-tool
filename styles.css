@@ -694,6 +694,62 @@ input[type="number"].valid {
   align-items: end;
 }
 
+/* Measure Fields Grid (Simple Method) */
+.measure-fields {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.field-weight {
+  border-left: 4px solid var(--color-primary);
+  background: var(--rating-blue-bg);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.field-weight label {
+  color: var(--color-primary-dark);
+}
+
+.field-range {
+  border-left: 4px solid var(--color-text-muted);
+  background: #f1f5f9;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.field-actual {
+  border-left: 4px solid var(--color-warning);
+  background: var(--rating-orange-bg);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.field-actual label {
+  color: #92400e; /* Amber 800 */
+  font-weight: 700;
+}
+
+.field-actual input {
+  border-color: var(--color-warning) !important;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .measure-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .measure-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 /* Precise MSL version with grid layout */
 .msl-measure-header {
   display: flex;
