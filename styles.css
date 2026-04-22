@@ -774,7 +774,7 @@ input[type="number"].valid {
   background: #f1f5f9;
   border-radius: 99px;
   overflow: visible;
-  margin: 1.5rem 0 0.5rem;
+  margin: 1.5rem 0 2rem;
 }
 
 .measure-range-bar {

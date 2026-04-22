@@ -743,22 +743,22 @@ function init() {
     select.addEventListener('change', updateAllCalculations);
   });
 
-  // Initialize MSL with 2 measures (IPR + 1 Generic)
+  // Initialize MSL with IPR + 1 blank measure
   updateRemoveButtons();
   if (document.querySelectorAll('.msl-measure-row').length === 0) {
     const container = document.getElementById('msl-list');
     if (container) {
-      // Measure 1: IPR
+      // Measure 1: IPR (default weight 10%)
       mslRowCounter = 1;
       const row1 = createMSLRow(mslRowCounter, true);
-      row1.classList.add('visible');
       container.appendChild(row1);
+      setTimeout(() => row1.classList.add('visible'), 10);
 
-      // Measure 2: Generic
+      // Measure 2: Blank, ready to fill
       mslRowCounter = 2;
       const row2 = createMSLRow(mslRowCounter, false);
       container.appendChild(row2);
-      setTimeout(() => row2.classList.add('visible'), 10);
+      setTimeout(() => row2.classList.add('visible'), 50);
     }
   }
 
@@ -830,41 +830,43 @@ function init() {
 function loadSampleData() {
   if (!confirm('This will overwrite current values with sample data. Continue?')) return;
 
-  // Weights (Equal)
-  [1, 2, 3, 4].forEach(i => document.getElementById(`pp-weight-s${i}`).value = 25);
+  // PP Weights: equal at 25% each
+  [1, 2, 3, 4].forEach(i => {
+    const el = document.getElementById(`pp-weight-s${i}`);
+    if (el) el.value = 25;
+  });
 
-  // Elements (Mix of 3 and 4)
+  // PP Elements: all 17 at Level 3
   const elements = [
     's1a', 's1b', 's1c',
     's2a', 's2b', 's2c', 's2d',
     's3a', 's3b', 's3c', 's3d', 's3e', 's3f',
     's4a', 's4b', 's4c', 's4d'
   ];
-
-  elements.forEach((id, idx) => {
+  elements.forEach(id => {
     const el = document.getElementById(`${id}-level`);
-    if (el) el.value = (idx % 3 === 0) ? 4 : 3;
+    if (el) el.value = 3; // Level 3 = Proficient
   });
 
-  // MSL Sample Data (simple min/max)
+  // MSL: IPR (10%) + DIBELS Composite (20%) = 30% total
   const container = document.getElementById('msl-list');
   container.innerHTML = '';
 
-  // IPR Measure
+  // Measure 1: IPR at 10%
   mslRowCounter = 1;
   const row1 = createMSLRow(mslRowCounter, true);
   container.appendChild(row1);
   setTimeout(() => row1.classList.add('visible'), 10);
-  document.getElementById('msl-weight-1').value = 15;
-  document.getElementById('msl-actual-1').value = 75;
+  document.getElementById('msl-actual-1').value = 78;
+  // weight (10), min (0), max (100) are already set by createMSLRow defaults
 
-  // Second Measure
+  // Measure 2: DIBELS Composite at 20%
   mslRowCounter = 2;
   const row2 = createMSLRow(mslRowCounter, false);
   container.appendChild(row2);
-  setTimeout(() => row2.classList.add('visible'), 10);
+  setTimeout(() => row2.classList.add('visible'), 50);
   document.getElementById('msl-name-2').value = 'DIBELS Composite';
-  document.getElementById('msl-weight-2').value = 15;
+  document.getElementById('msl-weight-2').value = 20;
   document.getElementById('msl-min-2').value = 0;
   document.getElementById('msl-max-2').value = 500;
   document.getElementById('msl-actual-2').value = 420;
