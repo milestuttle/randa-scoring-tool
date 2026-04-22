@@ -1,16 +1,19 @@
 // ===================================
-// RANDA Scoring Weight Web Tool - Precise MSL Version
+// RANDA Scoring Weight Calculator
 // 70:30 Teacher Evaluation Scoring
 // (70% Professional Practices / 30% Measures of Student Learning)
-// This version uses cutscore-based MSL calculation for precise scoring
+// Uses simple proportional MSL calculation
 // ===================================
 
-
-
-
 // ===================================
-// UTILITY FUNCTIONS
+// LOCAL CONSTANTS
 // ===================================
+
+const MSL_TOTAL_WEIGHT = 30;
+const IPR_WEIGHT = 10;
+const IPR_MIN = 0;
+const IPR_MAX = 100;
+const MAX_ADDITIONAL_MEASURES = 3;
 
 // Create debounced version of updateAllCalculations
 const debouncedUpdate = debounce(updateAllCalculations, 150);
@@ -21,28 +24,22 @@ const debouncedUpdate = debounce(updateAllCalculations, 150);
 
 function isStep3Valid() {
   const rows = document.querySelectorAll('.msl-measure-row');
-  if (rows.length < 2 || rows.length > 5) return false;
+  if (rows.length < 2) return false;
 
   const weights = [];
   let allFieldsFilled = true;
 
   rows.forEach(row => {
-    const weightInput = row.querySelector('.msl-weight');
-    const maxScoreInput = row.querySelector('.msl-max-score');
-    const expectedScoreInput = row.querySelector('.msl-expected-score');
-    const higherThresholdInput = row.querySelector('.msl-higher-threshold');
-    const lessUpperLimitInput = row.querySelector('.msl-less-upper-limit');
-    const actualScoreInput = row.querySelector('.msl-actual-score');
+    const idx = row.dataset.index;
+    const weightEl = document.getElementById(`msl-weight-${idx}`);
+    const minEl = document.getElementById(`msl-min-${idx}`);
+    const maxEl = document.getElementById(`msl-max-${idx}`);
+    const actualEl = document.getElementById(`msl-actual-${idx}`);
 
-    if (weightInput) weights.push(parseNum(weightInput.value));
+    if (weightEl) weights.push(parseNum(weightEl.value));
 
-    // Check if all required fields are filled
-    if (!weightInput?.value ||
-      !maxScoreInput?.value ||
-      !expectedScoreInput?.value ||
-      !higherThresholdInput?.value ||
-      !lessUpperLimitInput?.value ||
-      !actualScoreInput?.value) {
+    if (!weightEl?.value || !minEl?.value || !maxEl?.value || !actualEl?.value ||
+        minEl.value === '' || maxEl.value === '' || actualEl.value === '') {
       allFieldsFilled = false;
     }
   });
@@ -51,116 +48,81 @@ function isStep3Valid() {
 }
 
 // ===================================
-// MSL CALCULATIONS - CUTSCORE-BASED
+// MSL CALCULATIONS - SIMPLE PROPORTIONAL
 // ===================================
 
 /**
- * Maps actual score to 300-point scale using cutscores and linear interpolation
+ * Normalize an actual score within a min-max range to 0-1.
+ * Clamps to [0, 1] if actual is outside bounds.
  */
-function mapScoreTo300Scale(actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit) {
-  // Clamp actual score to valid range
-  actualScore = clamp(actualScore, 0, maxScore);
-
-  let mappedScore;
-
-  if (actualScore <= lessUpperLimit) {
-    // Less Than Expected range: 0 to lessUpperLimit maps to 0-100
-    mappedScore = (actualScore / lessUpperLimit) * 100;
-  } else if (actualScore <= expectedScore) {
-    // Between lessUpperLimit and expectedScore maps to 100-150
-    const range = expectedScore - lessUpperLimit;
-    const position = actualScore - lessUpperLimit;
-    mappedScore = 100 + (position / range) * 50;
-  } else if (actualScore <= higherThreshold) {
-    // Between expectedScore and higherThreshold maps to 150-201
-    const range = higherThreshold - expectedScore;
-    const position = actualScore - expectedScore;
-    mappedScore = 150 + (position / range) * 51;
-  } else {
-    // Higher Than Expected range: higherThreshold to maxScore maps to 201-300
-    const range = maxScore - higherThreshold;
-    const position = actualScore - higherThreshold;
-    if (range > 0) {
-      mappedScore = 201 + (position / range) * 99;
-    } else {
-      mappedScore = 201; // If higherThreshold equals maxScore
-    }
-  }
-
-  // Clamp final result to 0-300
-  return clamp(mappedScore, 0, 300);
+function normalize(actual, min, max) {
+  if (max <= min) return 0;
+  return clamp((actual - min) / (max - min), 0, 1);
 }
 
 function calculateMSLScore() {
   const rows = document.querySelectorAll('.msl-measure-row');
+  if (rows.length === 0) {
+    return { base: 0, score: 0, percentage: 0, rating: '—', measures: [], totalWeight: 0, weightsValid: false, valid: false };
+  }
+
+  let totalWeight = 0;
+  let totalWeightedScore = 0;
   const measures = [];
-  let mslScore300 = 0;
+  let allFilled = true;
 
   rows.forEach(row => {
-    const weightInput = row.querySelector('.msl-weight');
-    const nameInput = row.querySelector('.msl-name');
-    const maxScoreInput = row.querySelector('.msl-max-score');
-    const expectedScoreInput = row.querySelector('.msl-expected-score');
-    const higherThresholdInput = row.querySelector('.msl-higher-threshold');
-    const lessUpperLimitInput = row.querySelector('.msl-less-upper-limit');
-    const actualScoreInput = row.querySelector('.msl-actual-score');
+    const idx = row.dataset.index;
+    const nameEl = document.getElementById(`msl-name-${idx}`);
+    const weightEl = document.getElementById(`msl-weight-${idx}`);
+    const minEl = document.getElementById(`msl-min-${idx}`);
+    const maxEl = document.getElementById(`msl-max-${idx}`);
+    const actualEl = document.getElementById(`msl-actual-${idx}`);
 
-    // Check if all required fields have values
-    if (weightInput && weightInput.value &&
-      maxScoreInput && maxScoreInput.value &&
-      expectedScoreInput && expectedScoreInput.value &&
-      higherThresholdInput && higherThresholdInput.value &&
-      lessUpperLimitInput && lessUpperLimitInput.value &&
-      actualScoreInput && actualScoreInput.value) {
+    const name = nameEl ? nameEl.value : `Measure ${idx}`;
+    const weight = parseFloat(weightEl?.value) || 0;
+    const minScore = parseFloat(minEl?.value);
+    const maxScore = parseFloat(maxEl?.value);
+    const actual = parseFloat(actualEl?.value);
 
-      const weight = parseNum(weightInput.value);
-      const name = nameInput ? nameInput.value : 'Unnamed Measure';
-      const maxScore = parseNum(maxScoreInput.value);
-      const expectedScore = parseNum(expectedScoreInput.value);
-      const higherThreshold = parseNum(higherThresholdInput.value);
-      const lessUpperLimit = parseNum(lessUpperLimitInput.value);
-      const actualScore = parseNum(actualScoreInput.value);
+    totalWeight += weight;
 
-      // Calculate percentage achieved
-      const percentage = maxScore > 0 ? actualScore / maxScore : 0;
-
-      // Calculate weighted score: percentage × weight × 10
-      // (Since 1% weight = 10 points in the 1000-point system)
-      const weightedScore = percentage * weight * 10;
-
-      // Determine rating using cutscores (for display and MSL constraint)
-      const unweightedScore300 = mapScoreTo300Scale(
-        actualScore, maxScore, expectedScore, higherThreshold, lessUpperLimit
-      );
-
-      measures.push({
-        name,
-        weight,
-        actualScore,
-        maxScore,
-        expectedScore,
-        higherThreshold,
-        lessUpperLimit,
-        percentage: round2(percentage * 100), // Store as percentage 0-100
-        unweightedScore300: round2(unweightedScore300), // For rating display
-        weightedScore: round2(weightedScore) // Actual points contributed
-      });
-
-      mslScore300 += weightedScore;
+    if (isNaN(actual) || actualEl?.value === '' ||
+        isNaN(minScore) || minEl?.value === '' ||
+        isNaN(maxScore) || maxEl?.value === '') {
+      allFilled = false;
+      measures.push({ name, weight, minScore: 0, maxScore: 0, actual: 0, normalized: 0, percentage: 0, scaled300: 0, weighted: 0, filled: false });
+      return;
     }
+
+    const norm = normalize(actual, minScore, maxScore);
+    const scaled300 = round2(norm * MSL_MAX_SCORE);
+    const weighted = round2(scaled300 * (weight / MSL_TOTAL_WEIGHT));
+
+    totalWeightedScore += weighted;
+
+    measures.push({
+      name, weight, minScore, maxScore, actual,
+      normalized: round2(norm),
+      percentage: round2(norm * 100),
+      scaled300, weighted, filled: true
+    });
   });
 
-  // Calculate base score (out of 3) for display
-  const mslBase = mslScore300 / MSL_MULTIPLIER;
-  const mslPct = mslScore300 / MSL_MAX_SCORE;
-  const mslRating = getRatingLabel(mslScore300, MSL_RATING_RANGES);
+  const weightsValid = Math.abs(totalWeight - MSL_TOTAL_WEIGHT) < EPSILON;
+  const valid = allFilled && weightsValid && rows.length >= 2;
+  const mslScore = round2(totalWeightedScore);
+  const mslBase = round2(mslScore / MSL_MULTIPLIER);
+  const mslPct = pct(mslScore / MSL_MAX_SCORE);
+
+  let rating = '—';
+  if (valid) {
+    rating = getRatingLabel(mslScore, MSL_RATING_RANGES);
+  }
 
   return {
-    base: round2(mslBase),
-    score: round2(mslScore300),
-    percentage: pct(mslPct),
-    rating: mslRating,
-    measures
+    base: mslBase, score: mslScore, percentage: mslPct, rating,
+    measures, totalWeight: round2(totalWeight), weightsValid, valid
   };
 }
 
@@ -231,31 +193,74 @@ function updateAllCalculations() {
   const ppResult = calculatePPScore();
   updatePPUI(ppResult, updateProgressIndicator);
 
-  // Step 3: Validate MSL weights and calculate
-  const rows = document.querySelectorAll('.msl-measure-row');
-  const mslWeights = [];
-  rows.forEach(row => {
-    const weightInput = row.querySelector('.msl-weight');
-    if (weightInput) mslWeights.push(parseNum(weightInput.value));
+  // Step 3: Calculate MSL (includes weight validation)
+  const mslResult = calculateMSLScore();
+
+  // MSL Weight validation display
+  const mslWeightTotal = document.getElementById('total-msl-weight');
+  const mslWeightMsg = document.getElementById('msl-weight-message');
+  if (mslWeightTotal) mslWeightTotal.textContent = mslResult.totalWeight.toFixed(1);
+  if (mslWeightMsg) {
+    if (mslResult.weightsValid) {
+      mslWeightMsg.textContent = '✓ Total equals 30%';
+      mslWeightMsg.className = 'validation-success';
+    } else {
+      mslWeightMsg.textContent = `⚠ Total must equal 30% (currently ${mslResult.totalWeight.toFixed(1)}%)`;
+      mslWeightMsg.className = 'validation-error';
+    }
+  }
+
+  // Update Status Checklist
+  const statusWeights = document.getElementById('status-weights');
+  const statusScores = document.getElementById('status-scores');
+  if (statusWeights) {
+    statusWeights.className = `status-item ${mslResult.weightsValid ? 'complete' : 'incomplete'}`;
+    statusWeights.querySelector('.status-icon').textContent = mslResult.weightsValid ? '✓' : '⚖️';
+  }
+  if (statusScores) {
+    const allFilled = mslResult.measures.every(m => m.filled);
+    statusScores.className = `status-item ${allFilled ? 'complete' : 'incomplete'}`;
+    statusScores.querySelector('.status-icon').textContent = allFilled ? '✓' : '🎯';
+  }
+
+  // Per-measure feedback
+  mslResult.measures.forEach((m, i) => {
+    const row = document.querySelectorAll('.msl-measure-row')[i];
+    if (!row) return;
+
+    const feedbackEl = row.querySelector('.measure-feedback');
+    if (feedbackEl) {
+      if (m.filled) {
+        feedbackEl.textContent = `${m.percentage}% of range → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
+        feedbackEl.className = 'measure-feedback visible';
+      } else {
+        feedbackEl.textContent = '';
+        feedbackEl.className = 'measure-feedback';
+      }
+    }
+
+    const marker = row.querySelector('.measure-range-marker');
+    const minLabel = row.querySelector('.measure-range-label-min');
+    const maxLabel = row.querySelector('.measure-range-label-max');
+    if (minLabel) minLabel.textContent = isNaN(parseFloat(m.minScore)) ? 'Min' : m.minScore;
+    if (maxLabel) maxLabel.textContent = isNaN(parseFloat(m.maxScore)) ? 'Max' : m.maxScore;
+    if (marker) {
+      if (m.filled) {
+        marker.style.left = `${m.normalized * 100}%`;
+        marker.style.opacity = '1';
+      } else {
+        marker.style.left = '0%';
+        marker.style.opacity = '0.3';
+      }
+    }
   });
 
-  const mslWeightValidation = validateWeights(mslWeights, 30);
-  const mslWeightTotal = document.getElementById('total-msl-weight');
-  if (mslWeightTotal) mslWeightTotal.textContent = mslWeightValidation.sum.toFixed(1);
-
-  setValidationUI(
-    'msl-weight-message',
-    mslWeightValidation.valid,
-    mslWeightValidation.valid ? '✓ Total equals 30%' : `⚠ Total must equal 30% (currently ${mslWeightValidation.sum.toFixed(1)}%)`
-  );
-
-  const mslResult = calculateMSLScore();
   updateMSLUI(mslResult);
 
   // Step 4: Check if all steps are valid
   const step1Valid = isStep1Valid(parseNum);
   const step2Complete = isStep2Complete();
-  const step3Valid = isStep3Valid();
+  const step3Valid = mslResult.valid;
 
   const allValid = step1Valid && step2Complete && step3Valid;
 
@@ -273,8 +278,6 @@ function updateAllCalculations() {
       applyRatingClass(summaryRating, finalResult.rating, false);
     }
     if (summaryOverlay) summaryOverlay.style.display = 'none';
-
-    // Update summary marker position
     if (summaryScoreMarker) {
       const percentage = (finalResult.total / 1000) * 100;
       summaryScoreMarker.style.left = percentage + '%';
@@ -288,8 +291,6 @@ function updateAllCalculations() {
     }
     if (summaryOverlay) summaryOverlay.style.display = 'flex';
     if (summaryScoreMarker) summaryScoreMarker.style.display = 'none';
-
-    // Hide sticky footer if incomplete
     const footer = document.getElementById('sticky-footer');
     if (footer) footer.classList.remove('visible');
   }
@@ -298,7 +299,6 @@ function updateAllCalculations() {
   const ppValid = step1Valid && step2Complete;
   const ppSection = document.getElementById('pp-results');
   const ppOverlay = document.getElementById('pp-overlay');
-
   if (ppValid) {
     if (ppOverlay) ppOverlay.style.display = 'none';
     if (ppSection) ppSection.classList.remove('disabled');
@@ -310,7 +310,6 @@ function updateAllCalculations() {
   // Update MSL overlay
   const mslSection = document.getElementById('msl-results');
   const mslOverlay = document.getElementById('msl-overlay');
-
   if (step3Valid) {
     if (mslOverlay) mslOverlay.style.display = 'none';
     if (mslSection) mslSection.classList.remove('disabled');
@@ -322,11 +321,9 @@ function updateAllCalculations() {
   // Update Step 4 overlay
   const step4Section = document.getElementById('step4-results');
   const step4Overlay = document.getElementById('step4-overlay');
-
   if (allValid) {
     const finalResult = calculateFinalRating(ppResult.score, mslResult.score, mslResult.rating);
     updateFinalUI(finalResult, ppResult, mslResult, TOTAL_MAX_SCORE, updateProgressIndicator);
-
     if (step4Overlay) step4Overlay.style.display = 'none';
     if (step4Section) step4Section.classList.remove('disabled');
   } else {
@@ -348,24 +345,24 @@ function addMSLMeasure() {
   const container = document.getElementById('msl-list');
   if (!container) return;
 
-  const rows = container.querySelectorAll('.msl-measure-row');
-  if (rows.length >= 5) return;
+  const currentCount = container.querySelectorAll('.msl-measure-row').length;
+  if (currentCount >= 1 + MAX_ADDITIONAL_MEASURES) return;
 
   mslRowCounter++;
-  const row = createMSLRow(mslRowCounter);
+  const row = createMSLRow(mslRowCounter, false);
   container.appendChild(row);
-
-  // Animate in
   setTimeout(() => row.classList.add('visible'), 10);
 
-  // Focus first input
-  row.querySelector('.msl-weight')?.focus();
-
+  row.querySelector(`#msl-name-${mslRowCounter}`)?.focus();
+  updateAddButton();
   updateRemoveButtons();
-  updateAllCalculations();
+  debouncedUpdate();
 }
 
 function removeMSLMeasure(index) {
+  // Prevent removing IPR (index 1)
+  if (index === 1) return;
+
   const container = document.getElementById('msl-list');
   if (!container) return;
 
@@ -377,6 +374,7 @@ function removeMSLMeasure(index) {
     row.classList.remove('visible');
     setTimeout(() => {
       row.remove();
+      updateAddButton();
       updateRemoveButtons();
       updateAllCalculations();
     }, 300);
@@ -385,104 +383,95 @@ function removeMSLMeasure(index) {
 
 function createMSLRow(index, isIPR = false) {
   const row = document.createElement('div');
-  row.className = 'msl-measure-row';
+  row.className = `msl-measure-row animate-fade-in-up ${isIPR ? 'ipr-row' : ''}`;
   row.setAttribute('data-index', index);
 
-  // Pre-fill IPR values if this is measure 1
-  let cutscores = {
-    lessUpper: '',
-    expected: '',
-    higher: ''
-  };
-
-  let nameValue = '';
-  let readOnlyAttr = '';
-
-  if (index === 1 && !isIPR) { // Force first measure to look like IPR default
-    isIPR = true;
-  }
-
-  if (isIPR) {
-    cutscores = {
-      lessUpper: '49',
-      expected: '70',
-      higher: '90'
-    };
-    nameValue = 'Instructional Program Review (IPR)';
-    // readOnlyAttr = 'readonly'; // Uncomment if we want to enforce IPR
-  }
+  const name = isIPR ? 'Instructional Program Review (IPR)' : '';
+  const weight = isIPR ? IPR_WEIGHT : '';
+  const minVal = isIPR ? IPR_MIN : '';
+  const maxVal = isIPR ? IPR_MAX : '';
+  const readonlyAttr = isIPR ? 'readonly class="readonly-field"' : '';
 
   row.innerHTML = `
     <div class="msl-measure-header">
-      <span class="msl-measure-number">Measure ${index} ${isIPR ? '(Required)' : ''}</span>
-      <button type="button" class="btn-remove" onclick="removeMSLMeasure(${index})" aria-label="Remove measure ${index}">Remove</button>
-    </div>
-    
-    <div class="form-group full-width">
-      <label for="msl-name-${index}">Measure Name</label>
-      <input type="text" id="msl-name-${index}" class="msl-name" placeholder="e.g. DIBELS, CMAS, Unit Test" value="${nameValue}">
+      <span class="msl-measure-number">
+        ${isIPR ? 'Measure 1 — IPR <span class="ipr-badge">Foundational</span>' : `Measure ${index}`}
+      </span>
+      ${!isIPR ? `<button type="button" class="btn-remove" onclick="removeMSLMeasure(${index})" aria-label="Remove measure">Remove</button>` : ''}
     </div>
 
-    <div class="msl-grid-inputs">
-      <div class="form-group">
-        <label for="msl-weight-${index}">Weight (%)</label>
-        <input type="number" id="msl-weight-${index}" class="msl-weight" 
-               min="0" max="30" step="0.1" placeholder="0.0">
+    <div class="msl-grid-inputs measure-fields">
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="msl-name-${index}">Measure Name</label>
+        <input type="text" id="msl-name-${index}" value="${name}" ${isIPR ? readonlyAttr : `placeholder="e.g., CMAS, DIBELS, AP Mean Score"`}>
       </div>
-      
-      <div class="form-group">
-        <label for="msl-max-score-${index}">Max Possible Score</label>
-        <input type="number" id="msl-max-score-${index}" class="msl-max-score" 
-               min="0" placeholder="100" value="100">
+
+      ${!isIPR ? `
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="msl-desc-${index}">Description <span style="font-weight: normal; color: var(--color-text-muted);">(optional)</span></label>
+        <textarea id="msl-desc-${index}" class="msl-desc" rows="2" placeholder="Brief note about this measure, e.g. district benchmark, grade level, subject"></textarea>
       </div>
-      
-      <div class="form-group">
-        <label for="msl-actual-score-${index}">Actual Score</label>
-        <input type="number" id="msl-actual-score-${index}" class="msl-actual-score" 
-               min="0" placeholder="0">
+      ` : ''}
+
+      <div class="form-group field-weight">
+        <label for="msl-weight-${index}">⚖️ Weight (%)</label>
+        <input type="number" id="msl-weight-${index}" min="0" max="30" step="0.1" value="${weight}" placeholder="0">
+      </div>
+
+      <div class="form-group field-range">
+        <label for="msl-min-${index}">Min Score</label>
+        <input type="number" id="msl-min-${index}" step="any" value="${minVal}" ${isIPR ? readonlyAttr : `placeholder="0"`}>
+      </div>
+
+      <div class="form-group field-range">
+        <label for="msl-max-${index}">Max Score</label>
+        <input type="number" id="msl-max-${index}" step="any" value="${maxVal}" ${isIPR ? readonlyAttr : `placeholder="100"`}>
+      </div>
+
+      <div class="form-group field-actual">
+        <label for="msl-actual-${index}">🎯 Score Achieved</label>
+        <input type="number" id="msl-actual-${index}" step="any" placeholder="Enter score">
       </div>
     </div>
-    
-    <div class="cutscore-section">
-      <h4>Cutscores (for interpolation)</h4>
-      <div class="msl-grid-inputs">
-         <div class="form-group">
-          <label for="msl-less-upper-${index}" title="Top score for 'Less Than Expected' range (maps to 100 pts)">Less Upper Limit</label>
-          <input type="number" id="msl-less-upper-${index}" class="msl-less-upper-limit" 
-                 min="0" placeholder="< Expected" value="${cutscores.lessUpper}">
-        </div>
-        
-        <div class="form-group">
-          <label for="msl-expected-${index}" title="Middle score for 'Expected' range (maps to 150 pts)">Expected Score</label>
-          <input type="number" id="msl-expected-${index}" class="msl-expected-score" 
-                 min="0" placeholder="Middle" value="${cutscores.expected}">
-        </div>
-        
-        <div class="form-group">
-          <label for="msl-higher-${index}" title="Start score for 'Higher Than Expected' range (maps to 201 pts)">Higher Threshold</label>
-          <input type="number" id="msl-higher-${index}" class="msl-higher-threshold" 
-                 min="0" placeholder="> Expected" value="${cutscores.higher}">
-        </div>
+
+    <div class="measure-visual-feedback">
+      <div class="measure-range-bar-container">
+        <div class="measure-range-bar"></div>
+        <div class="measure-range-marker" style="left: 0%; opacity: 0.3;"></div>
+        <span class="measure-range-label-min">${minVal !== '' ? minVal : 'Min'}</span>
+        <span class="measure-range-label-max">${maxVal !== '' ? maxVal : 'Max'}</span>
       </div>
+      <div class="measure-feedback"></div>
     </div>
   `;
 
   // Attach listeners
-  const inputs = row.querySelectorAll('input[type="number"]');
-  inputs.forEach(input => {
+  row.querySelectorAll('input[type="number"]').forEach(input => {
     input.addEventListener('input', debouncedUpdate);
   });
+  row.querySelector('.msl-desc')?.addEventListener('input', () => saveState(STORAGE_KEY_PRECISE));
 
   return row;
 }
 
 function updateRemoveButtons() {
   const rows = document.querySelectorAll('.msl-measure-row');
-  const buttons = document.querySelectorAll('.btn-remove');
-  buttons.forEach(btn => {
+  document.querySelectorAll('.btn-remove').forEach(btn => {
     btn.disabled = rows.length <= 2;
   });
 }
+
+function updateAddButton() {
+  const btn = document.getElementById('btn-add-measure');
+  const count = document.querySelectorAll('.msl-measure-row').length;
+  if (btn) {
+    btn.disabled = count >= 1 + MAX_ADDITIONAL_MEASURES;
+    btn.textContent = count >= 1 + MAX_ADDITIONAL_MEASURES
+      ? 'Maximum Measures Reached'
+      : '+ Add Measure';
+  }
+}
+
 
 // ===================================
 // RESET FUNCTIONALITY
@@ -504,7 +493,7 @@ function resetAll() {
     select.value = '';
   });
 
-  // Reset MSL to 2 blank rows
+  // Reset MSL to IPR + 1 blank row
   const container = document.getElementById('msl-list');
   if (container) {
     container.innerHTML = '';
@@ -513,16 +502,17 @@ function resetAll() {
     // Add Measure 1 (IPR)
     mslRowCounter++;
     const row1 = createMSLRow(mslRowCounter, true);
-    row1.classList.add('visible');
     container.appendChild(row1);
+    setTimeout(() => row1.classList.add('visible'), 10);
 
-    // Add Measure 2 (Standard)
+    // Add Measure 2 (blank)
     mslRowCounter++;
     const row2 = createMSLRow(mslRowCounter, false);
-    row2.classList.add('visible');
     container.appendChild(row2);
+    setTimeout(() => row2.classList.add('visible'), 10);
   }
 
+  updateAddButton();
   updateRemoveButtons();
   updateAllCalculations();
   clearState(STORAGE_KEY_PRECISE);
@@ -629,12 +619,11 @@ function showCalculationDetails() {
         <ul>
           ${!step1Valid ? '<li>Step 1: PP weights must total 100%</li>' : ''}
           ${!step2Complete ? '<li>Step 2: All 17 elements must be rated</li>' : ''}
-          ${!step3Valid ? '<li>Step 3: All measure fields (weights, max, actual, cutscores) must be filled</li>' : ''}
+          ${!step3Valid ? '<li>Step 3: All measures need weights, min/max, and actual scores; weights must total 30%</li>' : ''}
         </ul>
       </div>
     `;
   } else {
-    // Generate detailed breakdown
     const ppResult = calculatePPScore();
     const mslResult = calculateMSLScore();
     const finalResult = calculateFinalRating(ppResult.score, mslResult.score, mslResult.rating);
@@ -644,89 +633,38 @@ function showCalculationDetails() {
         <h3>Professional Practices (PP)</h3>
         <p><strong>Base Formula per Standard:</strong> (Earned / Possible) × (Weight / 100) × 700</p>
         <table class="calc-table">
-          <thead>
-            <tr>
-              <th>Standard</th>
-              <th>Earned</th>
-              <th>Possible</th>
-              <th>Weight</th>
-              <th>Score (700 scale)</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Standard</th><th>Earned</th><th>Possible</th><th>Weight</th><th>Score (700 scale)</th></tr></thead>
           <tbody>
     `;
 
     ppResult.standards.forEach((std, i) => {
       const weight = parseNum(document.getElementById(`pp-weight-s${i + 1}`)?.value);
-      html += `
-        <tr>
-          <td>${std.standard.name}</td>
-          <td>${std.earned}</td>
-          <td>${std.possible}</td>
-          <td>${weight}%</td>
-          <td>${std.weightedScore700}</td>
-        </tr>
-      `;
+      html += `<tr><td>${std.standard.name}</td><td>${std.earned}</td><td>${std.possible}</td><td>${weight}%</td><td>${std.weightedScore700}</td></tr>`;
     });
 
     html += `
           </tbody>
-          <tfoot>
-            <tr>
-              <th colspan="4">Total PP Score</th>
-              <th>${ppResult.score}</th>
-            </tr>
-          </tfoot>
+          <tfoot><tr><th colspan="4">Total PP Score</th><th>${ppResult.score}</th></tr></tfoot>
         </table>
         <p><strong>PP Rating:</strong> <span class="rating-badge ${ratingToClass(ppResult.rating)}">${ppResult.rating}</span></p>
       </div>
       
       <div class="calc-section">
-        <h3>Measures of Student Learning (MSL) - Precise Scoring</h3>
-        <p><strong>Methodology:</strong> Calculated using cutscores and linear interpolation.</p>
-        <table class="calc-table wide-table">
-          <thead>
-            <tr>
-              <th>Measure</th>
-              <th>Weight</th>
-              <th>Actual / Max</th>
-              <th>Cutscores (Less/Exp/High)</th>
-              <th>Unweighted (300)</th>
-              <th>Weighted Score</th>
-            </tr>
-          </thead>
+        <h3>Measures of Student Learning (MSL)</h3>
+        <p><strong>Method:</strong> Each actual score is normalized within its min–max range, scaled to 300, then weighted.</p>
+        <p><strong>Formula per measure:</strong> <code>((Actual − Min) / (Max − Min)) × 300 × (Weight / 30)</code></p>
+        <table class="calc-table">
+          <thead><tr><th>Measure</th><th>Actual</th><th>Range</th><th>Normalized</th><th>Scaled (300)</th><th>Weight</th><th>Weighted</th></tr></thead>
           <tbody>
     `;
 
-    mslResult.measures.forEach((measure, i) => {
-      html += `
-        <tr>
-          <td>
-            <strong>Measure ${i + 1}</strong><br>
-            <small>${measure.name}</small>
-            ${measure.rating ? `<br><span class="rating-badge ${ratingToClass(measure.rating)}" style="font-size: 0.75rem; padding: 2px 8px; margin-top: 4px;">${measure.rating}</span>` : ''}
-          </td>
-          <td>${measure.weight}%</td>
-          <td>${measure.actualScore} / ${measure.maxScore}<br>(${measure.percentage}%)</td>
-          <td>
-            less &le; ${measure.lessUpperLimit}<br>
-            exp = ${measure.expectedScore}<br>
-            high &ge; ${measure.higherThreshold}
-          </td>
-          <td>${measure.unweightedScore300}</td>
-          <td>${measure.weightedScore}</td>
-        </tr>
-      `;
+    mslResult.measures.forEach(m => {
+      html += `<tr><td>${m.name || '—'}</td><td>${m.actual}</td><td>${m.minScore} – ${m.maxScore}</td><td>${(m.normalized * 100).toFixed(1)}%</td><td>${m.scaled300}</td><td>${m.weight}%</td><td>${m.weighted}</td></tr>`;
     });
 
     html += `
           </tbody>
-          <tfoot>
-            <tr>
-              <th colspan="5">Total MSL Score</th>
-              <th>${mslResult.score}</th>
-            </tr>
-          </tfoot>
+          <tfoot><tr><th colspan="6">Total MSL Score</th><th>${mslResult.score}</th></tr></tfoot>
         </table>
         <p><strong>MSL Rating:</strong> <span class="rating-badge ${ratingToClass(mslResult.rating)}">${mslResult.rating}</span></p>
       </div>
@@ -735,26 +673,12 @@ function showCalculationDetails() {
         <h3>Final Effectiveness Rating</h3>
         <p><strong>Formula:</strong> PP Score + MSL Score</p>
         <div class="final-calc-box">
-          <div class="calc-row">
-            <span>Professional Practices:</span>
-            <span>${ppResult.score}</span>
-          </div>
-          <div class="calc-row">
-            <span>Measures of Student Learning:</span>
-            <span>+ ${mslResult.score}</span>
-          </div>
-          <div class="calc-row total">
-            <span>Total Score:</span>
-            <span>${finalResult.total} / 1000</span>
-          </div>
-          <div class="calc-row result">
-            <span>Rating:</span>
-            <span class="${ratingToClass(finalResult.rating)}">${finalResult.rating}</span>
-          </div>
+          <div class="calc-row"><span>Professional Practices:</span><span>${ppResult.score}</span></div>
+          <div class="calc-row"><span>Measures of Student Learning:</span><span>+ ${mslResult.score}</span></div>
+          <div class="calc-row total"><span>Total Score:</span><span>${finalResult.total} / 1000</span></div>
+          <div class="calc-row result"><span>Rating:</span><span class="${ratingToClass(finalResult.rating)}">${finalResult.rating}</span></div>
           ${(mslResult.rating === 'Less Than Expected' && calculateFinalRating(ppResult.score, mslResult.score, 'Expected').rating === 'Highly Effective') ?
-        `<div class="calc-warning">
-              <strong>Note:</strong> Final rating capped at "Effective" because MSL rating is "Less Than Expected".
-             </div>` : ''}
+        `<div class="calc-warning"><strong>Note:</strong> Final rating capped at "Effective" because MSL rating is "Less Than Expected".</div>` : ''}
         </div>
       </div>
     `;
@@ -763,7 +687,6 @@ function showCalculationDetails() {
   }
 
   modal.style.display = 'flex';
-  // Allow closing by clicking overlay
   overlay.onclick = closeModal;
 }
 
@@ -834,10 +757,12 @@ function init() {
       // Measure 2: Generic
       mslRowCounter = 2;
       const row2 = createMSLRow(mslRowCounter, false);
-      row2.classList.add('visible');
       container.appendChild(row2);
+      setTimeout(() => row2.classList.add('visible'), 10);
     }
   }
+
+  updateAddButton();
 
   // Button listeners
   document.getElementById('btn-add-measure')?.addEventListener('click', addMSLMeasure);
@@ -851,7 +776,13 @@ function init() {
 
   document.getElementById('btn-sample-data')?.addEventListener('click', loadSampleData);
   document.getElementById('btn-reset')?.addEventListener('click', resetAll);
-  document.getElementById('btn-print')?.addEventListener('click', () => window.print());
+  document.getElementById('btn-print')?.addEventListener('click', () => {
+    const dateEl = document.getElementById('print-date');
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    window.print();
+  });
   document.getElementById('btn-show-calculations')?.addEventListener('click', showCalculationDetails);
   document.getElementById('modal-close')?.addEventListener('click', closeModal);
 
@@ -912,37 +843,34 @@ function loadSampleData() {
 
   elements.forEach((id, idx) => {
     const el = document.getElementById(`${id}-level`);
-    if (el) el.value = (idx % 3 === 0) ? 4 : 3; // Mix of Level 4 and 3
+    if (el) el.value = (idx % 3 === 0) ? 4 : 3;
   });
 
-  // MSL Sample Data
+  // MSL Sample Data (simple min/max)
   const container = document.getElementById('msl-list');
   container.innerHTML = '';
 
   // IPR Measure
   mslRowCounter = 1;
   const row1 = createMSLRow(mslRowCounter, true);
-  row1.classList.add('visible');
   container.appendChild(row1);
+  setTimeout(() => row1.classList.add('visible'), 10);
+  document.getElementById('msl-weight-1').value = 15;
+  document.getElementById('msl-actual-1').value = 75;
 
-  row1.querySelector('.msl-weight').value = 15;
-  row1.querySelector('.msl-max-score').value = 100;
-  row1.querySelector('.msl-actual-score').value = 75; // Effective range
-
-  // Unit Test Measure
+  // Second Measure
   mslRowCounter = 2;
   const row2 = createMSLRow(mslRowCounter, false);
-  row2.classList.add('visible');
   container.appendChild(row2);
+  setTimeout(() => row2.classList.add('visible'), 10);
+  document.getElementById('msl-name-2').value = 'DIBELS Composite';
+  document.getElementById('msl-weight-2').value = 15;
+  document.getElementById('msl-min-2').value = 0;
+  document.getElementById('msl-max-2').value = 500;
+  document.getElementById('msl-actual-2').value = 420;
 
-  row2.querySelector('.msl-weight').value = 15;
-  row2.querySelector('.msl-name').value = 'Unit Test 1';
-  row2.querySelector('.msl-max-score').value = 50;
-  row2.querySelector('.msl-less-upper-limit').value = 25;
-  row2.querySelector('.msl-expected-score').value = 35;
-  row2.querySelector('.msl-higher-threshold').value = 45;
-  row2.querySelector('.msl-actual-score').value = 48; // High score
-
+  updateAddButton();
+  updateRemoveButtons();
   updateAllCalculations();
 }
 

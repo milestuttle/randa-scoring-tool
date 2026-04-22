@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RANDA Scoring Weight Web Tool - Precise MSL</title>
+  <title>RANDA Scoring Weight Calculator</title>
   <meta name="description"
     content="Calculate teacher effectiveness ratings using the 70:30 scoring methodology with precise, cutscore-based MSL scoring (70% Professional Practices / 30% Measures of Student Learning).">
   <link rel="stylesheet" href="styles.css">
@@ -15,10 +15,8 @@
     <div
       style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto;">
       <div>
-        <h1>RANDA Scoring Weight Web Tool - Precise MSL</h1>
-        <p class="subtitle">70:30 Scoring Methodology with Cutscore-Based MSL (70% Professional Practices / 30% Measures
-          of
-          Student Learning)</p>
+        <h1>RANDA Scoring Weight Calculator</h1>
+        <p class="subtitle">70:30 Scoring Methodology (70% Professional Practices / 30% Measures of Student Learning)</p>
       </div>
       <button type="button" id="btn-about-tool" class="btn btn-secondary" style="white-space: nowrap;">ℹ️ About This
         Tool</button>
@@ -26,6 +24,18 @@
   </header>
 
   <main class="container">
+    <!-- Print-Only Header -->
+    <div class="print-only print-header">
+      <div class="print-header-row">
+        <div class="print-field"><strong>Teacher:</strong> ________________________________</div>
+        <div class="print-field"><strong>School Year:</strong> 2024-2025</div>
+      </div>
+      <div class="print-header-row">
+        <div class="print-field"><strong>Evaluator:</strong> _____________________________</div>
+        <div class="print-field"><strong>Date:</strong> <span id="print-date"></span></div>
+      </div>
+    </div>
+
     <!-- Progress Indicator -->
     <div class="progress-steps" role="navigation" aria-label="Evaluation progress"
       style="display: flex; justify-content: center; width: 100%; margin: 0 auto 2rem auto;">
@@ -446,25 +456,22 @@
 
     <!-- STEP 3: Measures of Student Learning -->
     <section id="step3" class="card">
-      <h2>Step 3: Configure Measures of Student Learning with Cutscores <button class="tooltip-trigger"
+      <h2>Step 3: Configure Measures of Student Learning <button class="tooltip-trigger"
           data-tooltip="step3-msl" aria-label="Help: Measures of Student Learning">ⓘ</button></h2>
-      <p class="step-description">Define 2-5 MSL measures with precise cutscores. The first measure must be IPR
-        (Instructional Program Review, scored out of 100). For each measure, set cutscores that define performance
-        ranges, then enter the actual score achieved.</p>
+      <p class="step-description">Define your MSL measures. IPR defaults to 10% but can be adjusted. Add up to 3 additional measures.
+        Weights must total 30%. Enter the minimum and maximum possible scores for each measure,
+        then the actual score achieved.</p>
 
       <div class="tooltip" id="tooltip-step3-msl" role="tooltip" style="display: none;">
         <div class="tooltip-content">
-          <strong>About Precise MSL Scoring:</strong> This version uses cutscores to map your actual scores to the
-          300-point MSL scale. For each measure, you define three cutscores:<br>
-          <strong>Less Than Expected Upper Limit:</strong> Top score for "Less Than Expected" range (maps to
-          100/300)<br>
-          <strong>Expected Score:</strong> Middle of "Expected" range (maps to 150/300)<br>
-          <strong>Higher Than Expected Threshold:</strong> Start of "Higher Than Expected" range (maps to 201/300)<br>
-          Your actual score is interpolated between these points to determine an exact score out of 300 for that
-          measure.<br><br>
-          <strong>IPR (Required):</strong> The first measure is always IPR (Instructional Program Review) with
-          pre-filled cutscores:<br>
-          0-30 = Ineffective | 31-49 = Somewhat Effective | 50-89 = Effective | 90-100 = Highly Effective
+          <strong>How scoring works:</strong> Each measure's actual score is converted to a percentage
+          within its min–max range, then scaled to a 300-point scale and weighted.<br><br>
+          <strong>Example:</strong> A measure with range 600–1100 and actual score of 850:<br>
+          <code>(850 − 600) / (1100 − 600) = 50% → 150 / 300</code><br><br>
+          <strong>IPR:</strong> Instructional Program Review is the first measure,
+          defaulting to 10% weight with a 0–100 point scale.<br><br>
+          <strong>Weights:</strong> All measure weights must add up to exactly 30%.
+          IPR typically accounts for 10%, leaving 20% for your other measures.
         </div>
       </div>
 
@@ -480,7 +487,19 @@
 
       <!-- Overall MSL Summary -->
       <div id="msl-results" class="overall-summary disabled">
-        <h3>Overall Measures of Student Learning Summary</h3>
+        <h3>MSL Results</h3>
+        
+        <div id="msl-status-checklist" class="status-checklist">
+          <div id="status-weights" class="status-item incomplete">
+            <span class="status-icon">⚖️</span>
+            <span class="status-text">Weights must total 30%</span>
+          </div>
+          <div id="status-scores" class="status-item incomplete">
+            <span class="status-icon">🎯</span>
+            <span class="status-text">All measures must have scores</span>
+          </div>
+        </div>
+
         <div class="summary-stats">
           <div class="stat">
             <span class="label">Base Score:</span>
@@ -697,15 +716,19 @@
 
           <h4>Step 3: Measures of Student Learning (MSL)</h4>
           <ul>
-            <li>Add 2-5 MSL measures using the "+ Add Measure" button</li>
-            <li>For each measure:
-              <ul>
-                <li>Assign a weight (percentage of 30%)</li>
-                <li>Select a rating: Less Than Expected, Expected, or More Than Expected</li>
-              </ul>
-            </li>
+            <li><strong>IPR is pre-configured</strong> — Measure 1 (Instructional Program Review) defaults to 10% weight. You can adjust this if needed.</li>
+            <li>Add up to 3 more measures (4 total)</li>
+            <li>For each measure, provide a name, weight, and the min/max/actual scores</li>
             <li><strong>Total weights must equal 30%</strong></li>
           </ul>
+
+          <h4>Scoring Method</h4>
+          <p>Each measure's score is normalized within its range and scaled to 300 points:</p>
+          <div style="background: var(--color-bg); padding: var(--spacing-md); border-radius: var(--radius-md); font-family: monospace; font-size: 0.9rem;">
+            Scaled = ((Actual − Min) / (Max − Min)) × 300<br><br>
+            Weighted = Scaled × (Weight / 30)
+          </div>
+          <p style="margin-top: var(--spacing-md);">The MSL score is the sum of all weighted contributions (out of 300).</p>
 
           <h4>Step 4: Overall Effectiveness Rating</h4>
           <ul>
@@ -794,6 +817,25 @@
         </div>
       </div>
     </div>
+    <!-- Print-Only Methodology -->
+    <section class="print-only print-methodology card">
+      <h3>Scoring Methodology & Verification</h3>
+      <p>This report was generated using the RANDA Scoring Weight Calculator. Professional Practices (70%) are scored
+        by weighting element-level proficiency ratings across 4 standards on a 700-point scale. Measures of Student
+        Learning (30%) use simple proportional scoring: each measure's actual score is normalized within its min–max
+        range, scaled to 300 points, and weighted. The final effectiveness rating is the sum of both components
+        on a 1000-point scale.</p>
+      <div class="print-signature-box">
+        <div class="signature-line">
+          <span>Evaluator Signature:</span>
+          <div class="line"></div>
+        </div>
+        <div class="signature-line">
+          <span>Date:</span>
+          <div class="line" style="width: 150px;"></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="app-footer">
