@@ -478,9 +478,6 @@ function updateAddButton() {
 // ===================================
 
 function resetAll() {
-  if (!confirm('Are you sure you want to reset all inputs? This cannot be undone.')) {
-    return;
-  }
 
   // Reset PP weights
   [1, 2, 3, 4].forEach(i => {
