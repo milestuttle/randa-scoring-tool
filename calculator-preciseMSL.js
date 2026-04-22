@@ -776,6 +776,7 @@ function init() {
 
   document.getElementById('btn-sample-data')?.addEventListener('click', loadSampleData);
   document.getElementById('btn-reset')?.addEventListener('click', resetAll);
+  document.getElementById('btn-reset-top')?.addEventListener('click', resetAll);
   document.getElementById('btn-print')?.addEventListener('click', () => {
     const dateEl = document.getElementById('print-date');
     if (dateEl) {
