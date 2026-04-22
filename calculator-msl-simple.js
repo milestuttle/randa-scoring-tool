@@ -161,25 +161,59 @@ function updateAllCalculations() {
     }
   }
 
+  // Update Status Checklist
+  const statusWeights = document.getElementById('status-weights');
+  const statusScores = document.getElementById('status-scores');
+  
+  if (statusWeights) {
+    statusWeights.className = `status-item ${result.weightsValid ? 'complete' : 'incomplete'}`;
+    statusWeights.querySelector('.status-icon').textContent = result.weightsValid ? '✓' : '⚖️';
+  }
+  
+  if (statusScores) {
+    const allFilled = result.measures.every(m => m.filled);
+    statusScores.className = `status-item ${allFilled ? 'complete' : 'incomplete'}`;
+    statusScores.querySelector('.status-icon').textContent = allFilled ? '✓' : '🎯';
+  }
+
   // Per-measure feedback
   result.measures.forEach((m, i) => {
     const row = document.querySelectorAll('.msl-measure-row')[i];
     if (!row) return;
+    
+    // Text feedback
     const feedbackEl = row.querySelector('.measure-feedback');
     if (feedbackEl) {
       if (m.filled) {
-        feedbackEl.textContent = `${m.percentage}% → ${m.scaled300} / 300 → contributes ${m.weighted} pts`;
+        feedbackEl.textContent = `${m.percentage}% of range → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
         feedbackEl.className = 'measure-feedback visible';
       } else {
         feedbackEl.textContent = '';
         feedbackEl.className = 'measure-feedback';
       }
     }
+
+    // Visual Range Bar
+    const marker = row.querySelector('.measure-range-marker');
+    const minLabel = row.querySelector('.measure-range-label-min');
+    const maxLabel = row.querySelector('.measure-range-label-max');
+    
+    if (minLabel) minLabel.textContent = isNaN(parseFloat(m.minScore)) ? 'Min' : m.minScore;
+    if (maxLabel) maxLabel.textContent = isNaN(parseFloat(m.maxScore)) ? 'Max' : m.maxScore;
+    
+    if (marker) {
+      if (m.filled) {
+        marker.style.left = `${m.normalized * 100}%`;
+        marker.style.opacity = '1';
+      } else {
+        marker.style.left = '0%';
+        marker.style.opacity = '0.3';
+      }
+    }
   });
 
   // MSL results summary
   const mslResults = document.getElementById('msl-results');
-  const mslOverlay = document.getElementById('msl-overlay');
   document.getElementById('msl-score').textContent = result.valid ? result.score : '0';
   document.getElementById('msl-percentage').textContent = (result.valid ? result.percentage : 0).toFixed(1) + '%';
   const randaEl = document.getElementById('msl-randa-score');
@@ -193,12 +227,11 @@ function updateAllCalculations() {
     if (cls) ratingEl.classList.add('rating-badge', cls);
   }
 
+  // Handle results section "dimming" instead of full overlay
   if (result.valid) {
     mslResults?.classList.remove('disabled');
-    if (mslOverlay) mslOverlay.style.display = 'none';
   } else {
     mslResults?.classList.add('disabled');
-    if (mslOverlay) mslOverlay.style.display = 'flex';
   }
 
   // Top summary card
@@ -266,7 +299,7 @@ let rowCounter = 1; // IPR is always 1
 
 function createMeasureRow(index, isIPR = false) {
   const row = document.createElement('div');
-  row.className = 'msl-measure-row';
+  row.className = `msl-measure-row animate-fade-in-up ${isIPR ? 'ipr-row' : ''}`;
   row.dataset.index = index;
 
   const name = isIPR ? 'Instructional Program Review (IPR)' : '';
@@ -274,11 +307,13 @@ function createMeasureRow(index, isIPR = false) {
   const minVal = isIPR ? IPR_MIN : '';
   const maxVal = isIPR ? IPR_MAX : '';
   const readonlyAttr = isIPR ? 'readonly class="readonly-field"' : '';
-  const weightReadonly = isIPR ? 'readonly class="readonly-field"' : '';
+  const weightReadonly = ''; // No longer readonly for IPR
 
   row.innerHTML = `
     <div class="msl-measure-header">
-      <span class="msl-measure-number">${isIPR ? 'Measure 1 — IPR (Required)' : `Measure ${index}`}</span>
+      <span class="msl-measure-number">
+        ${isIPR ? 'Measure 1 — IPR <span class="ipr-badge">Foundational</span>' : `Measure ${index}`}
+      </span>
       ${!isIPR ? `<button type="button" class="btn-remove" onclick="removeMeasure(${index})" aria-label="Remove measure">Remove</button>` : ''}
     </div>
 
@@ -316,8 +351,15 @@ function createMeasureRow(index, isIPR = false) {
       </div>
     </div>
 
-
-    <div class="measure-feedback"></div>
+    <div class="measure-visual-feedback">
+      <div class="measure-range-bar-container">
+        <div class="measure-range-bar"></div>
+        <div class="measure-range-marker" style="left: 0%; opacity: 0.3;"></div>
+        <span class="measure-range-label-min">${minVal || 'Min'}</span>
+        <span class="measure-range-label-max">${maxVal || 'Max'}</span>
+      </div>
+      <div class="measure-feedback"></div>
+    </div>
   `;
 
   // Attach listeners
@@ -544,7 +586,7 @@ function loadState() {
       if (nameEl && !isIPR) nameEl.value = m.name;
       const descEl = document.getElementById(`msl-desc-${m.index}`);
       if (descEl) descEl.value = m.desc || '';
-      if (weightEl && !isIPR) weightEl.value = m.weight;
+      if (weightEl) weightEl.value = m.weight;
       if (minEl && !isIPR) minEl.value = m.min;
       if (maxEl && !isIPR) maxEl.value = m.max;
       if (actualEl) actualEl.value = m.actual;
