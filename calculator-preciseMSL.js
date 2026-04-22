@@ -828,11 +828,11 @@ function init() {
 }
 
 function loadSampleData() {
-  if (!confirm('This will overwrite current values with sample data. Continue?')) return;
 
   // Clear any stale saved state so it doesn't overwrite sample values
   clearState(STORAGE_KEY_PRECISE);
 
+  // PP Weights: equal at 25% each
   [1, 2, 3, 4].forEach(i => {
     const el = document.getElementById(`pp-weight-s${i}`);
     if (el) el.value = 25;
