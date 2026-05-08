@@ -155,9 +155,18 @@ function updateAllCalculations() {
     if (result.weightsValid) {
       weightMsg.textContent = '✓ Total equals 30%';
       weightMsg.className = 'validation-success';
-    } else {
-      weightMsg.textContent = `⚠ Total must equal 30% (currently ${result.totalWeight.toFixed(1)}%)`;
+    } else if (result.totalWeight > MSL_TOTAL_WEIGHT) {
+      weightMsg.textContent = `⚠ Total exceeds 30% (currently ${result.totalWeight.toFixed(1)}%)`;
       weightMsg.className = 'validation-error';
+    } else {
+      const rowCount = document.querySelectorAll('.msl-measure-row').length;
+      if (rowCount <= 1) {
+        weightMsg.textContent = `Add measures to reach 30% (currently ${result.totalWeight.toFixed(1)}%)`;
+        weightMsg.className = 'validation-info';
+      } else {
+        weightMsg.textContent = `⚠ Total must equal 30% (currently ${result.totalWeight.toFixed(1)}%)`;
+        weightMsg.className = 'validation-error';
+      }
     }
   }
 
@@ -214,18 +223,8 @@ function updateAllCalculations() {
 
   // MSL results summary
   const mslResults = document.getElementById('msl-results');
-  document.getElementById('msl-score').textContent = result.valid ? result.score : '0';
-  document.getElementById('msl-percentage').textContent = (result.valid ? result.percentage : 0).toFixed(1) + '%';
   const randaEl = document.getElementById('msl-randa-score');
   if (randaEl) randaEl.textContent = result.valid ? (result.score / 100).toFixed(2) : '—';
-
-  const ratingEl = document.getElementById('msl-rating');
-  ratingEl.textContent = result.valid ? result.rating : '—';
-  stripRatingClasses(ratingEl);
-  if (result.valid) {
-    const cls = ratingToClass(result.rating);
-    if (cls) ratingEl.classList.add('rating-badge', cls);
-  }
 
   // Handle results section "dimming" instead of full overlay
   if (result.valid) {
@@ -252,7 +251,7 @@ function updateAllCalculations() {
     }
     if (summaryOverlay) summaryOverlay.style.display = 'none';
     if (summaryMarker) {
-      summaryMarker.style.left = (result.score / MSL_MAX_SCALED * 100) + '%';
+      summaryMarker.style.left = clamp(result.score / MSL_MAX_SCALED * 100, 2, 98) + '%';
       summaryMarker.style.display = 'block';
     }
   } else {
@@ -426,8 +425,6 @@ function updateAddButton() {
 // ===================================
 
 function resetAll() {
-  if (!confirm('Are you sure you want to reset all data? This cannot be undone.')) return;
-
   const container = document.getElementById('msl-list');
   container.innerHTML = '';
   rowCounter = 1;
@@ -613,7 +610,10 @@ function init() {
     const container = document.getElementById('msl-list');
     const iprRow = createMeasureRow(1, true);
     container.appendChild(iprRow);
-    setTimeout(() => iprRow.classList.add('visible'), 10);
+    setTimeout(() => {
+      iprRow.classList.add('visible');
+      document.getElementById('msl-actual-1')?.focus();
+    }, 150);
   }
 
   // Event listeners
