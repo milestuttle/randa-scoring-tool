@@ -8,6 +8,14 @@
   <meta name="description"
     content="Calculate Measures of Student Learning (MSL) scores for COPMS RANDA entry using simple proportional scoring.">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    @media print {
+      /* Hide the interactive configuration card entirely during print */
+      #step-msl {
+        display: none !important;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -87,24 +95,30 @@
       </div>
     </section>
 
+    <!-- Print-Only Summary of Measures -->
+    <section id="print-measures-summary" class="card print-only">
+      <h2>Measures of Student Learning Details</h2>
+      <div id="print-measures-table-container">
+        <p style="font-style: italic; color: var(--color-text-muted);">No measures configured.</p>
+      </div>
+    </section>
+
     <!-- MSL Configuration -->
     <section id="step-msl" class="card">
       <h2>Configure MSL Measures <button class="tooltip-trigger" data-tooltip="msl-help"
           aria-label="Help: MSL Measures">ⓘ</button></h2>
       <p class="step-description">
         Define your MSL measures. IPR defaults to 10% but can be adjusted. Add up to 3 additional measures.
-        Weights must total 30%. Enter the minimum and maximum possible scores for each measure,
-        then the actual score achieved.
+        Weights must total 30%. Enter the Goal Score (midpoint) and Max Score for each measure,
+        then the actual score achieved. Minimum Score is set at an equal distance below Goal Score.
       </p>
 
       <div class="tooltip" id="tooltip-msl-help" role="tooltip" style="display: none;">
         <div class="tooltip-content">
-          <strong>How scoring works:</strong> Each measure's actual score is converted to a percentage
-          within its min–max range, then scaled to a 300-point scale and weighted.<br><br>
-          <strong>Example:</strong> A measure with range 600–1100 and actual score of 850:<br>
-          <code>(850 − 600) / (1100 − 600) = 50% → 150 / 300</code><br><br>
+          <strong>How scoring works:</strong> Each measure is defined by a Goal Score (midpoint) and Max Score. The Minimum Score is calculated as Goal − (Max − Goal). The actual score is converted to a percentage within this range, then scaled to a 300-point scale and weighted.<br><br>
+          <strong>Example:</strong> Goal Score = 85, Max Score = 100 → Minimum Score = 70 (Range 70–100). An actual score of 85 = 50% → 150 / 300.<br><br>
           <strong>IPR:</strong> Instructional Program Review is the first measure,
-          defaulting to 10% weight with a 0–100 point scale.<br><br>
+          defaulting to 10% weight with a fixed 0–100 point scale (Goal = 50).<br><br>
           <strong>Weights:</strong> All measure weights must add up to exactly 30%.
           IPR typically accounts for 10%, leaving 20% for your other measures.
         </div>
@@ -223,12 +237,16 @@
         according to its contribution to the overall MSL score (30% of total evaluation).</p>
       <div class="print-signature-box">
         <div class="signature-line">
-          <span>Evaluator Signature:</span>
+          <span>Teacher Signature:</span>
           <div class="line"></div>
         </div>
         <div class="signature-line">
+          <span>Evaluator Signature:</span>
+          <div class="line"></div>
+        </div>
+        <div class="signature-line" style="max-width: 180px;">
           <span>Date:</span>
-          <div class="line" style="width: 150px;"></div>
+          <div class="line"></div>
         </div>
       </div>
     </section>

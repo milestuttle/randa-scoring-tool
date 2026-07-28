@@ -73,25 +73,29 @@ function calculateMSL() {
 
   rows.forEach(row => {
     const idx = row.dataset.index;
+    const isIPR = row.classList.contains('ipr-row') || idx == 1;
     const nameEl = document.getElementById(`msl-name-${idx}`);
     const weightEl = document.getElementById(`msl-weight-${idx}`);
-    const minEl = document.getElementById(`msl-min-${idx}`);
+    const goalEl = document.getElementById(`msl-goal-${idx}`);
     const maxEl = document.getElementById(`msl-max-${idx}`);
     const actualEl = document.getElementById(`msl-actual-${idx}`);
 
     const name = nameEl ? nameEl.value : `Measure ${idx}`;
     const weight = parseFloat(weightEl?.value) || 0;
-    const minScore = parseFloat(minEl?.value);
-    const maxScore = parseFloat(maxEl?.value);
+    const goalScore = isIPR ? 50 : parseFloat(goalEl?.value);
+    const maxScore = isIPR ? 100 : parseFloat(maxEl?.value);
+    const minScore = 2 * goalScore - maxScore;
     const actual = parseFloat(actualEl?.value);
 
     totalWeight += weight;
 
     if (isNaN(actual) || actualEl?.value === '' ||
-        isNaN(minScore) || minEl?.value === '' ||
-        isNaN(maxScore) || maxEl?.value === '') {
+        isNaN(goalScore) || (goalEl?.value === '' && !isIPR) ||
+        isNaN(maxScore) || (maxEl?.value === '' && !isIPR) ||
+        maxScore <= goalScore) {
       allFilled = false;
-      measures.push({ name, weight, minScore: 0, maxScore: 0, actual: 0, normalized: 0, scaled300: 0, weighted: 0, filled: false });
+      const invalidRange = !isNaN(goalScore) && !isNaN(maxScore) && maxScore <= goalScore;
+      measures.push({ name, weight, goalScore: isNaN(goalScore) ? 0 : goalScore, maxScore: isNaN(maxScore) ? 0 : maxScore, minScore: isNaN(minScore) ? 0 : minScore, actual: 0, normalized: 0, scaled300: 0, weighted: 0, filled: false, invalidRange });
       return;
     }
 
@@ -104,6 +108,7 @@ function calculateMSL() {
     measures.push({
       name,
       weight,
+      goalScore,
       minScore,
       maxScore,
       actual,
@@ -194,8 +199,11 @@ function updateAllCalculations() {
     const feedbackEl = row.querySelector('.measure-feedback');
     if (feedbackEl) {
       if (m.filled) {
-        feedbackEl.textContent = `${m.percentage}% of range → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
+        feedbackEl.textContent = `${m.percentage}% of range (Min: ${m.minScore}, Goal: ${m.goalScore}, Max: ${m.maxScore}) → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
         feedbackEl.className = 'measure-feedback visible';
+      } else if (m.invalidRange) {
+        feedbackEl.textContent = `⚠ Max Score (${m.maxScore}) must be greater than Goal Score (${m.goalScore})`;
+        feedbackEl.className = 'measure-feedback visible validation-error';
       } else {
         feedbackEl.textContent = '';
         feedbackEl.className = 'measure-feedback';
@@ -207,8 +215,8 @@ function updateAllCalculations() {
     const minLabel = row.querySelector('.measure-range-label-min');
     const maxLabel = row.querySelector('.measure-range-label-max');
     
-    if (minLabel) minLabel.textContent = isNaN(parseFloat(m.minScore)) ? 'Min' : m.minScore;
-    if (maxLabel) maxLabel.textContent = isNaN(parseFloat(m.maxScore)) ? 'Max' : m.maxScore;
+    if (minLabel) minLabel.textContent = !m.filled ? 'Min' : `Min (${m.minScore})`;
+    if (maxLabel) maxLabel.textContent = !m.filled ? 'Max' : `Max (${m.maxScore})`;
     
     if (marker) {
       if (m.filled) {
@@ -265,8 +273,76 @@ function updateAllCalculations() {
     if (summaryMarker) summaryMarker.style.display = 'none';
   }
 
+  // Update print-only summary table
+  updatePrintSummary(result);
+
   // Save
   saveState();
+}
+
+/**
+ * Dynamically generate a clean, print-friendly summary table of all MSL measures
+ */
+function updatePrintSummary(result) {
+  const container = document.getElementById('print-measures-table-container');
+  if (!container) return;
+
+  if (!result.valid) {
+    container.innerHTML = `
+      <div class="print-warning" style="padding: 12px; border: 1px dashed #dc2626; color: #991b1b; text-align: center; font-weight: bold; margin: 15px 0; background: #fee2e2; border-radius: 4px;">
+        ⚠️ Configuration incomplete. Complete all MSL measures and ensure total weight equals 30% to view print details.
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <table class="results-table" style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10pt;">
+      <thead>
+        <tr style="background-color: #f3f4f6;">
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Measure</th>
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: center; width: 10%;">Weight</th>
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: center; width: 12%;">Goal Score</th>
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: center; width: 12%;">Max Score</th>
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: center; width: 18%;">Calculated Range (Min–Max)</th>
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: center; width: 14%;">Score Achieved</th>
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: center; width: 12%;">% of Range</th>
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: center; width: 12%;">Contribution</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  result.measures.forEach((m, idx) => {
+    const displayName = m.name ? m.name.trim() : `Measure ${idx + 1}`;
+    html += `
+      <tr>
+        <td style="border: 1px solid #ccc; padding: 8px; text-align: left; font-weight: bold;">${displayName}</td>
+        <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${m.weight.toFixed(1)}%</td>
+        <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${m.goalScore}</td>
+        <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${m.maxScore}</td>
+        <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${m.minScore} – ${m.maxScore}</td>
+        <td style="border: 1px solid #ccc; padding: 8px; text-align: center; font-weight: bold;">${m.actual}</td>
+        <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${m.percentage.toFixed(1)}%</td>
+        <td style="border: 1px solid #ccc; padding: 8px; text-align: center; font-weight: bold;">${m.weighted.toFixed(2)} pts</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+      <tfoot>
+        <tr style="background-color: #f9fafb; font-weight: bold;">
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: left;">Total Weight / MSL Score</td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${result.totalWeight.toFixed(1)}%</td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: center;" colspan="5"></td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 11pt; color: var(--color-primary);">${result.score.toFixed(2)} / 300.00</td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+
+  container.innerHTML = html;
 }
 
 // ===================================
@@ -303,7 +379,7 @@ function createMeasureRow(index, isIPR = false) {
 
   const name = isIPR ? 'Instructional Program Review (IPR)' : '';
   const weight = isIPR ? IPR_WEIGHT : '';
-  const minVal = isIPR ? IPR_MIN : '';
+  const goalVal = isIPR ? 50 : '';
   const maxVal = isIPR ? IPR_MAX : '';
   const readonlyAttr = isIPR ? 'readonly class="readonly-field"' : '';
   const weightReadonly = ''; // No longer readonly for IPR
@@ -335,8 +411,8 @@ function createMeasureRow(index, isIPR = false) {
       </div>
 
       <div class="form-group field-range">
-        <label for="msl-min-${index}">Min Score</label>
-        <input type="number" id="msl-min-${index}" step="any" value="${minVal}" ${isIPR ? readonlyAttr : `placeholder="0"`}>
+        <label for="msl-goal-${index}">🎯 Goal Score</label>
+        <input type="number" id="msl-goal-${index}" step="any" value="${goalVal}" ${isIPR ? readonlyAttr : `placeholder="85"`}>
       </div>
 
       <div class="form-group field-range">
@@ -354,8 +430,8 @@ function createMeasureRow(index, isIPR = false) {
       <div class="measure-range-bar-container">
         <div class="measure-range-bar"></div>
         <div class="measure-range-marker" style="left: 0%; opacity: 0.3;"></div>
-        <span class="measure-range-label-min">${minVal || 'Min'}</span>
-        <span class="measure-range-label-max">${maxVal || 'Max'}</span>
+        <span class="measure-range-label-min">${isIPR ? 'Min (0)' : 'Min'}</span>
+        <span class="measure-range-label-max">${isIPR ? 'Max (100)' : 'Max'}</span>
       </div>
       <div class="measure-feedback"></div>
     </div>
@@ -460,18 +536,20 @@ function showCalculationDetails() {
 
   let html = '<div class="calc-section">';
   html += '<h3>MSL Score Calculation</h3>';
-  html += '<p><strong>Method:</strong> Each actual score is normalized within its min–max range, scaled to 300, then weighted.</p>';
+  html += '<p><strong>Method:</strong> Each measure is configured with a <strong>Goal Score</strong> (the midpoint) and a <strong>Max Score</strong>. The Minimum Score is calculated at an equal distance below Goal Score: <code>Min = 2 × Goal − Max</code>. The actual score is normalized within the resulting [Min, Max] range, scaled to 300, and weighted.</p>';
   html += '<p><strong>Formula per measure:</strong> <code>((Actual − Min) / (Max − Min)) × 300 × (Weight / 30)</code></p>';
 
   html += '<table class="calc-table"><thead><tr>';
-  html += '<th>Measure</th><th>Actual</th><th>Range</th><th>Normalized</th><th>Scaled (300)</th><th>Weight</th><th>Weighted</th>';
+  html += '<th>Measure</th><th>Actual</th><th>Goal (Midpoint)</th><th>Max</th><th>Calculated Min</th><th>% of Range</th><th>Scaled (300)</th><th>Weight</th><th>Weighted</th>';
   html += '</tr></thead><tbody>';
 
   result.measures.forEach(m => {
     html += `<tr>
       <td>${m.name || '—'}</td>
       <td>${m.actual}</td>
-      <td>${m.minScore} – ${m.maxScore}</td>
+      <td>${m.goalScore}</td>
+      <td>${m.maxScore}</td>
+      <td>${m.minScore}</td>
       <td>${(m.normalized * 100).toFixed(1)}%</td>
       <td>${m.scaled300}</td>
       <td>${m.weight}%</td>
@@ -524,7 +602,7 @@ function copySummary() {
   text += 'Measures:\n';
 
   result.measures.forEach(m => {
-    text += `  • ${m.name}: ${m.actual} (range ${m.minScore}–${m.maxScore}), weight ${m.weight}% → ${m.weighted} pts\n`;
+    text += `  • ${m.name}: ${m.actual} (Goal ${m.goalScore}, Max ${m.maxScore}, Min ${m.minScore}), weight ${m.weight}% → ${m.weighted} pts\n`;
   });
 
   navigator.clipboard.writeText(text).then(() => {
@@ -550,7 +628,7 @@ function saveState() {
       name: document.getElementById(`msl-name-${idx}`)?.value || '',
       desc: document.getElementById(`msl-desc-${idx}`)?.value || '',
       weight: document.getElementById(`msl-weight-${idx}`)?.value || '',
-      min: document.getElementById(`msl-min-${idx}`)?.value || '',
+      goal: document.getElementById(`msl-goal-${idx}`)?.value || '',
       max: document.getElementById(`msl-max-${idx}`)?.value || '',
       actual: document.getElementById(`msl-actual-${idx}`)?.value || ''
     });
@@ -576,7 +654,7 @@ function loadState() {
       // Restore values (non-readonly fields)
       const nameEl = document.getElementById(`msl-name-${m.index}`);
       const weightEl = document.getElementById(`msl-weight-${m.index}`);
-      const minEl = document.getElementById(`msl-min-${m.index}`);
+      const goalEl = document.getElementById(`msl-goal-${m.index}`);
       const maxEl = document.getElementById(`msl-max-${m.index}`);
       const actualEl = document.getElementById(`msl-actual-${m.index}`);
 
@@ -584,7 +662,13 @@ function loadState() {
       const descEl = document.getElementById(`msl-desc-${m.index}`);
       if (descEl) descEl.value = m.desc || '';
       if (weightEl) weightEl.value = m.weight;
-      if (minEl && !isIPR) minEl.value = m.min;
+      if (goalEl && !isIPR) {
+        if (m.goal !== undefined && m.goal !== '') {
+          goalEl.value = m.goal;
+        } else if (m.min !== undefined && m.max !== undefined && m.min !== '' && m.max !== '') {
+          goalEl.value = (parseFloat(m.min) + parseFloat(m.max)) / 2;
+        }
+      }
       if (maxEl && !isIPR) maxEl.value = m.max;
       if (actualEl) actualEl.value = m.actual;
 

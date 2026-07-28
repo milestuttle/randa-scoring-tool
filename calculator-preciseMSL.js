@@ -73,25 +73,29 @@ function calculateMSLScore() {
 
   rows.forEach(row => {
     const idx = row.dataset.index;
+    const isIPR = row.classList.contains('ipr-row') || idx == 1;
     const nameEl = document.getElementById(`msl-name-${idx}`);
     const weightEl = document.getElementById(`msl-weight-${idx}`);
-    const minEl = document.getElementById(`msl-min-${idx}`);
+    const goalEl = document.getElementById(`msl-goal-${idx}`);
     const maxEl = document.getElementById(`msl-max-${idx}`);
     const actualEl = document.getElementById(`msl-actual-${idx}`);
 
     const name = nameEl ? nameEl.value : `Measure ${idx}`;
     const weight = parseFloat(weightEl?.value) || 0;
-    const minScore = parseFloat(minEl?.value);
-    const maxScore = parseFloat(maxEl?.value);
+    const goalScore = isIPR ? 50 : parseFloat(goalEl?.value);
+    const maxScore = isIPR ? 100 : parseFloat(maxEl?.value);
+    const minScore = 2 * goalScore - maxScore;
     const actual = parseFloat(actualEl?.value);
 
     totalWeight += weight;
 
     if (isNaN(actual) || actualEl?.value === '' ||
-        isNaN(minScore) || minEl?.value === '' ||
-        isNaN(maxScore) || maxEl?.value === '') {
+        isNaN(goalScore) || (goalEl?.value === '' && !isIPR) ||
+        isNaN(maxScore) || (maxEl?.value === '' && !isIPR) ||
+        maxScore <= goalScore) {
       allFilled = false;
-      measures.push({ name, weight, minScore: 0, maxScore: 0, actual: 0, normalized: 0, percentage: 0, scaled300: 0, weighted: 0, filled: false });
+      const invalidRange = !isNaN(goalScore) && !isNaN(maxScore) && maxScore <= goalScore;
+      measures.push({ name, weight, goalScore: isNaN(goalScore) ? 0 : goalScore, maxScore: isNaN(maxScore) ? 0 : maxScore, minScore: isNaN(minScore) ? 0 : minScore, actual: 0, normalized: 0, percentage: 0, scaled300: 0, weighted: 0, filled: false, invalidRange });
       return;
     }
 
@@ -102,7 +106,7 @@ function calculateMSLScore() {
     totalWeightedScore += weighted;
 
     measures.push({
-      name, weight, minScore, maxScore, actual,
+      name, weight, goalScore, minScore, maxScore, actual,
       normalized: round2(norm),
       percentage: round2(norm * 100),
       scaled300, weighted, filled: true
@@ -231,8 +235,11 @@ function updateAllCalculations() {
     const feedbackEl = row.querySelector('.measure-feedback');
     if (feedbackEl) {
       if (m.filled) {
-        feedbackEl.textContent = `${m.percentage}% of range → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
+        feedbackEl.textContent = `${m.percentage}% of range (Min: ${m.minScore}, Goal: ${m.goalScore}, Max: ${m.maxScore}) → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
         feedbackEl.className = 'measure-feedback visible';
+      } else if (m.invalidRange) {
+        feedbackEl.textContent = `⚠ Max Score (${m.maxScore}) must be greater than Goal Score (${m.goalScore})`;
+        feedbackEl.className = 'measure-feedback visible validation-error';
       } else {
         feedbackEl.textContent = '';
         feedbackEl.className = 'measure-feedback';
@@ -242,8 +249,8 @@ function updateAllCalculations() {
     const marker = row.querySelector('.measure-range-marker');
     const minLabel = row.querySelector('.measure-range-label-min');
     const maxLabel = row.querySelector('.measure-range-label-max');
-    if (minLabel) minLabel.textContent = isNaN(parseFloat(m.minScore)) ? 'Min' : m.minScore;
-    if (maxLabel) maxLabel.textContent = isNaN(parseFloat(m.maxScore)) ? 'Max' : m.maxScore;
+    if (minLabel) minLabel.textContent = !m.filled ? 'Min' : `Min (${m.minScore})`;
+    if (maxLabel) maxLabel.textContent = !m.filled ? 'Max' : `Max (${m.maxScore})`;
     if (marker) {
       if (m.filled) {
         marker.style.left = `${m.normalized * 100}%`;
@@ -388,7 +395,7 @@ function createMSLRow(index, isIPR = false) {
 
   const name = isIPR ? 'Instructional Program Review (IPR)' : '';
   const weight = isIPR ? IPR_WEIGHT : '';
-  const minVal = isIPR ? IPR_MIN : '';
+  const goalVal = isIPR ? 50 : '';
   const maxVal = isIPR ? IPR_MAX : '';
   const readonlyAttr = isIPR ? 'readonly class="readonly-field"' : '';
 
@@ -419,8 +426,8 @@ function createMSLRow(index, isIPR = false) {
       </div>
 
       <div class="form-group field-range">
-        <label for="msl-min-${index}">Min Score</label>
-        <input type="number" id="msl-min-${index}" step="any" value="${minVal}" ${isIPR ? readonlyAttr : `placeholder="0"`}>
+        <label for="msl-goal-${index}">🎯 Goal Score</label>
+        <input type="number" id="msl-goal-${index}" step="any" value="${goalVal}" ${isIPR ? readonlyAttr : `placeholder="85"`}>
       </div>
 
       <div class="form-group field-range">
@@ -438,8 +445,8 @@ function createMSLRow(index, isIPR = false) {
       <div class="measure-range-bar-container">
         <div class="measure-range-bar"></div>
         <div class="measure-range-marker" style="left: 0%; opacity: 0.3;"></div>
-        <span class="measure-range-label-min">${minVal !== '' ? minVal : 'Min'}</span>
-        <span class="measure-range-label-max">${maxVal !== '' ? maxVal : 'Max'}</span>
+        <span class="measure-range-label-min">${isIPR ? 'Min (0)' : 'Min'}</span>
+        <span class="measure-range-label-max">${isIPR ? 'Max (100)' : 'Max'}</span>
       </div>
       <div class="measure-feedback"></div>
     </div>
@@ -648,20 +655,20 @@ function showCalculationDetails() {
       
       <div class="calc-section">
         <h3>Measures of Student Learning (MSL)</h3>
-        <p><strong>Method:</strong> Each actual score is normalized within its min–max range, scaled to 300, then weighted.</p>
+        <p><strong>Method:</strong> Each measure is configured with a <strong>Goal Score</strong> (the midpoint) and a <strong>Max Score</strong>. The Minimum Score is calculated at an equal distance below Goal Score: <code>Min = 2 × Goal − Max</code>. The actual score is normalized within the resulting [Min, Max] range, scaled to 300, and weighted.</p>
         <p><strong>Formula per measure:</strong> <code>((Actual − Min) / (Max − Min)) × 300 × (Weight / 30)</code></p>
         <table class="calc-table">
-          <thead><tr><th>Measure</th><th>Actual</th><th>Range</th><th>Normalized</th><th>Scaled (300)</th><th>Weight</th><th>Weighted</th></tr></thead>
+          <thead><tr><th>Measure</th><th>Actual</th><th>Goal (Midpoint)</th><th>Max</th><th>Calculated Min</th><th>Normalized</th><th>Scaled (300)</th><th>Weight</th><th>Weighted</th></tr></thead>
           <tbody>
     `;
 
     mslResult.measures.forEach(m => {
-      html += `<tr><td>${m.name || '—'}</td><td>${m.actual}</td><td>${m.minScore} – ${m.maxScore}</td><td>${(m.normalized * 100).toFixed(1)}%</td><td>${m.scaled300}</td><td>${m.weight}%</td><td>${m.weighted}</td></tr>`;
+      html += `<tr><td>${m.name || '—'}</td><td>${m.actual}</td><td>${m.goalScore}</td><td>${m.maxScore}</td><td>${m.minScore}</td><td>${(m.normalized * 100).toFixed(1)}%</td><td>${m.scaled300}</td><td>${m.weight}%</td><td>${m.weighted}</td></tr>`;
     });
 
     html += `
           </tbody>
-          <tfoot><tr><th colspan="6">Total MSL Score</th><th>${mslResult.score}</th></tr></tfoot>
+          <tfoot><tr><th colspan="8">Total MSL Score</th><th>${mslResult.score}</th></tr></tfoot>
         </table>
         <p><strong>MSL Rating:</strong> <span class="rating-badge ${ratingToClass(mslResult.rating)}">${mslResult.rating}</span></p>
       </div>
@@ -709,7 +716,7 @@ function closeAboutModal() {
 
 // Helper to recover dynamic MSL rows during load
 function recoverMissingMSL(id) {
-  const match = id.match(/msl-(?:weight|rating)-(\d+)/);
+  const match = id.match(/msl-(?:weight|rating|goal|min|max)-(\d+)/);
   if (match) {
     const index = parseInt(match[1]);
     while (mslRowCounter < index) {
@@ -858,7 +865,7 @@ function loadSampleData() {
   container.appendChild(row1);
   setTimeout(() => row1.classList.add('visible'), 10);
   document.getElementById('msl-actual-1').value = 78;
-  // weight (10), min (0), max (100) are already set by createMSLRow defaults
+  // weight (10), goal (50), max (100) are already set by createMSLRow defaults
 
   // Measure 2: DIBELS Composite at 20%
   mslRowCounter = 2;
@@ -867,7 +874,7 @@ function loadSampleData() {
   setTimeout(() => row2.classList.add('visible'), 50);
   document.getElementById('msl-name-2').value = 'DIBELS Composite';
   document.getElementById('msl-weight-2').value = 20;
-  document.getElementById('msl-min-2').value = 0;
+  document.getElementById('msl-goal-2').value = 420;
   document.getElementById('msl-max-2').value = 500;
   document.getElementById('msl-actual-2').value = 420;
 

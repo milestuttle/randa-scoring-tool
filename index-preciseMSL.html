@@ -463,17 +463,15 @@
       <h2>Step 3: Configure Measures of Student Learning <button class="tooltip-trigger"
           data-tooltip="step3-msl" aria-label="Help: Measures of Student Learning">ⓘ</button></h2>
       <p class="step-description">Define your MSL measures. IPR defaults to 10% but can be adjusted. Add up to 3 additional measures.
-        Weights must total 30%. Enter the minimum and maximum possible scores for each measure,
-        then the actual score achieved.</p>
+        Weights must total 30%. Enter the Goal Score (midpoint) and Max Score for each measure,
+        then the actual score achieved. Minimum Score is set at an equal distance below Goal Score.</p>
 
       <div class="tooltip" id="tooltip-step3-msl" role="tooltip" style="display: none;">
         <div class="tooltip-content">
-          <strong>How scoring works:</strong> Each measure's actual score is converted to a percentage
-          within its min–max range, then scaled to a 300-point scale and weighted.<br><br>
-          <strong>Example:</strong> A measure with range 600–1100 and actual score of 850:<br>
-          <code>(850 − 600) / (1100 − 600) = 50% → 150 / 300</code><br><br>
+          <strong>How scoring works:</strong> Each measure is defined by a Goal Score (midpoint) and Max Score. The Minimum Score is calculated as Goal − (Max − Goal). The actual score is converted to a percentage within this range, then scaled to a 300-point scale and weighted.<br><br>
+          <strong>Example:</strong> Goal Score = 85, Max Score = 100 → Minimum Score = 70 (Range 70–100). An actual score of 85 = 50% → 150 / 300.<br><br>
           <strong>IPR:</strong> Instructional Program Review is the first measure,
-          defaulting to 10% weight with a 0–100 point scale.<br><br>
+          defaulting to 10% weight with a fixed 0–100 point scale (Goal = 50).<br><br>
           <strong>Weights:</strong> All measure weights must add up to exactly 30%.
           IPR typically accounts for 10%, leaving 20% for your other measures.
         </div>
