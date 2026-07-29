@@ -754,6 +754,10 @@ input[type="number"].valid {
   border-radius: var(--radius-lg) !important;
 }
 
+.ipr-row .measure-fields {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .ipr-badge {
   background: var(--color-primary);
   color: white;

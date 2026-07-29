@@ -235,7 +235,12 @@ function updateAllCalculations() {
     const feedbackEl = row.querySelector('.measure-feedback');
     if (feedbackEl) {
       if (m.filled) {
-        feedbackEl.textContent = `${m.percentage}% of range (Min: ${m.minScore}, Goal: ${m.goalScore}, Max: ${m.maxScore}) → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
+        const isIPRRow = row.classList.contains('ipr-row') || row.getAttribute('data-index') == 1;
+        if (isIPRRow) {
+          feedbackEl.textContent = `${m.percentage}% of IPR range (0–100) → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
+        } else {
+          feedbackEl.textContent = `${m.percentage}% of range (Min: ${m.minScore}, Goal: ${m.goalScore}, Max: ${m.maxScore}) → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
+        }
         feedbackEl.className = 'measure-feedback visible';
       } else if (m.invalidRange) {
         feedbackEl.textContent = `⚠ Max Score (${m.maxScore}) must be greater than Goal Score (${m.goalScore})`;
@@ -425,15 +430,17 @@ function createMSLRow(index, isIPR = false) {
         <input type="number" id="msl-weight-${index}" min="0" max="30" step="0.1" value="${weight}" placeholder="0">
       </div>
 
+      ${!isIPR ? `
       <div class="form-group field-range">
         <label for="msl-goal-${index}">🎯 Goal Score</label>
-        <input type="number" id="msl-goal-${index}" step="any" value="${goalVal}" ${isIPR ? readonlyAttr : `placeholder="85"`}>
+        <input type="number" id="msl-goal-${index}" step="any" value="${goalVal}" placeholder="85">
       </div>
 
       <div class="form-group field-range">
         <label for="msl-max-${index}">Max Score</label>
-        <input type="number" id="msl-max-${index}" step="any" value="${maxVal}" ${isIPR ? readonlyAttr : `placeholder="100"`}>
+        <input type="number" id="msl-max-${index}" step="any" value="${maxVal}" placeholder="100">
       </div>
+      ` : ''}
 
       <div class="form-group field-actual">
         <label for="msl-actual-${index}">🎯 Score Achieved</label>
