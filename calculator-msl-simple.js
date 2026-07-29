@@ -81,6 +81,9 @@ function calculateMSL() {
     const maxEl = document.getElementById(`msl-max-${idx}`);
     const actualEl = document.getElementById(`msl-actual-${idx}`);
 
+    const descEl = document.getElementById(`msl-desc-${idx}`);
+    const desc = descEl ? descEl.value.trim() : '';
+
     const name = nameEl ? nameEl.value : `Measure ${idx}`;
     const weight = parseFloat(weightEl?.value) || 0;
     const goalScore = isIPR ? 50 : parseFloat(goalEl?.value);
@@ -102,7 +105,7 @@ function calculateMSL() {
     if (!hasGoalAndMax || !hasActual || weight <= 0) {
       allFilled = false;
       measures.push({
-        name, weight, goalScore: isNaN(goalScore) ? 0 : goalScore,
+        name, desc, weight, goalScore: isNaN(goalScore) ? 0 : goalScore,
         maxScore: isNaN(maxScore) ? 0 : maxScore, minScore: isNaN(minScore) ? 0 : minScore,
         actual: hasActual ? actual : 0, hasActual, hasGoalAndMax, isIPR,
         normalized: 0, scaled300: 0, weighted: 0, filled: false, invalidRange
@@ -118,6 +121,7 @@ function calculateMSL() {
 
     measures.push({
       name,
+      desc,
       weight,
       goalScore,
       minScore,
@@ -360,6 +364,8 @@ function updatePrintSummary(result) {
 
     result.measures.forEach((m, idx) => {
       const displayName = m.name ? m.name.trim() : `Measure ${idx + 1}`;
+      const descText = m.desc ? m.desc.trim() : '';
+
       html += `
         <tr>
           <td style="text-align: left; font-weight: bold;">${displayName}</td>
@@ -372,6 +378,16 @@ function updatePrintSummary(result) {
           <td style="text-align: center; font-weight: bold;">${m.weighted.toFixed(2)} pts</td>
         </tr>
       `;
+
+      if (descText) {
+        html += `
+          <tr>
+            <td colspan="8" style="text-align: left; font-size: 8.5pt; color: #333333; background: #fafafa; padding: 4px 8px 6px 16px; font-style: italic; border-top: none;">
+              <strong>Description:</strong> ${descText}
+            </td>
+          </tr>
+        `;
+      }
     });
 
     html += `
@@ -446,6 +462,8 @@ function updatePrintSummary(result) {
 
   result.measures.forEach((m, idx) => {
     const displayName = m.name ? m.name.trim() : `Measure ${idx + 1}`;
+    const descText = m.desc ? m.desc.trim() : '';
+
     html += `
       <tr>
         <td style="text-align: left; font-weight: bold;">${displayName}</td>
@@ -457,6 +475,24 @@ function updatePrintSummary(result) {
         <td style="text-align: center; font-weight: bold;">Goal Set</td>
       </tr>
     `;
+
+    if (descText) {
+      html += `
+        <tr>
+          <td colspan="7" style="text-align: left; font-size: 8.5pt; color: #333333; background: #fafafa; padding: 4px 8px 6px 16px; font-style: italic; border-top: none;">
+            <strong>Description:</strong> ${descText}
+          </td>
+        </tr>
+      `;
+    } else {
+      html += `
+        <tr>
+          <td colspan="7" style="text-align: left; font-size: 8.5pt; color: #666666; background: #fafafa; padding: 4px 8px 6px 16px; font-style: italic; border-top: none;">
+            <strong>Description:</strong> ____________________________________________________________________________________
+          </td>
+        </tr>
+      `;
+    }
   });
 
   html += `
@@ -592,8 +628,8 @@ function createMeasureRow(index, isIPR = false) {
   row.querySelectorAll('input[type="number"]').forEach(input => {
     input.addEventListener('input', debouncedUpdate);
   });
-  // Textarea doesn't affect calculations but we save on input
-  row.querySelector('.msl-desc')?.addEventListener('input', saveState);
+  // Textarea updates print summary and saves state on input
+  row.querySelector('.msl-desc')?.addEventListener('input', debouncedUpdate);
 
   return row;
 }
