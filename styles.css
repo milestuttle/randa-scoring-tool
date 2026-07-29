@@ -548,14 +548,14 @@ input[type="number"].valid {
 
 .summary-marker-container {
   position: relative;
-  height: 30px;
-  margin-top: var(--spacing-sm);
+  height: 20px;
+  margin-top: 2px;
   transition: all 0.3s ease;
 }
 
 .summary-card.collapsed .summary-marker-container {
-  height: 16px;
-  margin-top: 4px;
+  height: 14px;
+  margin-top: 2px;
 }
 
 .summary-score-marker {
@@ -568,17 +568,19 @@ input[type="number"].valid {
 .summary-marker-arrow {
   width: 0;
   height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 16px solid var(--color-primary);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 14px solid var(--color-primary);
+  border-top: none;
   margin: 0 auto;
   transition: all 0.3s ease;
 }
 
 .summary-card.collapsed .summary-marker-arrow {
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 12px solid var(--color-primary);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 10px solid var(--color-primary);
+  border-top: none;
 }
 
 .summary-label {
@@ -2151,8 +2153,8 @@ input[type="number"].valid {
 
 .summary-marker-container {
   position: relative;
-  height: 60px;
-  margin-top: var(--spacing-sm);
+  height: 20px;
+  margin-top: 2px;
 }
 
 .summary-score-marker {
@@ -2165,9 +2167,10 @@ input[type="number"].valid {
 .summary-marker-arrow {
   width: 0;
   height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 16px solid var(--color-primary);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 14px solid var(--color-primary);
+  border-top: none;
   margin: 0 auto;
 }
 
