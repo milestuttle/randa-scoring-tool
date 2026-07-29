@@ -63,13 +63,14 @@ function normalize(actual, min, max) {
 function calculateMSLScore() {
   const rows = document.querySelectorAll('.msl-measure-row');
   if (rows.length === 0) {
-    return { base: 0, score: 0, percentage: 0, rating: '—', measures: [], totalWeight: 0, weightsValid: false, valid: false };
+    return { base: 0, score: 0, percentage: 0, rating: '—', measures: [], totalWeight: 0, weightsValid: false, goalsValid: false, valid: false };
   }
 
   let totalWeight = 0;
   let totalWeightedScore = 0;
   const measures = [];
   let allFilled = true;
+  let allGoalsSet = true;
 
   rows.forEach(row => {
     const idx = row.dataset.index;
@@ -85,17 +86,27 @@ function calculateMSLScore() {
     const goalScore = isIPR ? 50 : parseFloat(goalEl?.value);
     const maxScore = isIPR ? 100 : parseFloat(maxEl?.value);
     const minScore = 2 * goalScore - maxScore;
-    const actual = parseFloat(actualEl?.value);
+    const actualRaw = actualEl?.value;
+    const actual = parseFloat(actualRaw);
 
     totalWeight += weight;
 
-    if (isNaN(actual) || actualEl?.value === '' ||
-        isNaN(goalScore) || (goalEl?.value === '' && !isIPR) ||
-        isNaN(maxScore) || (maxEl?.value === '' && !isIPR) ||
-        maxScore <= goalScore) {
+    const hasGoalAndMax = isIPR || (!isNaN(goalScore) && goalEl?.value !== '' && !isNaN(maxScore) && maxEl?.value !== '' && maxScore > goalScore);
+    const hasActual = !isNaN(actual) && actualRaw !== '';
+    const invalidRange = !isIPR && !isNaN(goalScore) && !isNaN(maxScore) && maxScore <= goalScore;
+
+    if (!hasGoalAndMax || weight <= 0) {
+      allGoalsSet = false;
+    }
+
+    if (!hasGoalAndMax || !hasActual || weight <= 0) {
       allFilled = false;
-      const invalidRange = !isNaN(goalScore) && !isNaN(maxScore) && maxScore <= goalScore;
-      measures.push({ name, weight, goalScore: isNaN(goalScore) ? 0 : goalScore, maxScore: isNaN(maxScore) ? 0 : maxScore, minScore: isNaN(minScore) ? 0 : minScore, actual: 0, normalized: 0, percentage: 0, scaled300: 0, weighted: 0, filled: false, invalidRange });
+      measures.push({
+        name, weight, goalScore: isNaN(goalScore) ? 0 : goalScore,
+        maxScore: isNaN(maxScore) ? 0 : maxScore, minScore: isNaN(minScore) ? 0 : minScore,
+        actual: hasActual ? actual : 0, hasActual, hasGoalAndMax, isIPR,
+        normalized: 0, percentage: 0, scaled300: 0, weighted: 0, filled: false, invalidRange
+      });
       return;
     }
 
@@ -107,14 +118,16 @@ function calculateMSLScore() {
 
     measures.push({
       name, weight, goalScore, minScore, maxScore, actual,
+      hasActual: true, hasGoalAndMax: true, isIPR,
       normalized: round2(norm),
       percentage: round2(norm * 100),
-      scaled300, weighted, filled: true
+      scaled300, weighted, filled: true, invalidRange: false
     });
   });
 
   const weightsValid = Math.abs(totalWeight - MSL_TOTAL_WEIGHT) < EPSILON;
-  const valid = allFilled && weightsValid && rows.length >= 2;
+  const goalsValid = weightsValid && allGoalsSet && rows.length >= 1;
+  const valid = allFilled && weightsValid && rows.length >= 1;
   const mslScore = round2(totalWeightedScore);
   const mslBase = round2(mslScore / MSL_MULTIPLIER);
   const mslPct = pct(mslScore / MSL_MAX_SCORE);
@@ -126,7 +139,7 @@ function calculateMSLScore() {
 
   return {
     base: mslBase, score: mslScore, percentage: mslPct, rating,
-    measures, totalWeight: round2(totalWeight), weightsValid, valid
+    measures, totalWeight: round2(totalWeight), weightsValid, goalsValid, valid
   };
 }
 
@@ -343,8 +356,200 @@ function updateAllCalculations() {
     if (step4Section) step4Section.classList.add('disabled');
   }
 
+  // Update print-only summary table
+  updatePrintSummary(mslResult);
+
   // Save state
   saveState(STORAGE_KEY_PRECISE);
+}
+
+/**
+ * Dynamically generate a clean, high-contrast B&W print document for BOY Goal Plan or EOY Evaluation
+ */
+function updatePrintSummary(result) {
+  const container = document.getElementById('print-measures-table-container');
+  if (!container) return;
+
+  const docTitleEl = document.getElementById('print-doc-title');
+
+  if (!result.goalsValid && !result.valid) {
+    if (docTitleEl) docTitleEl.textContent = 'Measures of Student Learning (MSL) — Configuration Incomplete';
+    container.innerHTML = `
+      <div class="print-card" style="border: 1px solid #000000; padding: 15px; text-align: center; font-weight: bold; margin: 15px 0; background: #ffffff;">
+        ⚠️ Configuration incomplete: Ensure total MSL weight equals 30.0% and Goal/Max scores are set for all measures to generate print document.
+      </div>
+    `;
+    return;
+  }
+
+  if (result.valid) {
+    if (docTitleEl) docTitleEl.textContent = 'Measures of Student Learning (MSL) — Final Evaluation Report';
+
+    let html = `
+      <div class="print-summary-box">
+        <div class="print-summary-item">
+          <div class="print-summary-label">Final MSL Score</div>
+          <div class="print-summary-value">${result.score.toFixed(2)} / 300.00</div>
+        </div>
+        <div class="print-summary-item">
+          <div class="print-summary-label">COPMS RANDA Entry Value</div>
+          <div class="print-summary-value">${(result.score / 100).toFixed(2)}</div>
+        </div>
+        <div class="print-summary-item">
+          <div class="print-summary-label">Final MSL Rating</div>
+          <div class="print-summary-value">${result.rating}</div>
+        </div>
+      </div>
+
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th style="text-align: left;">Measure Name</th>
+            <th style="width: 10%;">Weight</th>
+            <th style="width: 12%;">Goal Score</th>
+            <th style="width: 12%;">Max Score</th>
+            <th style="width: 18%;">Calculated Range (Min–Max)</th>
+            <th style="width: 14%;">Score Achieved</th>
+            <th style="width: 12%;">% of Range</th>
+            <th style="width: 12%;">Contribution</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    result.measures.forEach((m, idx) => {
+      const displayName = m.name ? m.name.trim() : `Measure ${idx + 1}`;
+      html += `
+        <tr>
+          <td style="text-align: left; font-weight: bold;">${displayName}</td>
+          <td style="text-align: center;">${m.weight.toFixed(1)}%</td>
+          <td style="text-align: center;">${m.goalScore}</td>
+          <td style="text-align: center;">${m.maxScore}</td>
+          <td style="text-align: center;">${m.minScore} – ${m.maxScore}</td>
+          <td style="text-align: center; font-weight: bold;">${m.actual}</td>
+          <td style="text-align: center;">${m.percentage.toFixed(1)}%</td>
+          <td style="text-align: center; font-weight: bold;">${m.weighted.toFixed(2)} pts</td>
+        </tr>
+      `;
+    });
+
+    html += `
+        </tbody>
+        <tfoot>
+          <tr>
+            <td style="text-align: left;">Total Weight / Final MSL Score</td>
+            <td style="text-align: center;">${result.totalWeight.toFixed(1)}%</td>
+            <td style="text-align: center;" colspan="5"></td>
+            <td style="text-align: center;">${result.score.toFixed(2)} / 300.00</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="print-footnote">
+        <strong>Scoring Methodology:</strong> Each measure's score achieved is linearly normalized within its range [Min, Max], scaled to 300 points, and weighted by its contribution to the 30% MSL evaluation total. Minimum Score is calculated at an equal distance below Goal Score: <code>Min = 2 × Goal − Max</code>.
+      </div>
+
+      <div class="print-signature-box">
+        <div class="signature-line">
+          <span>Educator Signature:</span>
+          <div class="line"></div>
+        </div>
+        <div class="signature-line">
+          <span>Evaluator Signature:</span>
+          <div class="line"></div>
+        </div>
+        <div class="signature-line" style="max-width: 160px;">
+          <span>Date:</span>
+          <div class="line"></div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    return;
+  }
+
+  if (docTitleEl) docTitleEl.textContent = 'Measures of Student Learning (MSL) — Goal Plan & Agreement';
+
+  let html = `
+    <div class="print-summary-box">
+      <div class="print-summary-item">
+        <div class="print-summary-label">Target Evaluation Weight</div>
+        <div class="print-summary-value">${result.totalWeight.toFixed(1)}% of Overall Evaluation</div>
+      </div>
+      <div class="print-summary-item">
+        <div class="print-summary-label">Configured Measures</div>
+        <div class="print-summary-value">${result.measures.length} Measures Established</div>
+      </div>
+      <div class="print-summary-item">
+        <div class="print-summary-label">Document Status</div>
+        <div class="print-summary-value">Goal Plan Established</div>
+      </div>
+    </div>
+
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th style="text-align: left;">Measure Name</th>
+          <th style="width: 10%;">Weight</th>
+          <th style="width: 13%;">Goal Score (Midpoint)</th>
+          <th style="width: 13%;">Max Score (Upper)</th>
+          <th style="width: 20%;">Calculated Min (Floor)*</th>
+          <th style="width: 18%;">Score Achieved</th>
+          <th style="width: 12%;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  result.measures.forEach((m, idx) => {
+    const displayName = m.name ? m.name.trim() : `Measure ${idx + 1}`;
+    html += `
+      <tr>
+        <td style="text-align: left; font-weight: bold;">${displayName}</td>
+        <td style="text-align: center;">${m.weight.toFixed(1)}%</td>
+        <td style="text-align: center;">${m.goalScore}</td>
+        <td style="text-align: center;">${m.maxScore}</td>
+        <td style="text-align: center;">${m.minScore}</td>
+        <td style="text-align: center; color: #555;">__________________</td>
+        <td style="text-align: center; font-weight: bold;">Goal Set</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+      <tfoot>
+        <tr>
+          <td style="text-align: left;">Total Configured Weight</td>
+          <td style="text-align: center;">${result.totalWeight.toFixed(1)}%</td>
+          <td style="text-align: center;" colspan="4"></td>
+          <td style="text-align: center;">Pending EOY</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="print-footnote">
+      * <strong>Note:</strong> The Minimum Score represents the score range floor and is automatically calculated at an equal distance below Goal Score: <code>Min = Goal − (Max − Goal) = 2 × Goal − Max</code>. Score Achieved will be documented and evaluated at the End of Year evaluation meeting.
+    </div>
+
+    <div class="print-signature-box">
+      <div class="signature-line">
+        <span>Educator Signature:</span>
+        <div class="line"></div>
+      </div>
+      <div class="signature-line">
+        <span>Evaluator Signature:</span>
+        <div class="line"></div>
+      </div>
+      <div class="signature-line" style="max-width: 160px;">
+        <span>Date:</span>
+        <div class="line"></div>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
 }
 
 // ===================================

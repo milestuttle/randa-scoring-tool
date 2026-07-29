@@ -1684,11 +1684,11 @@ input[type="number"].valid {
 }
 
 /* ===================================
-   Print Styles
+   Print Styles (High-Contrast Black & White)
    =================================== */
 @media print {
   @page {
-    margin: 1.5cm;
+    margin: 1.2cm 1.5cm;
     size: portrait;
   }
 
@@ -1697,11 +1697,13 @@ input[type="number"].valid {
   }
 
   body {
-    background: white !important;
-    color: black !important;
-    font-size: 11pt;
-    line-height: 1.4;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
 
   .container {
@@ -1710,7 +1712,7 @@ input[type="number"].valid {
     margin: 0 !important;
   }
 
-  /* Hide UI Elements */
+  /* Hide UI Elements & Interactive Panels */
   .app-header,
   .quick-actions,
   .actions,
@@ -1720,6 +1722,12 @@ input[type="number"].valid {
   .tooltip-trigger,
   .tooltip,
   .overlay,
+  .summary-card,
+  #step-msl,
+  #step1,
+  #step2,
+  #step3,
+  #step4,
   button,
   .btn-remove,
   .validation-error,
@@ -1728,131 +1736,147 @@ input[type="number"].valid {
     display: none !important;
   }
 
-  /* Header branding for print */
+  /* Header branding & metadata for print */
   .print-header {
-    border-bottom: 2px solid var(--color-primary);
-    padding-bottom: 1rem;
-    margin-bottom: 2rem;
+    border-bottom: 2px solid #000000 !important;
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .print-doc-title {
+    font-size: 15pt !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+    color: #000000 !important;
+    margin-bottom: 10px !important;
   }
 
   .print-header-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-bottom: 0.4rem !important;
   }
 
   .print-field {
-    font-size: 10pt;
+    font-size: 10pt !important;
+    color: #000000 !important;
   }
 
-  /* Cards converted to document sections */
+  /* High contrast B&W Cards */
   .card {
     box-shadow: none !important;
-    border: 1px solid #ddd !important;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    break-inside: avoid;
-    padding: 15px !important;
+    border: 1px solid #000000 !important;
+    border-radius: 0 !important;
+    margin-bottom: 18px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    padding: 12px !important;
+    background: #ffffff !important;
   }
 
-  .summary-card {
-    border: 2px solid var(--color-primary) !important;
-    background: #f8fbff !important;
+  /* EOY Summary Box */
+  .print-summary-box {
+    border: 2px solid #000000 !important;
+    padding: 10px 14px !important;
+    margin-bottom: 18px !important;
+    background: #ffffff !important;
+    display: flex !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-summary-item {
+    text-align: center !important;
+  }
+
+  .print-summary-label {
+    font-size: 8.5pt !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    color: #000000 !important;
+  }
+
+  .print-summary-value {
+    font-size: 15pt !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+    margin-top: 2px !important;
+  }
+
+  /* Print Tables (High Contrast B&W Grid) */
+  .results-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 10px !important;
+    margin-bottom: 12px !important;
+    font-size: 9.5pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .results-table th,
+  .results-table td {
+    border: 1px solid #000000 !important;
+    padding: 6px 8px !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+
+  .results-table thead tr {
+    background-color: #f0f0f0 !important;
+    border-bottom: 2px solid #000000 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  /* Input fields converted to static text */
-  input, textarea, select {
-    border: none !important;
-    border-bottom: 1px solid #ccc !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    height: auto !important;
-    min-height: auto !important;
-    font-weight: 600 !important;
-    font-size: 10.5pt !important;
-    color: black !important;
-    appearance: none;
-    -webkit-appearance: none;
+  .results-table th {
+    font-weight: bold !important;
+    text-align: center !important;
   }
 
-  /* Preserve input differentiation with light backgrounds */
-  .field-weight, .field-range, .field-actual {
-    border-left-width: 3px !important;
-    padding: 8px !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .field-weight { background-color: #f0f7ff !important; }
-  .field-range  { background-color: #f8fafc !important; }
-  .field-actual { background-color: #fffbeb !important; }
-
-  /* Grid adjustment for print */
-  .measure-fields {
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 10px !important;
+  .results-table tfoot tr {
+    border-top: 2px solid #000000 !important;
+    font-weight: bold !important;
+    background-color: #f9f9f9 !important;
   }
 
-  /* Professional Methodology & Signatures */
-  .print-methodology {
-    margin-top: 30px;
-    font-size: 9pt;
-    color: #444;
+  /* Footnote & Notes */
+  .print-footnote {
+    font-size: 8.5pt !important;
+    color: #222222 !important;
+    margin-top: 6px !important;
+    margin-bottom: 18px !important;
+    line-height: 1.35 !important;
   }
 
+  /* Professional Signatures */
   .print-signature-box {
-    display: flex;
-    gap: 40px;
-    margin-top: 25px;
+    display: flex !important;
+    gap: 30px !important;
+    margin-top: 30px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .signature-line {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  .signature-line span {
+    font-size: 9.5pt !important;
+    font-weight: bold !important;
+    color: #000000 !important;
   }
 
   .signature-line .line {
-    border-bottom: 1px solid black;
-    height: 1.5rem;
-  }
-
-  /* Summary Results highlights */
-  .summary-value {
-    color: var(--color-primary) !important;
-    font-weight: 800 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .summary-range-bar {
-    border: 1px solid #ccc;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .summary-range-segment {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .results-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .results-table th, .results-table td {
-    border: 1px solid #ccc !important;
-    padding: 8px !important;
-  }
-
-  .results-table thead {
-    background: #f3f4f6 !important;
-    color: black !important;
+    border-bottom: 1px solid #000000 !important;
+    height: 1.6rem !important;
   }
 }
 
