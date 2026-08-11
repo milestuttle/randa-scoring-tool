@@ -405,21 +405,6 @@ function updatePrintSummary(result) {
       <div class="print-footnote">
         <strong>Scoring Methodology:</strong> Each measure's score achieved is linearly normalized within its range [Min, Max], scaled to 300 points, and weighted by its contribution to the 30% MSL evaluation total. Minimum Score is calculated at an equal distance below Goal Score: <code>Min = 2 × Goal − Max</code>.
       </div>
-
-      <div class="print-signature-box">
-        <div class="signature-line">
-          <span>Educator Signature:</span>
-          <div class="line"></div>
-        </div>
-        <div class="signature-line">
-          <span>Evaluator Signature:</span>
-          <div class="line"></div>
-        </div>
-        <div class="signature-line" style="max-width: 160px;">
-          <span>Date:</span>
-          <div class="line"></div>
-        </div>
-      </div>
     `;
 
     container.innerHTML = html;
@@ -509,21 +494,6 @@ function updatePrintSummary(result) {
 
     <div class="print-footnote">
       * <strong>Note:</strong> The Minimum Score represents the score range floor and is automatically calculated at an equal distance below Goal Score: <code>Min = Goal − (Max − Goal) = 2 × Goal − Max</code>. Score Achieved will be documented and evaluated at the End of Year evaluation meeting.
-    </div>
-
-    <div class="print-signature-box">
-      <div class="signature-line">
-        <span>Educator Signature:</span>
-        <div class="line"></div>
-      </div>
-      <div class="signature-line">
-        <span>Evaluator Signature:</span>
-        <div class="line"></div>
-      </div>
-      <div class="signature-line" style="max-width: 160px;">
-        <span>Date:</span>
-        <div class="line"></div>
-      </div>
     </div>
   `;
 
