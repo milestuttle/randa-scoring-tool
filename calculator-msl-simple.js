@@ -271,8 +271,10 @@ function updateAllCalculations() {
   const summaryScore = document.getElementById('summary-total-score');
   const summaryRating = document.getElementById('summary-rating');
   const summaryOverlay = document.getElementById('summary-overlay');
+  const summaryOverlayContent = document.getElementById('summary-overlay-content');
   const summaryMarker = document.getElementById('summary-score-marker');
   const summaryRanda = document.getElementById('summary-randa-score');
+  const printBadge = document.getElementById('print-mode-badge');
 
   if (result.valid) {
     if (summaryScore) summaryScore.textContent = result.score;
@@ -295,8 +297,39 @@ function updateAllCalculations() {
       summaryRating.textContent = '—';
       stripRatingClasses(summaryRating);
     }
+    
+    // Guided placeholder overlay
+    const filledCount = result.measures.filter(m => m.hasActual).length;
+    const totalCount = result.measures.length;
+    let guideMsg = '';
+    
+    if (!result.weightsValid) {
+      guideMsg = `📋 Set total MSL weight to 30.0% (currently ${result.totalWeight.toFixed(1)}%)`;
+    } else if (!result.goalsValid) {
+      guideMsg = `📋 Enter Goal Score and Max Score for all measures`;
+    } else {
+      guideMsg = `📋 Enter score achieved for all measures (${filledCount}/${totalCount} entered)`;
+    }
+
+    if (summaryOverlayContent) {
+      summaryOverlayContent.innerHTML = `<p>${guideMsg}</p>`;
+    }
     if (summaryOverlay) summaryOverlay.style.display = 'flex';
     if (summaryMarker) summaryMarker.style.display = 'none';
+  }
+
+  // Update live print document status badge
+  if (printBadge) {
+    if (result.valid) {
+      printBadge.textContent = '📄 EOY Final Evaluation Report (Ready)';
+      printBadge.className = 'print-mode-badge badge-eoy';
+    } else if (result.goalsValid) {
+      printBadge.textContent = '📄 BOY Goal Plan & Agreement (Ready)';
+      printBadge.className = 'print-mode-badge badge-boy';
+    } else {
+      printBadge.textContent = '⚠️ Configuration Incomplete';
+      printBadge.className = 'print-mode-badge badge-incomplete';
+    }
   }
 
   // Update print-only summary table
@@ -740,13 +773,31 @@ function closeAboutModal() {
 }
 
 // ===================================
+// TOAST NOTIFICATIONS
+// ===================================
+
+function showToast(message) {
+  const toast = document.getElementById('toast-notification');
+  const toastMsg = document.getElementById('toast-message');
+  if (!toast || !toastMsg) return;
+
+  toastMsg.textContent = message;
+  toast.classList.add('visible');
+
+  if (toast._timeout) clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => {
+    toast.classList.remove('visible');
+  }, 2800);
+}
+
+// ===================================
 // COPY SUMMARY
 // ===================================
 
 function copySummary() {
   const result = calculateMSL();
   if (!result.valid) {
-    alert('Please complete all measures before copying.');
+    showToast('⚠️ Complete all measures before copying.');
     return;
   }
 
@@ -766,8 +817,11 @@ function copySummary() {
     const btn = document.getElementById('btn-copy-summary');
     const orig = btn.innerHTML;
     btn.innerHTML = '✅ Copied!';
+    showToast('✓ MSL summary copied to clipboard!');
     setTimeout(() => btn.innerHTML = orig, 2000);
-  }).catch(() => alert('Could not copy to clipboard.'));
+  }).catch(() => {
+    showToast('⚠️ Could not copy to clipboard.');
+  });
 }
 
 // ===================================

@@ -90,8 +90,8 @@
           </div>
         </div>
       </div>
-      <div id="summary-overlay" class="overlay" role="status">
-        <div class="overlay-content">
+      <div id="summary-overlay" class="overlay guided-overlay" role="status">
+        <div class="overlay-content" id="summary-overlay-content">
           <p>📋 Complete all MSL measures to see your score</p>
         </div>
       </div>
@@ -142,7 +142,7 @@
 
       <!-- MSL Results Summary -->
       <div id="msl-results" class="overall-summary">
-        <h3>MSL Results</h3>
+        <h3>Setup Status Checklist</h3>
 
         <div id="msl-status-checklist" class="status-checklist">
           <div id="status-weights" class="status-item incomplete">
@@ -154,16 +154,14 @@
             <span class="status-text">All measures must have scores</span>
           </div>
         </div>
-
-        <div class="summary-stats">
-          <div class="stat highlight randa-stat">
-            <span class="label">COPMS RANDA Entry:</span>
-            <span class="value randa-entry"><strong id="msl-randa-score">—</strong></span>
-            <span class="label" style="font-size:0.75rem; margin-top:0.25rem;">Enter this value in RANDA</span>
-          </div>
-        </div>
       </div>
     </section>
+
+    <!-- Print Mode Indicator & Actions -->
+    <div class="print-mode-bar" aria-live="polite">
+      <span class="print-mode-label">Print Document Format:</span>
+      <span id="print-mode-badge" class="print-mode-badge badge-incomplete">⚠️ Configuration Incomplete</span>
+    </div>
 
     <!-- Action Buttons -->
     <div class="actions">
@@ -249,6 +247,11 @@
     <p><strong>Disclaimer:</strong> This calculator is for informational purposes only. No data is stored or
       transmitted. Always verify calculations with official evaluation documentation.</p>
   </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="toast" role="status" aria-live="polite">
+    <span id="toast-message">✓ Summary copied to clipboard!</span>
+  </div>
 
   <script src="calculator-msl-simple.js"></script>
 </body>
