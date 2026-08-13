@@ -756,7 +756,7 @@ function showCalculationDetails() {
   html += '<p><strong>Method:</strong> Each measure is configured with a <strong>Goal Score</strong> (the midpoint) and a <strong>Max Score</strong>. The Minimum Score is calculated at an equal distance below Goal Score: <code>Min = 2 × Goal − Max</code>. The actual score is normalized within the resulting [Min, Max] range, scaled to 300, and weighted.</p>';
   html += '<p><strong>Formula per measure:</strong> <code>((Actual − Min) / (Max − Min)) × 300 × (Weight / 30)</code></p>';
 
-  html += '<table class="calc-table"><thead><tr>';
+  html += '<div class="table-scroll"><table class="calc-table"><thead><tr>';
   html += '<th>Measure</th><th>Actual</th><th>Goal (Midpoint)</th><th>Max</th><th>Calculated Min</th><th>% of Range</th><th>Scaled (300)</th><th>Weight</th><th>Weighted</th>';
   html += '</tr></thead><tbody>';
 
@@ -774,7 +774,7 @@ function showCalculationDetails() {
     </tr>`;
   });
 
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
 
   html += '<div class="final-calc-box">';
   html += `<div class="calc-row total"><span>Total MSL Score:</span><span>${result.score} / 300</span></div>`;
