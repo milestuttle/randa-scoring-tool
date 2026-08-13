@@ -23,7 +23,18 @@ function round2(x) {
   return Math.round(x * 100) / 100;
 }
 
-const debouncedUpdate = debounce(updateAllCalculations, 150);
+/**
+ * Escape user-supplied strings before inserting into innerHTML.
+ */
+function escapeHTML(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+const debouncedUpdate = debounce(updateAllCalculations, 60);
 
 // ===================================
 // CONSTANTS
@@ -37,11 +48,29 @@ const IPR_MAX = 100;
 const MAX_ADDITIONAL_MEASURES = 3;
 const STORAGE_KEY = 'msl_simple_calc_v1';
 
-const MSL_RATING_RANGES = [
-  { min: 201, max: 300, label: 'More Than Expected' },
-  { min: 100, max: 200, label: 'Expected' },
-  { min: 0, max: 99, label: 'Less Than Expected' }
-];
+// ===================================
+// HELPERS
+// ===================================
+
+/**
+ * Returns rating label for a given MSL score.
+ * Uses floating-point-safe boundaries (>200, >=100, else).
+ */
+function getMSLRating(score) {
+  if (score > 200) return 'More Than Expected';
+  if (score >= 100) return 'Expected';
+  return 'Less Than Expected';
+}
+
+/**
+ * Returns the current academic school year string (e.g. "2026-2027").
+ * A new school year starts on July 1 (month >= 6).
+ */
+function getCurrentSchoolYear() {
+  const now = new Date();
+  const year = now.getFullYear();
+  return now.getMonth() >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+}
 
 // ===================================
 // CALCULATION
@@ -144,15 +173,7 @@ function calculateMSL() {
   const valid = allFilled && weightsValid && rows.length >= 1;
   const mslScore = round2(totalWeightedScore);
 
-  let rating = '—';
-  if (valid) {
-    for (const range of MSL_RATING_RANGES) {
-      if (mslScore >= range.min && mslScore <= range.max) {
-        rating = range.label;
-        break;
-      }
-    }
-  }
+  const rating = valid ? getMSLRating(mslScore) : '—';
 
   return {
     score: mslScore,
@@ -257,8 +278,6 @@ function updateAllCalculations() {
 
   // MSL results summary
   const mslResults = document.getElementById('msl-results');
-  const randaEl = document.getElementById('msl-randa-score');
-  if (randaEl) randaEl.textContent = result.valid ? (result.score / 100).toFixed(2) : '—';
 
   // Handle results section "dimming" instead of full overlay
   if (result.valid) {
@@ -396,8 +415,8 @@ function updatePrintSummary(result) {
     `;
 
     result.measures.forEach((m, idx) => {
-      const displayName = m.name ? m.name.trim() : `Measure ${idx + 1}`;
-      const descText = m.desc ? m.desc.trim() : '';
+      const displayName = escapeHTML(m.name ? m.name.trim() : `Measure ${idx + 1}`);
+      const descText = escapeHTML(m.desc ? m.desc.trim() : '');
 
       html += `
         <tr>
@@ -479,8 +498,8 @@ function updatePrintSummary(result) {
   `;
 
   result.measures.forEach((m, idx) => {
-    const displayName = m.name ? m.name.trim() : `Measure ${idx + 1}`;
-    const descText = m.desc ? m.desc.trim() : '';
+    const displayName = escapeHTML(m.name ? m.name.trim() : `Measure ${idx + 1}`);
+    const descText = escapeHTML(m.desc ? m.desc.trim() : '');
 
     html += `
       <tr>
@@ -577,10 +596,10 @@ function createMeasureRow(index, isIPR = false) {
       <span class="msl-measure-number">
         ${isIPR ? 'Measure 1 — IPR <span class="ipr-badge">Foundational</span>' : `Measure ${index}`}
       </span>
-      ${!isIPR ? `<button type="button" class="btn-remove" onclick="removeMeasure(${index})" aria-label="Remove measure">Remove</button>` : ''}
+      ${!isIPR ? `<button type="button" class="btn-remove" data-remove-index="${index}" aria-label="Remove measure">Remove</button>` : ''}
     </div>
 
-    <div class="msl-grid-inputs measure-fields">
+    <div class="measure-fields">
       <div class="form-group" style="grid-column: 1 / -1;">
         <label for="msl-name-${index}">Measure Name</label>
         <input type="text" id="msl-name-${index}" value="${name}" ${isIPR ? readonlyAttr : `placeholder="e.g., CMAS, DIBELS, AP Mean Score"`}>
@@ -611,7 +630,7 @@ function createMeasureRow(index, isIPR = false) {
       ` : ''}
 
       <div class="form-group field-actual">
-        <label for="msl-actual-${index}">🎯 Score Achieved</label>
+        <label for="msl-actual-${index}">📊 Score Achieved</label>
         <input type="number" id="msl-actual-${index}" step="any" placeholder="Enter score">
       </div>
     </div>
@@ -735,7 +754,7 @@ function showCalculationDetails() {
 
   result.measures.forEach(m => {
     html += `<tr>
-      <td>${m.name || '—'}</td>
+      <td>${escapeHTML(m.name || '—')}</td>
       <td>${m.actual}</td>
       <td>${m.goalScore}</td>
       <td>${m.maxScore}</td>
@@ -794,6 +813,22 @@ function showToast(message) {
 // COPY SUMMARY
 // ===================================
 
+/**
+ * Fallback clipboard copy for non-secure contexts (e.g. file:// URLs).
+ */
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch { /* ignore */ }
+  document.body.removeChild(ta);
+  return ok;
+}
+
 function copySummary() {
   const result = calculateMSL();
   if (!result.valid) {
@@ -813,15 +848,24 @@ function copySummary() {
     text += `  • ${m.name}: ${m.actual} (Goal ${m.goalScore}, Max ${m.maxScore}, Min ${m.minScore}), weight ${m.weight}% → ${m.weighted} pts\n`;
   });
 
-  navigator.clipboard.writeText(text).then(() => {
+  const onSuccess = () => {
     const btn = document.getElementById('btn-copy-summary');
     const orig = btn.innerHTML;
     btn.innerHTML = '✅ Copied!';
     showToast('✓ MSL summary copied to clipboard!');
     setTimeout(() => btn.innerHTML = orig, 2000);
-  }).catch(() => {
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
+      if (fallbackCopy(text)) onSuccess();
+      else showToast('⚠️ Could not copy to clipboard.');
+    });
+  } else if (fallbackCopy(text)) {
+    onSuccess();
+  } else {
     showToast('⚠️ Could not copy to clipboard.');
-  });
+  }
 }
 
 // ===================================
@@ -854,6 +898,7 @@ function loadState() {
 
   try {
     const state = JSON.parse(saved);
+    if (!state.measures || state.measures.length === 0) return false;
     const container = document.getElementById('msl-list');
     container.innerHTML = '';
 
@@ -930,6 +975,16 @@ function init() {
 
   document.getElementById('btn-about-tool')?.addEventListener('click', openAboutModal);
 
+  // Delegated remove-measure handler — avoids inline onclick and global window export
+  document.getElementById('msl-list')?.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-remove');
+    if (btn) removeMeasure(btn.dataset.removeIndex);
+  });
+
+  // Set dynamic school year in print header
+  const schoolYearEl = document.getElementById('print-school-year');
+  if (schoolYearEl) schoolYearEl.textContent = getCurrentSchoolYear();
+
   // Modal close
   document.getElementById('modal-close')?.addEventListener('click', closeModal);
   document.getElementById('modal-overlay')?.addEventListener('click', closeModal);
@@ -960,9 +1015,6 @@ function init() {
   updateRemoveButtons();
   updateAllCalculations();
 }
-
-// Global for onclick attributes
-window.removeMeasure = removeMeasure;
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);

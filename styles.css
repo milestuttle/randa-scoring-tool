@@ -694,6 +694,7 @@ input[type="number"].valid {
 }
 
 .msl-measure-number {
+  font-size: 1.1em;
   font-weight: 600;
   color: var(--color-primary);
   margin-bottom: var(--spacing-sm);
@@ -752,8 +753,8 @@ input[type="number"].valid {
 /* MSL Simple Enhancements */
 .ipr-row {
   background: linear-gradient(to right, #f8fafc, #f1f5f9);
-  border-left: 6px solid var(--color-primary) !important;
-  border-radius: var(--radius-lg) !important;
+  border-left: 6px solid var(--color-primary);
+  border-radius: var(--radius-lg);
 }
 
 .ipr-row .measure-fields {
@@ -900,6 +901,20 @@ input[type="number"].valid {
   }
 }
 
+/* About Modal Two-Column Grid */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 /* Precise MSL version with grid layout */
 .msl-measure-header {
@@ -911,11 +926,6 @@ input[type="number"].valid {
   border-bottom: 2px solid #e0e0e0;
 }
 
-.msl-measure-number {
-  font-size: 1.1em;
-  font-weight: 600;
-  color: #2c5282;
-}
 
 /* MSL Section Layout */
 .msl-section {

@@ -38,7 +38,7 @@
       <div id="print-doc-title" class="print-doc-title">Measures of Student Learning (MSL) Details</div>
       <div class="print-header-row">
         <div class="print-field"><strong>Educator Name:</strong> ________________________________</div>
-        <div class="print-field"><strong>School Year:</strong> 2026-2027</div>
+        <div class="print-field"><strong>School Year:</strong> <span id="print-school-year"></span></div>
       </div>
       <div class="print-header-row">
         <div class="print-field"><strong>Evaluator Name:</strong> _____________________________</div>
@@ -196,8 +196,7 @@
           <button type="button" class="modal-close" id="about-modal-close" aria-label="Close modal">&times;</button>
         </div>
         <div class="modal-body" id="about-modal-body" style="max-height: 70vh; overflow-y: auto;">
-          <div class="about-grid"
-            style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-xl); text-align: left;">
+          <div class="about-grid">
             <div>
               <h3>How to Use</h3>
               <ol>
