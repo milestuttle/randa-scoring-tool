@@ -90,7 +90,7 @@ function normalize(actual, min, max) {
  * Returns { score, rating, percentage, measures[], valid }
  */
 function calculateMSL() {
-  const rows = document.querySelectorAll('.msl-measure-row');
+  const rows = document.querySelectorAll('.msl-measure-row:not(.is-removing)');
   if (rows.length === 0) {
     return { score: 0, rating: '—', percentage: 0, measures: [], totalWeight: 0, weightsValid: false, goalsValid: false, valid: false };
   }
@@ -646,12 +646,10 @@ function createMeasureRow(index, isIPR = false) {
     </div>
   `;
 
-  // Attach listeners
-  row.querySelectorAll('input[type="number"]').forEach(input => {
-    input.addEventListener('input', debouncedUpdate);
+  // Attach listeners to all inputs and textareas
+  row.querySelectorAll('input, textarea').forEach(el => {
+    el.addEventListener('input', debouncedUpdate);
   });
-  // Textarea updates print summary and saves state on input
-  row.querySelector('.msl-desc')?.addEventListener('input', debouncedUpdate);
 
   return row;
 }
@@ -676,9 +674,14 @@ function addMeasure() {
 
 function removeMeasure(index) {
   const row = document.querySelector(`.msl-measure-row[data-index="${index}"]`);
-  if (!row) return;
+  if (!row || row.classList.contains('is-removing')) return;
 
+  row.classList.add('is-removing');
   row.classList.remove('visible');
+  updateAddButton();
+  updateRemoveButtons();
+  updateAllCalculations();
+
   setTimeout(() => {
     row.remove();
     updateAddButton();
@@ -688,7 +691,7 @@ function removeMeasure(index) {
 }
 
 function updateRemoveButtons() {
-  const rows = document.querySelectorAll('.msl-measure-row');
+  const rows = document.querySelectorAll('.msl-measure-row:not(.is-removing)');
   document.querySelectorAll('.btn-remove').forEach(btn => {
     btn.disabled = rows.length <= 1; // Always keep at least IPR
   });
@@ -696,7 +699,7 @@ function updateRemoveButtons() {
 
 function updateAddButton() {
   const btn = document.getElementById('btn-add-measure');
-  const count = document.querySelectorAll('.msl-measure-row').length;
+  const count = document.querySelectorAll('.msl-measure-row:not(.is-removing)').length;
   if (btn) {
     btn.disabled = count >= 1 + MAX_ADDITIONAL_MEASURES;
     btn.textContent = count >= 1 + MAX_ADDITIONAL_MEASURES
@@ -710,6 +713,10 @@ function updateAddButton() {
 // ===================================
 
 function resetAll() {
+  if (!confirm('Are you sure you want to reset all MSL measures and calculations?')) {
+    return;
+  }
+
   const container = document.getElementById('msl-list');
   container.innerHTML = '';
   rowCounter = 1;
@@ -722,6 +729,7 @@ function resetAll() {
   updateAddButton();
   updateRemoveButtons();
   updateAllCalculations();
+  showToast('✓ All measures reset to default.');
 }
 
 // ===================================
@@ -873,7 +881,7 @@ function copySummary() {
 // ===================================
 
 function saveState() {
-  const rows = document.querySelectorAll('.msl-measure-row');
+  const rows = document.querySelectorAll('.msl-measure-row:not(.is-removing)');
   const state = { measures: [] };
 
   rows.forEach(row => {
@@ -990,6 +998,14 @@ function init() {
   document.getElementById('modal-overlay')?.addEventListener('click', closeModal);
   document.getElementById('about-modal-close')?.addEventListener('click', closeAboutModal);
   document.getElementById('about-modal-overlay')?.addEventListener('click', closeAboutModal);
+
+  // Close modals on Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeAboutModal();
+    }
+  });
 
   // Tooltip
   document.querySelectorAll('.tooltip-trigger').forEach(trigger => {

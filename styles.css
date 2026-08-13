@@ -2068,12 +2068,14 @@ input[type="number"].valid {
   transition: var(--transition);
 }
 
+.summary-value.rating-more-than-expected,
 .summary-value.rating-highly-effective,
 .summary-value.rating-exemplary {
   background-color: var(--rating-green-bg);
   color: var(--rating-green);
 }
 
+.summary-value.rating-expected,
 .summary-value.rating-effective,
 .summary-value.rating-accomplished,
 .summary-value.rating-proficient {
@@ -2087,6 +2089,7 @@ input[type="number"].valid {
   color: var(--rating-orange);
 }
 
+.summary-value.rating-less-than-expected,
 .summary-value.rating-ineffective,
 .summary-value.rating-basic {
   background-color: var(--rating-red-bg);

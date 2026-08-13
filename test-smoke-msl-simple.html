@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smoke Test — MSL Simple Calculator</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 960px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .test-container {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      margin-bottom: 24px;
+    }
+    h1 {
+      color: #4f46e5;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .summary {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    .summary.all-pass {
+      background: #ecfdf5;
+      border: 2px solid #059669;
+      color: #065f46;
+    }
+    .summary.has-fail {
+      background: #fef2f2;
+      border: 2px solid #dc2626;
+      color: #991b1b;
+    }
+    .test-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .test-result {
+      padding: 10px 14px;
+      border-radius: 6px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.95rem;
+    }
+    .test-result.pass {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      color: #14532d;
+    }
+    .test-result.fail {
+      background: #fef2f2;
+      border-left: 4px solid #dc2626;
+      color: #7f1d1d;
+    }
+    .test-result .icon {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    .test-info {
+      color: #64748b;
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+    .iframe-wrapper {
+      margin-top: 24px;
+    }
+    iframe {
+      width: 100%;
+      height: 700px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-category {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🧪 Smoke Test Suite: MSL Simple Calculator</h1>
+    <p>Automated verification for <code>index-msl-simple.html</code> & <code>calculator-msl-simple.js</code>.</p>
+    
+    <div id="summary" class="summary">Running tests...</div>
+    <div id="test-results" class="test-grid"></div>
+
+    <div class="iframe-wrapper">
+      <h2>Live Component Preview</h2>
+      <iframe id="app-frame" src="index-msl-simple.html"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const tests = [];
+    let passCount = 0;
+    let failCount = 0;
+
+    function assert(category, name, condition, details = '') {
+      const passed = Boolean(condition);
+      tests.push({ category, name, passed, details });
+      if (passed) passCount++;
+      else failCount++;
+    }
+
+    function renderResults() {
+      const container = document.getElementById('test-results');
+      const summaryEl = document.getElementById('summary');
+      container.innerHTML = '';
+
+      tests.forEach(t => {
+        const div = document.createElement('div');
+        div.className = `test-result ${t.passed ? 'pass' : 'fail'}`;
+        div.innerHTML = `
+          <span class="icon">${t.passed ? '✓' : '✗'}</span>
+          <div>
+            <span class="badge badge-category">${t.category}</span>
+            <strong>${t.name}</strong>
+            ${t.details ? `<div class="test-info">${t.details}</div>` : ''}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      const total = tests.length;
+      summaryEl.className = `summary ${failCount === 0 ? 'all-pass' : 'has-fail'}`;
+      summaryEl.innerHTML = `
+        <strong>Result:</strong> ${passCount}/${total} tests passed ${failCount === 0 ? '🎉 All Checks Passed!' : `⚠️ (${failCount} failures)`}
+      `;
+    }
+
+    async function runTestSuite() {
+      const iframe = document.getElementById('app-frame');
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      const win = iframe.contentWindow;
+
+      // Group 1: Initial State & Core Elements
+      assert('Structure', 'App header and title exist', doc.querySelector('.app-header h1')?.textContent.includes('MSL Score Calculator'));
+      assert('Structure', 'Action buttons exist (Show Calc, Copy, Print, Reset)', 
+        doc.getElementById('btn-show-calculations') &&
+        doc.getElementById('btn-copy-summary') &&
+        doc.getElementById('btn-print') &&
+        doc.getElementById('btn-reset')
+      );
+      assert('Structure', 'IPR row initialized as Measure 1', doc.querySelector('.msl-measure-row.ipr-row') !== null);
+      
+      const schoolYearEl = doc.getElementById('print-school-year');
+      assert('Dynamic Dates', 'Dynamic School Year populated', schoolYearEl && /^\d{4}-\d{4}$/.test(schoolYearEl.textContent.trim()), `Found: "${schoolYearEl?.textContent}"`);
+
+      const printBadge = doc.getElementById('print-mode-badge');
+      assert('Status Badge', 'Initial badge shows Configuration Incomplete', printBadge?.textContent.includes('Incomplete'));
+
+      // Group 2: Measure Addition & Removal
+      const btnAdd = doc.getElementById('btn-add-measure');
+      btnAdd.click(); // Add Measure 2
+      btnAdd.click(); // Add Measure 3
+      btnAdd.click(); // Add Measure 4 (Total 4 = 1 IPR + 3 additional)
+      
+      const rowCount4 = doc.querySelectorAll('.msl-measure-row').length;
+      assert('Measure Management', 'Can add up to 4 total measures (1 IPR + 3 additional)', rowCount4 === 4, `Rows count: ${rowCount4}`);
+      assert('Measure Management', 'Add button is disabled at max 4 measures', btnAdd.disabled && btnAdd.textContent.includes('Maximum'));
+
+      // Test Removal
+      const removeBtns = doc.querySelectorAll('.btn-remove');
+      if (removeBtns.length > 0) {
+        removeBtns[removeBtns.length - 1].click(); // Remove 4th measure
+        await new Promise(r => setTimeout(r, 350));
+      }
+      const rowCount3 = doc.querySelectorAll('.msl-measure-row:not(.is-removing)').length;
+      assert('Measure Management', 'Can remove measure via delegated button', rowCount3 === 3, `Rows count: ${rowCount3}`);
+      assert('Measure Management', 'Add button re-enabled after removal', !btnAdd.disabled);
+
+      // Group 3: XSS Protection Check
+      const m2NameInput = doc.getElementById('msl-name-2');
+      const m2DescInput = doc.getElementById('msl-desc-2');
+      if (m2NameInput) {
+        m2NameInput.value = '<script>window.__xssTest=true;<\/script><b>Math Growth</b>';
+        m2NameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      if (m2DescInput) {
+        m2DescInput.value = '<img src="x" onerror="window.__xssTest2=true;"> District SLO';
+        m2DescInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      await new Promise(r => setTimeout(r, 100));
+      assert('Security', 'XSS scripts not executed from measure name or description', win.__xssTest === undefined && win.__xssTest2 === undefined);
+
+      // Group 4: BOY Plan Ready State
+      // Set weights: IPR=10%, Measure 2=10%, Measure 3=10% (Total=30%)
+      const w1 = doc.getElementById('msl-weight-1');
+      const w2 = doc.getElementById('msl-weight-2');
+      const w3 = doc.getElementById('msl-weight-3');
+      if (w1) { w1.value = '10'; w1.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (w2) { w2.value = '10'; w2.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (w3) { w3.value = '10'; w3.dispatchEvent(new Event('input', { bubbles: true })); }
+
+      // Set Goals and Max
+      const g2 = doc.getElementById('msl-goal-2');
+      const max2 = doc.getElementById('msl-max-2');
+      const g3 = doc.getElementById('msl-goal-3');
+      const max3 = doc.getElementById('msl-max-3');
+      if (g2 && max2) {
+        g2.value = '80'; g2.dispatchEvent(new Event('input', { bubbles: true }));
+        max2.value = '100'; max2.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      if (g3 && max3) {
+        g3.value = '70'; g3.dispatchEvent(new Event('input', { bubbles: true }));
+        max3.value = '90'; max3.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      await new Promise(r => setTimeout(r, 150));
+      assert('BOY Mode', 'Print mode badge transitions to BOY Goal Plan (Ready)', printBadge?.className.includes('badge-boy') && printBadge?.textContent.includes('BOY Goal Plan'));
+      
+      const printDocTitle = doc.getElementById('print-doc-title');
+      assert('BOY Mode', 'Print doc title indicates Goal Plan & Agreement', printDocTitle?.textContent.includes('Goal Plan & Agreement'));
+
+      // Group 5: EOY Final Evaluation & Scoring
+      // Enter scores: IPR actual = 50 (normalized 0.5 -> 150 scale * (10/30) = 50 pts)
+      // Measure 2 actual = 80 (Goal midpoint -> normalized 0.5 -> 150 scale * (10/30) = 50 pts)
+      // Measure 3 actual = 70 (Goal midpoint -> normalized 0.5 -> 150 scale * (10/30) = 50 pts)
+      // Total expected = 150 / 300 (Rating: "Expected", RANDA: 1.50)
+      const act1 = doc.getElementById('msl-actual-1');
+      const act2 = doc.getElementById('msl-actual-2');
+      const act3 = doc.getElementById('msl-actual-3');
+      if (act1) { act1.value = '50'; act1.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (act2) { act2.value = '80'; act2.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (act3) { act3.value = '70'; act3.dispatchEvent(new Event('input', { bubbles: true })); }
+
+      await new Promise(r => setTimeout(r, 150));
+      assert('EOY Mode', 'Print mode badge transitions to EOY Final Evaluation (Ready)', printBadge?.className.includes('badge-eoy'));
+
+      const summaryScore = doc.getElementById('summary-total-score');
+      const summaryRanda = doc.getElementById('summary-randa-score');
+      const summaryRating = doc.getElementById('summary-rating');
+      assert('Calculations', 'Calculates exact score 150 / 300', summaryScore?.textContent.trim() === '150');
+      assert('Calculations', 'COPMS RANDA Entry value displays 1.50', summaryRanda?.textContent.trim() === '1.50');
+      assert('Calculations', 'MSL Rating displays Expected', summaryRating?.textContent.trim() === 'Expected');
+      assert('Visual Theme', 'Summary rating has theme color class rating-expected', summaryRating?.classList.contains('rating-expected'));
+
+      // Group 6: Boundary & Rating Scale Tests
+      // High score test: More Than Expected (Score > 200)
+      if (act1 && act2 && act3) {
+        act1.value = '100'; act1.dispatchEvent(new Event('input', { bubbles: true }));
+        act2.value = '100'; act2.dispatchEvent(new Event('input', { bubbles: true }));
+        act3.value = '90';  act3.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await new Promise(r => setTimeout(r, 150));
+      assert('Rating Boundaries', 'Score 300 -> More Than Expected', summaryScore?.textContent.trim() === '300' && summaryRating?.textContent.trim() === 'More Than Expected');
+
+      // Boundary float test: 99.5 score -> Less Than Expected (previously had gap bug)
+      if (act1 && act2 && act3) {
+        act1.value = '33.17'; act1.dispatchEvent(new Event('input', { bubbles: true }));
+        act2.value = '60';    act2.dispatchEvent(new Event('input', { bubbles: true }));
+        act3.value = '50';    act3.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await new Promise(r => setTimeout(r, 150));
+      const floatScore = parseFloat(summaryScore?.textContent || '0');
+      assert('Rating Boundaries', 'Boundary scores below 100 return Less Than Expected (no gap)', floatScore < 100 && summaryRating?.textContent.trim() === 'Less Than Expected', `Score: ${floatScore}, Rating: "${summaryRating?.textContent}"`);
+
+      // Group 7: Modals & Escape Key
+      const btnShowCalc = doc.getElementById('btn-show-calculations');
+      const calcModal = doc.getElementById('calculation-modal');
+      btnShowCalc.click();
+      assert('Modals', 'Show Calculations modal opens on click', calcModal?.style.display === 'flex');
+
+      // Test Escape key close
+      doc.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      assert('Modals', 'Escape key closes Calculation modal', calcModal?.style.display === 'none');
+
+      const btnAbout = doc.getElementById('btn-about-tool');
+      const aboutModal = doc.getElementById('about-modal');
+      btnAbout.click();
+      assert('Modals', 'About This Tool modal opens on click', aboutModal?.style.display === 'flex');
+      doc.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      assert('Modals', 'Escape key closes About modal', aboutModal?.style.display === 'none');
+
+      renderResults();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const iframe = document.getElementById('app-frame');
+      iframe.onload = () => {
+        setTimeout(runTestSuite, 400);
+      };
+    });
+  </script>
+</body>
+</html>
