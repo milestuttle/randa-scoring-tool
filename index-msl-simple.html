@@ -22,9 +22,12 @@
 <body>
   <header class="app-header">
     <div class="app-header-content">
-      <div>
-        <h1>MSL Score Calculator</h1>
-        <p class="subtitle">Calculate MSL scores for COPMS RANDA entry</p>
+      <div class="header-brand">
+        <img src="district-logo.png" alt="Cañon City Schools Fremont RE-1 Logo" class="header-logo">
+        <div class="header-titles">
+          <h1>MSL Score Calculator</h1>
+          <p class="subtitle">Calculate MSL scores for COPMS RANDA entry</p>
+        </div>
       </div>
       <button type="button" id="btn-about-tool" class="btn btn-secondary">ℹ️ About This Tool</button>
     </div>
@@ -33,7 +36,13 @@
   <main class="container">
     <!-- Print-Only Header -->
     <div class="print-only print-header">
-      <div id="print-doc-title" class="print-doc-title">Measures of Student Learning (MSL) Details</div>
+      <div class="print-header-brand">
+        <img src="district-logo.png" alt="Cañon City Schools Logo" class="print-logo">
+        <div class="print-header-titles">
+          <div id="print-doc-title" class="print-doc-title">Measures of Student Learning (MSL) Details</div>
+          <div class="print-doc-subtitle">Cañon City Schools &bull; Fremont RE-1</div>
+        </div>
+      </div>
       <div class="print-header-row">
         <div class="print-field"><strong>Educator Name:</strong> ________________________________</div>
         <div class="print-field"><strong>School Year:</strong> <span id="print-school-year"></span></div>

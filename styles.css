@@ -152,15 +152,43 @@ strong {
   gap: var(--spacing-md);
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: left;
+}
+
+.header-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 50%;
+  background-color: #ffffff;
+  padding: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.04);
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
 .app-header h1 {
   color: white;
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: 2px;
 }
 
 .subtitle {
   font-size: 1.125rem;
   opacity: 0.95;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0;
 }
 
 .header-links {
@@ -1714,6 +1742,17 @@ input[type="number"].valid {
     gap: var(--spacing-sm);
   }
 
+  .header-brand {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-xs);
+  }
+
+  .header-logo {
+    width: 52px;
+    height: 52px;
+  }
+
   .app-header h1 {
     font-size: 1.35rem;
     line-height: 1.25;
@@ -2013,7 +2052,25 @@ input[type="number"].valid {
   .print-header {
     border-bottom: 2px solid #000000 !important;
     padding-bottom: 0.75rem !important;
-    margin-bottom: 1.5rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .print-header-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .print-logo {
+    width: 64px !important;
+    height: 64px !important;
+    object-fit: contain !important;
+    flex-shrink: 0 !important;
+  }
+
+  .print-header-titles {
+    flex-grow: 1 !important;
   }
 
   .print-doc-title {
@@ -2022,7 +2079,14 @@ input[type="number"].valid {
     text-transform: uppercase !important;
     letter-spacing: 0.03em !important;
     color: #000000 !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .print-doc-subtitle {
+    font-size: 10pt !important;
+    font-weight: 600 !important;
+    color: #333333 !important;
+    margin-top: 1px !important;
   }
 
   .print-header-row {
