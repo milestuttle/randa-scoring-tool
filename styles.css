@@ -54,6 +54,9 @@
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
 
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -77,7 +80,7 @@
 }
 
 body {
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
   color: var(--color-text);
@@ -2848,7 +2851,7 @@ input[type="number"].valid {
   background-color: #f1f5f9;
   padding: 2px 6px;
   border-radius: 3px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
   color: var(--color-primary-dark);
 }
@@ -2880,12 +2883,14 @@ input[type="number"].valid {
 }
 
 .calc-formula {
-  background: #f8fafc;
-  padding: var(--spacing-md);
+  background-color: #f0f9ff;
   border-left: 4px solid var(--color-primary);
-  font-family: 'Courier New', monospace;
-  margin: var(--spacing-sm) 0;
+  padding: var(--spacing-md);
   border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--color-primary-dark);
+  margin: var(--spacing-sm) 0;
 }
 
 .calc-step {
@@ -3227,10 +3232,10 @@ body:has(.sticky-footer) {
 .calc-formula {
   background-color: #f0f9ff;
   /* Light blue tint */
-  border-left-color: var(--color-primary);
+  border-left: 4px solid var(--color-primary);
   padding: var(--spacing-md);
   border-radius: var(--radius-sm);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9rem;
   color: var(--color-primary-dark);
 }
