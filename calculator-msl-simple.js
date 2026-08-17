@@ -194,49 +194,93 @@ function calculateMSL() {
 function updateAllCalculations() {
   const result = calculateMSL();
 
-  // Weight validation display
+  // Weight Allocation Budget Meter
   const weightTotal = document.getElementById('total-msl-weight');
   const weightMsg = document.getElementById('msl-weight-message');
+  const weightMeterFill = document.getElementById('weight-meter-fill');
+  const weightMeterBadge = document.getElementById('weight-meter-badge');
+
   if (weightTotal) weightTotal.textContent = result.totalWeight.toFixed(1);
-  if (weightMsg) {
-    if (result.weightsValid) {
-      weightMsg.textContent = '✓ Total equals 30%';
-      weightMsg.className = 'validation-success';
-    } else if (result.totalWeight > MSL_TOTAL_WEIGHT) {
-      weightMsg.textContent = `⚠ Total exceeds 30% (currently ${result.totalWeight.toFixed(1)}%)`;
-      weightMsg.className = 'validation-error';
-    } else {
+
+  const fillPct = clamp((result.totalWeight / MSL_TOTAL_WEIGHT) * 100, 0, 100);
+  if (weightMeterFill) {
+    weightMeterFill.style.width = `${fillPct}%`;
+  }
+
+  if (result.weightsValid) {
+    if (weightMeterFill) weightMeterFill.className = 'weight-meter-fill fill-complete';
+    if (weightMeterBadge) {
+      weightMeterBadge.className = 'weight-meter-badge badge-complete';
+      weightMeterBadge.innerHTML = `<span>30.0% / 30.0%</span>`;
+    }
+    if (weightMsg) {
+      weightMsg.innerHTML = '<span class="text-success">✓ Perfect! Total weight is exactly 30.0%</span>';
+      weightMsg.className = 'weight-meter-status validation-success';
+    }
+  } else if (result.totalWeight > MSL_TOTAL_WEIGHT) {
+    if (weightMeterFill) weightMeterFill.className = 'weight-meter-fill fill-over';
+    if (weightMeterBadge) {
+      weightMeterBadge.className = 'weight-meter-badge badge-over';
+      weightMeterBadge.innerHTML = `<span>${result.totalWeight.toFixed(1)}% / 30.0%</span>`;
+    }
+    if (weightMsg) {
+      const overBy = (result.totalWeight - MSL_TOTAL_WEIGHT).toFixed(1);
+      weightMsg.innerHTML = `<span class="text-error">⚠ Total exceeds 30% (currently ${result.totalWeight.toFixed(1)}%, over by ${overBy}%)</span>`;
+      weightMsg.className = 'weight-meter-status validation-error';
+    }
+  } else {
+    if (weightMeterFill) weightMeterFill.className = 'weight-meter-fill fill-progress';
+    if (weightMeterBadge) {
+      weightMeterBadge.className = 'weight-meter-badge badge-incomplete';
+      weightMeterBadge.innerHTML = `<span>${result.totalWeight.toFixed(1)}% / 30.0%</span>`;
+    }
+    if (weightMsg) {
+      const remaining = (MSL_TOTAL_WEIGHT - result.totalWeight).toFixed(1);
       const rowCount = document.querySelectorAll('.msl-measure-row').length;
       if (rowCount <= 1) {
-        weightMsg.textContent = `Add measures to reach 30% (currently ${result.totalWeight.toFixed(1)}%)`;
-        weightMsg.className = 'validation-info';
+        weightMsg.innerHTML = `<span class="text-info">Add measures to reach 30% (currently ${result.totalWeight.toFixed(1)}%, ${remaining}% left)</span>`;
+        weightMsg.className = 'weight-meter-status validation-info';
       } else {
-        weightMsg.textContent = `⚠ Total must equal 30% (currently ${result.totalWeight.toFixed(1)}%)`;
-        weightMsg.className = 'validation-error';
+        weightMsg.innerHTML = `<span class="text-error">⚠ Total must equal 30% (currently ${result.totalWeight.toFixed(1)}%, ${remaining}% left)</span>`;
+        weightMsg.className = 'weight-meter-status validation-error';
       }
     }
   }
 
-  // Update Status Checklist
+  // Update Status Checklist (if present in DOM)
   const statusWeights = document.getElementById('status-weights');
   const statusScores = document.getElementById('status-scores');
   
   if (statusWeights) {
     statusWeights.className = `status-item ${result.weightsValid ? 'complete' : 'incomplete'}`;
-    statusWeights.querySelector('.status-icon').textContent = result.weightsValid ? '✓' : '⚖️';
+    const icon = statusWeights.querySelector('.status-icon');
+    if (icon) icon.textContent = result.weightsValid ? '✓' : '⚖️';
   }
   
   if (statusScores) {
     const allFilled = result.measures.every(m => m.filled);
     statusScores.className = `status-item ${allFilled ? 'complete' : 'incomplete'}`;
-    statusScores.querySelector('.status-icon').textContent = allFilled ? '✓' : '🎯';
+    const icon = statusScores.querySelector('.status-icon');
+    if (icon) icon.textContent = allFilled ? '✓' : '🎯';
   }
 
-  // Per-measure feedback
+  // Per-measure feedback and auto-derived values
   result.measures.forEach((m, i) => {
     const row = document.querySelectorAll('.msl-measure-row')[i];
     if (!row) return;
     
+    // Update Auto-Derived Min Score readout
+    const minValEl = row.querySelector(`#msl-min-val-${row.dataset.index}`);
+    if (minValEl) {
+      minValEl.textContent = (m.minScore !== undefined && m.minScore !== null && !isNaN(m.minScore)) ? m.minScore : '—';
+    }
+
+    // Update Auto-Derived Weighted Contribution readout
+    const contribValEl = row.querySelector(`#msl-contrib-val-${row.dataset.index}`);
+    if (contribValEl) {
+      contribValEl.textContent = m.filled ? `${m.weighted.toFixed(2)} pts` : '—';
+    }
+
     // Text feedback
     const feedbackEl = row.querySelector('.measure-feedback');
     if (feedbackEl) {
@@ -457,6 +501,19 @@ function updatePrintSummary(result) {
       <div class="print-footnote">
         <strong>Scoring Methodology:</strong> Each measure's score achieved is linearly normalized within its range [Min, Max], scaled to 300 points, and weighted by its contribution to the 30% MSL evaluation total. Minimum Score is calculated at an equal distance below Goal Score: <code>Min = 2 × Goal − Max</code>.
       </div>
+
+      <div class="print-signature-box">
+        <div class="signature-line">
+          <span>Educator Signature:</span>
+          <div class="line"></div>
+          <span style="font-size: 8.5pt; font-weight: normal; color: #333333; margin-top: 4px;">Date: ________________________</span>
+        </div>
+        <div class="signature-line">
+          <span>Evaluator Signature:</span>
+          <div class="line"></div>
+          <span style="font-size: 8.5pt; font-weight: normal; color: #333333; margin-top: 4px;">Date: ________________________</span>
+        </div>
+      </div>
     `;
 
     container.innerHTML = html;
@@ -547,6 +604,19 @@ function updatePrintSummary(result) {
     <div class="print-footnote">
       * <strong>Note:</strong> The Minimum Score represents the score range floor and is automatically calculated at an equal distance below Goal Score: <code>Min = Goal − (Max − Goal) = 2 × Goal − Max</code>. Score Achieved will be documented and evaluated at the End of Year evaluation meeting.
     </div>
+
+    <div class="print-signature-box">
+      <div class="signature-line">
+        <span>Educator Signature:</span>
+        <div class="line"></div>
+        <span style="font-size: 8.5pt; font-weight: normal; color: #333333; margin-top: 4px;">Date: ________________________</span>
+      </div>
+      <div class="signature-line">
+        <span>Evaluator Signature:</span>
+        <div class="line"></div>
+        <span style="font-size: 8.5pt; font-weight: normal; color: #333333; margin-top: 4px;">Date: ________________________</span>
+      </div>
+    </div>
   `;
 
   container.innerHTML = html;
@@ -632,6 +702,32 @@ function createMeasureRow(index, isIPR = false) {
       <div class="form-group field-actual">
         <label for="msl-actual-${index}">📊 Score Achieved</label>
         <input type="number" id="msl-actual-${index}" step="any" placeholder="Enter score">
+      </div>
+    </div>
+
+    <!-- Auto-Derived Outputs Ribbon -->
+    <div class="measure-auto-ribbon">
+      ${!isIPR ? `
+      <div class="auto-ribbon-pill">
+        <span class="auto-badge">AUTO</span>
+        <span class="auto-ribbon-label">Calculated Min:</span>
+        <strong id="msl-min-val-${index}" class="auto-ribbon-value">—</strong>
+        <span class="auto-ribbon-subtext">(2 × Goal − Max)</span>
+      </div>
+      ` : `
+      <div class="auto-ribbon-pill">
+        <span class="auto-badge">FIXED</span>
+        <span class="auto-ribbon-label">IPR Scale:</span>
+        <strong class="auto-ribbon-value">0 – 100</strong>
+        <span class="auto-ribbon-subtext">(Goal: 50)</span>
+      </div>
+      `}
+
+      <div class="auto-ribbon-pill auto-ribbon-pill-contrib">
+        <span class="auto-badge">AUTO</span>
+        <span class="auto-ribbon-label">Weighted Contribution:</span>
+        <strong id="msl-contrib-val-${index}" class="auto-ribbon-value">—</strong>
+        <span class="auto-ribbon-subtext">(out of 300 scale)</span>
       </div>
     </div>
 
@@ -858,10 +954,15 @@ function copySummary() {
 
   const onSuccess = () => {
     const btn = document.getElementById('btn-copy-summary');
-    const orig = btn.innerHTML;
-    btn.innerHTML = '✅ Copied!';
+    if (!btn) return;
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = '✓ Copied to Clipboard!';
+    btn.classList.add('btn-copy-success');
     showToast('✓ MSL summary copied to clipboard!');
-    setTimeout(() => btn.innerHTML = orig, 2000);
+    setTimeout(() => {
+      btn.innerHTML = origHTML;
+      btn.classList.remove('btn-copy-success');
+    }, 2200);
   };
 
   if (navigator.clipboard && window.isSecureContext) {

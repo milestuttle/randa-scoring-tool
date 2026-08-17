@@ -40,16 +40,16 @@
         <img src="district-logo.png" alt="Cañon City Schools Logo" class="print-logo">
         <div class="print-header-titles">
           <div id="print-doc-title" class="print-doc-title">Measures of Student Learning (MSL) Details</div>
-          <div class="print-doc-subtitle">Cañon City Schools &bull; Fremont RE-1</div>
+          <div class="print-doc-subtitle">Cañon City Schools &bull; Fremont RE-1 &bull; Licensed Personnel Evaluation System</div>
         </div>
       </div>
-      <div class="print-header-row">
-        <div class="print-field"><strong>Educator Name:</strong> ________________________________</div>
-        <div class="print-field"><strong>School Year:</strong> <span id="print-school-year"></span></div>
-      </div>
-      <div class="print-header-row">
-        <div class="print-field"><strong>Evaluator Name:</strong> _____________________________</div>
-        <div class="print-field"><strong>Date:</strong> <span id="print-date"></span></div>
+      <div class="print-meta-grid">
+        <div class="print-meta-item"><strong>Educator Name:</strong> ________________________________</div>
+        <div class="print-meta-item"><strong>School Year:</strong> <span id="print-school-year"></span></div>
+        <div class="print-meta-item"><strong>Evaluator Name:</strong> _____________________________</div>
+        <div class="print-meta-item"><strong>Date:</strong> <span id="print-date"></span></div>
+        <div class="print-meta-item"><strong>School / Department:</strong> _______________________</div>
+        <div class="print-meta-item"><strong>Evaluation Type:</strong> Licensed Educator (MSL)</div>
       </div>
     </div>
 
@@ -141,25 +141,22 @@
 
       <button type="button" id="btn-add-measure" class="btn btn-secondary">+ Add Measure</button>
 
-      <div class="validation-summary">
-        <strong>Total MSL Weight:</strong> <span id="total-msl-weight">0.0</span>%
-        <div id="msl-weight-message" class="validation-error" role="status" aria-live="polite">⚠ Total must equal 30%
+      <!-- Weight Allocation Budget Meter -->
+      <div class="weight-meter-card">
+        <div class="weight-meter-header">
+          <div class="weight-meter-title-wrap">
+            <span class="weight-meter-icon">⚖️</span>
+            <span class="weight-meter-title">Weight Allocation Budget</span>
+            <span id="weight-meter-badge" class="weight-meter-badge badge-incomplete">
+              <span id="total-msl-weight">0.0</span>% / 30.0%
+            </span>
+          </div>
+          <div id="msl-weight-message" class="weight-meter-status" role="status" aria-live="polite">
+            Add measures to reach 30.0%
+          </div>
         </div>
-      </div>
-
-      <!-- MSL Results Summary -->
-      <div id="msl-results" class="overall-summary">
-        <h3>Setup Status Checklist</h3>
-
-        <div id="msl-status-checklist" class="status-checklist">
-          <div id="status-weights" class="status-item incomplete">
-            <span class="status-icon">⚖️</span>
-            <span class="status-text">Weights must total 30%</span>
-          </div>
-          <div id="status-scores" class="status-item incomplete">
-            <span class="status-icon">🎯</span>
-            <span class="status-text">All measures must have scores</span>
-          </div>
+        <div class="weight-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0">
+          <div id="weight-meter-fill" class="weight-meter-fill" style="width: 0%;"></div>
         </div>
       </div>
     </section>
@@ -170,12 +167,16 @@
       <span id="print-mode-badge" class="print-mode-badge badge-incomplete">⚠️ Configuration Incomplete</span>
     </div>
 
-    <!-- Action Buttons -->
+    <!-- Action Buttons with Clear Hierarchy -->
     <div class="actions">
-      <button type="button" id="btn-show-calculations" class="btn btn-secondary">📊 Show Calculations</button>
-      <button type="button" id="btn-copy-summary" class="btn btn-secondary">📋 Copy Summary</button>
-      <button type="button" id="btn-print" class="btn btn-secondary">🖨️ Print Results</button>
-      <button type="button" id="btn-reset" class="btn btn-danger">Reset All</button>
+      <div class="actions-primary-group">
+        <button type="button" id="btn-copy-summary" class="btn btn-primary">📋 Copy RANDA Summary</button>
+        <button type="button" id="btn-print" class="btn btn-secondary">🖨️ Print Results</button>
+        <button type="button" id="btn-show-calculations" class="btn btn-secondary">📊 Show Calculations</button>
+      </div>
+      <div class="actions-danger-group">
+        <button type="button" id="btn-reset" class="btn btn-ghost-danger">🗑️ Reset All</button>
+      </div>
     </div>
 
     <!-- Calculation Modal -->
