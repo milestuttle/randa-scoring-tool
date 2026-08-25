@@ -338,6 +338,7 @@ function updateAllCalculations() {
   const summaryMarker = document.getElementById('summary-score-marker');
   const summaryRanda = document.getElementById('summary-randa-score');
   const printBadge = document.getElementById('print-mode-badge');
+  const printInstruction = document.getElementById('print-mode-instruction');
 
   if (result.valid) {
     if (summaryScore) summaryScore.textContent = result.score;
@@ -381,17 +382,20 @@ function updateAllCalculations() {
     if (summaryMarker) summaryMarker.style.display = 'none';
   }
 
-  // Update live print document status badge
+  // Update live print document status badge & instruction
   if (printBadge) {
     if (result.valid) {
       printBadge.textContent = '📄 EOY Final Evaluation Report (Ready)';
       printBadge.className = 'print-mode-badge badge-eoy';
+      if (printInstruction) printInstruction.style.display = 'block';
     } else if (result.goalsValid) {
       printBadge.textContent = '📄 BOY Goal Plan & Agreement (Ready)';
       printBadge.className = 'print-mode-badge badge-boy';
+      if (printInstruction) printInstruction.style.display = 'none';
     } else {
       printBadge.textContent = '⚠️ Configuration Incomplete';
       printBadge.className = 'print-mode-badge badge-incomplete';
+      if (printInstruction) printInstruction.style.display = 'none';
     }
   }
 

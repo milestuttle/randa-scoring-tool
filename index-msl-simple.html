@@ -164,8 +164,13 @@
 
     <!-- Print Mode Indicator & Actions -->
     <div class="print-mode-bar" aria-live="polite">
-      <span class="print-mode-label">Print Document Format:</span>
-      <span id="print-mode-badge" class="print-mode-badge badge-incomplete">⚠️ Configuration Incomplete</span>
+      <div class="print-mode-status">
+        <span class="print-mode-label">Print Document Format:</span>
+        <span id="print-mode-badge" class="print-mode-badge badge-incomplete">⚠️ Configuration Incomplete</span>
+      </div>
+      <div id="print-mode-instruction" class="print-mode-instruction" style="display: none;">
+        Please print as a PDF and add to RANDA under &ldquo;Evidence &amp; Artifacts.&rdquo;
+      </div>
     </div>
 
     <!-- Action Buttons with Clear Hierarchy -->

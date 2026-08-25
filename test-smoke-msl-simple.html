@@ -171,7 +171,9 @@
       assert('Dynamic Dates', 'Dynamic School Year populated', schoolYearEl && /^\d{4}-\d{4}$/.test(schoolYearEl.textContent.trim()), `Found: "${schoolYearEl?.textContent}"`);
 
       const printBadge = doc.getElementById('print-mode-badge');
+      const printInstruction = doc.getElementById('print-mode-instruction');
       assert('Status Badge', 'Initial badge shows Configuration Incomplete', printBadge?.textContent.includes('Incomplete'));
+      assert('Status Badge', 'Initial print instruction is hidden', printInstruction?.style.display === 'none');
 
       // Group 2: Measure Addition & Removal
       const btnAdd = doc.getElementById('btn-add-measure');
@@ -233,6 +235,7 @@
 
       await new Promise(r => setTimeout(r, 150));
       assert('BOY Mode', 'Print mode badge transitions to BOY Goal Plan (Ready)', printBadge?.className.includes('badge-boy') && printBadge?.textContent.includes('BOY Goal Plan'));
+      assert('BOY Mode', 'Print instruction remains hidden in BOY Mode', printInstruction?.style.display === 'none');
       
       const printDocTitle = doc.getElementById('print-doc-title');
       assert('BOY Mode', 'Print doc title indicates Goal Plan & Agreement', printDocTitle?.textContent.includes('Goal Plan & Agreement'));
@@ -251,6 +254,7 @@
 
       await new Promise(r => setTimeout(r, 150));
       assert('EOY Mode', 'Print mode badge transitions to EOY Final Evaluation (Ready)', printBadge?.className.includes('badge-eoy'));
+      assert('EOY Mode', 'Print instruction is visible in EOY Ready state', printInstruction?.style.display === 'block' && printInstruction?.textContent.includes('Please print as a PDF and add to RANDA'));
 
       const summaryScore = doc.getElementById('summary-total-score');
       const summaryRanda = doc.getElementById('summary-randa-score');
