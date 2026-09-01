@@ -264,6 +264,14 @@
       assert('Calculations', 'MSL Rating displays Expected', summaryRating?.textContent.trim() === 'Expected');
       assert('Visual Theme', 'Summary rating has theme color class rating-expected', summaryRating?.classList.contains('rating-expected'));
 
+      // Verify Primary 300-Point Scale Score Focus & Contribution Readouts
+      const m1Score300 = doc.getElementById('msl-score300-val-1');
+      const m1Contrib = doc.getElementById('msl-contrib-val-1');
+      const m1Badge = doc.getElementById('msl-rating-badge-1');
+      assert('300 Scale Focus', 'Primary measure score displays on 300-point scale (150.00 / 300)', m1Score300?.textContent.includes('150.00 / 300'), `Got: "${m1Score300?.textContent}"`);
+      assert('300 Scale Focus', 'Measure rating tag displays Expected on card', m1Badge?.textContent.trim() === 'Expected', `Got: "${m1Badge?.textContent}"`);
+      assert('Contributing Score', 'Contributing score clearly indicates points towards final 300 (+50.00 pts)', m1Contrib?.textContent.includes('50.00 pts'), `Got: "${m1Contrib?.textContent}"`);
+
       // Group 6: Boundary & Rating Scale Tests
       // High score test: More Than Expected (Score > 200)
       if (act1 && act2 && act3) {

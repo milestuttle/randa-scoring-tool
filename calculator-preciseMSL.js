@@ -243,19 +243,64 @@ function updateAllCalculations() {
     statusScores.querySelector('.status-icon').textContent = allFilled ? '✓' : '🎯';
   }
 
-  // Per-measure feedback
+  // Per-measure feedback and auto-derived values
   mslResult.measures.forEach((m, i) => {
     const row = document.querySelectorAll('.msl-measure-row')[i];
     if (!row) return;
 
+    const idx = row.getAttribute('data-index');
+
+    // Update Auto-Derived Min Score readout
+    const minValEl = row.querySelector(`#msl-min-val-${idx}`);
+    if (minValEl) {
+      minValEl.textContent = (m.minScore !== undefined && m.minScore !== null && !isNaN(m.minScore)) ? m.minScore : '—';
+    }
+
+    // Update Auto-Derived Primary Measure Score (300 Scale) & Rating Tag
+    const score300ValEl = row.querySelector(`#msl-score300-val-${idx}`);
+    const ratingBadgeEl = row.querySelector(`#msl-rating-badge-${idx}`);
+    const contribValEl = row.querySelector(`#msl-contrib-val-${idx}`);
+    const contribWrapEl = row.querySelector(`#msl-contrib-wrap-${idx}`);
+
+    if (m.filled) {
+      const measureRating = getRatingLabel(m.scaled300, MSL_RATING_RANGES);
+      const ratingCls = ratingToClass(measureRating);
+      
+      if (score300ValEl) {
+        score300ValEl.textContent = `${m.scaled300.toFixed(2)} / 300`;
+      }
+      if (ratingBadgeEl) {
+        ratingBadgeEl.textContent = measureRating;
+        ratingBadgeEl.className = `measure-rating-badge ${ratingCls ? `badge-${ratingCls}` : ''}`;
+        ratingBadgeEl.style.display = 'inline-flex';
+      }
+      if (contribValEl) {
+        contribValEl.textContent = `+${m.weighted.toFixed(2)} pts`;
+      }
+      if (contribWrapEl) {
+        contribWrapEl.style.display = 'inline-flex';
+      }
+    } else {
+      if (score300ValEl) score300ValEl.textContent = '—';
+      if (ratingBadgeEl) {
+        ratingBadgeEl.textContent = '';
+        ratingBadgeEl.style.display = 'none';
+      }
+      if (contribValEl) contribValEl.textContent = '—';
+      if (contribWrapEl) {
+        contribWrapEl.style.display = 'none';
+      }
+    }
+
     const feedbackEl = row.querySelector('.measure-feedback');
     if (feedbackEl) {
       if (m.filled) {
-        const isIPRRow = row.classList.contains('ipr-row') || row.getAttribute('data-index') == 1;
+        const isIPRRow = row.classList.contains('ipr-row') || idx == 1;
+        const measureRating = getRatingLabel(m.scaled300, MSL_RATING_RANGES);
         if (isIPRRow) {
-          feedbackEl.textContent = `${m.percentage}% of IPR range (0–100) → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
+          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.scaled300.toFixed(2)} / 300</span> (${measureRating}, ${m.percentage.toFixed(1)}% of 0–100 range) &bull; <strong>Contributing to Final 300:</strong> <span class="feedback-highlight-contrib">+${m.weighted.toFixed(2)} pts</span> (${m.weight.toFixed(1)}% of 30% weight)`;
         } else {
-          feedbackEl.textContent = `${m.percentage}% of range (Min: ${m.minScore}, Goal: ${m.goalScore}, Max: ${m.maxScore}) → ${m.scaled300} / 300 scale → contributes ${m.weighted} pts`;
+          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.scaled300.toFixed(2)} / 300</span> (${measureRating}, ${m.percentage.toFixed(1)}% of range [${m.minScore}–${m.maxScore}]) &bull; <strong>Contributing to Final 300:</strong> <span class="feedback-highlight-contrib">+${m.weighted.toFixed(2)} pts</span> (${m.weight.toFixed(1)}% of 30% weight)`;
         }
         feedbackEl.className = 'measure-feedback visible';
       } else if (m.invalidRange) {
@@ -655,6 +700,43 @@ function createMSLRow(index, isIPR = false) {
       <div class="form-group field-actual">
         <label for="msl-actual-${index}">🎯 Score Achieved</label>
         <input type="number" id="msl-actual-${index}" step="any" placeholder="Enter score">
+      </div>
+    </div>
+
+    <!-- Auto-Derived Outputs Ribbon -->
+    <div class="measure-auto-ribbon">
+      ${!isIPR ? `
+      <div class="auto-ribbon-pill auto-ribbon-pill-min">
+        <span class="auto-badge">AUTO</span>
+        <div class="auto-ribbon-content">
+          <span class="auto-ribbon-label">Calculated Min:</span>
+          <strong id="msl-min-val-${index}" class="auto-ribbon-value">—</strong>
+        </div>
+        <span class="auto-ribbon-subtext">(2 × Goal − Max)</span>
+      </div>
+      ` : `
+      <div class="auto-ribbon-pill auto-ribbon-pill-min">
+        <span class="auto-badge">FIXED</span>
+        <div class="auto-ribbon-content">
+          <span class="auto-ribbon-label">IPR Scale:</span>
+          <strong class="auto-ribbon-value">0 – 100</strong>
+        </div>
+        <span class="auto-ribbon-subtext">(Goal: 50)</span>
+      </div>
+      `}
+
+      <div class="auto-ribbon-pill auto-ribbon-pill-score300">
+        <span class="auto-badge auto-badge-primary">SCORE</span>
+        <div class="auto-ribbon-content">
+          <span class="auto-ribbon-label">Measure Score (300 Scale):</span>
+          <div class="score-with-badge">
+            <strong id="msl-score300-val-${index}" class="auto-ribbon-value auto-ribbon-value-primary">—</strong>
+            <span id="msl-rating-badge-${index}" class="measure-rating-badge" style="display: none;"></span>
+            <span id="msl-contrib-wrap-${index}" class="score-contrib-parenthetical" style="display: none;">
+              (contributes <strong id="msl-contrib-val-${index}">+0.00 pts</strong> to final 300)
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 
