@@ -722,7 +722,7 @@ function createMeasureRow(index, isIPR = false) {
     <div class="measure-auto-ribbon">
       ${!isIPR ? `
       <div class="auto-ribbon-pill auto-ribbon-pill-min">
-        <span class="auto-badge">AUTO</span>
+        <span class="auto-badge">Auto</span>
         <div class="auto-ribbon-content">
           <span class="auto-ribbon-label">Calculated Min:</span>
           <strong id="msl-min-val-${index}" class="auto-ribbon-value">—</strong>
@@ -731,7 +731,7 @@ function createMeasureRow(index, isIPR = false) {
       </div>
       ` : `
       <div class="auto-ribbon-pill auto-ribbon-pill-min">
-        <span class="auto-badge">FIXED</span>
+        <span class="auto-badge">Fixed</span>
         <div class="auto-ribbon-content">
           <span class="auto-ribbon-label">IPR Scale:</span>
           <strong class="auto-ribbon-value">0 – 100</strong>
@@ -741,7 +741,7 @@ function createMeasureRow(index, isIPR = false) {
       `}
 
       <div class="auto-ribbon-pill auto-ribbon-pill-score300">
-        <span class="auto-badge auto-badge-primary">SCORE</span>
+        <span class="auto-badge auto-badge-primary">Score</span>
         <div class="auto-ribbon-content">
           <span class="auto-ribbon-label">Measure Score (300 Scale):</span>
           <div class="score-with-badge">

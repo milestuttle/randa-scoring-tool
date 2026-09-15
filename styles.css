@@ -554,10 +554,8 @@ input[type="number"].valid {
 }
 
 .summary-label {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--color-text-muted);
   margin-bottom: var(--spacing-xs);
   transition: all 0.3s ease;
@@ -948,11 +946,9 @@ input[type="number"].valid {
 }
 
 .auto-ribbon-label {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--color-text-muted);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 
 .auto-ribbon-value {
@@ -1041,10 +1037,8 @@ input[type="number"].valid {
   align-items: center;
   background: #e2e8f0;
   color: #475569;
-  font-size: 0.62rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+  font-weight: 700;
   padding: 2px 6px;
   border-radius: 3px;
   line-height: 1.2;
@@ -1152,7 +1146,7 @@ input[type="number"].valid {
   width: 100%;
   height: 10px;
   background: #e2e8f0;
-  border-radius: 9999px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   position: relative;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
@@ -1160,7 +1154,7 @@ input[type="number"].valid {
 
 .weight-meter-fill {
   height: 100%;
-  border-radius: 9999px;
+  border-radius: var(--radius-md);
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.35s ease;
   background: var(--color-primary);
 }
@@ -1182,10 +1176,8 @@ input[type="number"].valid {
   color: white;
   padding: 2px 8px;
   border-radius: 99px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   margin-left: var(--spacing-sm);
 }
 
@@ -1201,7 +1193,7 @@ input[type="number"].valid {
   position: relative;
   height: 24px;
   background: #f1f5f9;
-  border-radius: 99px;
+  border-radius: var(--radius-md);
   overflow: visible;
   margin: 1.5rem 0 2rem;
 }
@@ -1211,7 +1203,7 @@ input[type="number"].valid {
   width: 100%;
   background: linear-gradient(to right, var(--rating-red) 0%, var(--rating-orange) 40%, var(--rating-blue) 70%, var(--rating-green) 100%);
   opacity: 0.2;
-  border-radius: 99px;
+  border-radius: var(--radius-md);
 }
 
 .measure-range-marker {
@@ -3462,7 +3454,7 @@ input[type="number"].valid {
 .progress-container {
   height: 8px;
   background-color: var(--color-border);
-  border-radius: 99px;
+  border-radius: var(--radius-md);
   margin-top: var(--spacing-sm);
   overflow: hidden;
   position: relative;
@@ -3471,7 +3463,7 @@ input[type="number"].valid {
 .progress-fill {
   height: 100%;
   background-color: var(--color-primary);
-  border-radius: 99px;
+  border-radius: var(--radius-md);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
   width: 0%;
 }
@@ -3779,7 +3771,7 @@ body:has(.sticky-footer) {
   align-items: center;
   gap: var(--spacing-xs);
   padding: 0.35rem 0.75rem;
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
   font-weight: 600;
   transition: all 0.2s ease;
