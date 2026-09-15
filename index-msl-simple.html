@@ -29,7 +29,10 @@
           <p class="subtitle">Calculate MSL scores for COPMS RANDA entry</p>
         </div>
       </div>
-      <button type="button" id="btn-about-tool" class="btn btn-secondary">ℹ️ About This Tool</button>
+      <button type="button" id="btn-about-tool" class="btn btn-secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        About This Tool
+      </button>
     </div>
   </header>
 
@@ -100,7 +103,7 @@
       </div>
       <div id="summary-overlay" class="overlay guided-overlay" role="status">
         <div class="overlay-content" id="summary-overlay-content">
-          <p>📋 Complete all MSL measures to see your score</p>
+          <p>Complete all MSL measures to see your score</p>
         </div>
       </div>
     </section>
@@ -146,7 +149,6 @@
       <div class="weight-meter-card">
         <div class="weight-meter-header">
           <div class="weight-meter-title-wrap">
-            <span class="weight-meter-icon">⚖️</span>
             <span class="weight-meter-title">Weight Allocation Budget</span>
             <span id="weight-meter-badge" class="weight-meter-badge badge-incomplete">
               <span id="total-msl-weight">0.0</span>% / 30.0%
@@ -166,7 +168,7 @@
     <div class="print-mode-bar" aria-live="polite">
       <div class="print-mode-status">
         <span class="print-mode-label">Print Document Format:</span>
-        <span id="print-mode-badge" class="print-mode-badge badge-incomplete">⚠️ Configuration Incomplete</span>
+        <span id="print-mode-badge" class="print-mode-badge badge-incomplete">Configuration Incomplete</span>
       </div>
       <div id="print-mode-instruction" class="print-mode-instruction" style="display: none;">
         Please print as a PDF and add to RANDA under &ldquo;Evidence &amp; Artifacts.&rdquo;
@@ -176,12 +178,24 @@
     <!-- Action Buttons with Clear Hierarchy -->
     <div class="actions">
       <div class="actions-primary-group">
-        <button type="button" id="btn-copy-summary" class="btn btn-primary">📋 Copy RANDA Summary</button>
-        <button type="button" id="btn-print" class="btn btn-secondary">🖨️ Print Results</button>
-        <button type="button" id="btn-show-calculations" class="btn btn-secondary">📊 Show Calculations</button>
+        <button type="button" id="btn-copy-summary" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+          Copy RANDA Summary
+        </button>
+        <button type="button" id="btn-print" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print Results
+        </button>
+        <button type="button" id="btn-show-calculations" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Show Calculations
+        </button>
       </div>
       <div class="actions-danger-group">
-        <button type="button" id="btn-reset" class="btn btn-ghost-danger">🗑️ Reset All</button>
+        <button type="button" id="btn-reset" class="btn btn-ghost-danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Reset All
+        </button>
       </div>
     </div>
 

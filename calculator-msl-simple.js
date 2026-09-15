@@ -214,7 +214,7 @@ function updateAllCalculations() {
       weightMeterBadge.innerHTML = `<span>30.0% / 30.0%</span>`;
     }
     if (weightMsg) {
-      weightMsg.innerHTML = '<span class="text-success">✓ Perfect! Total weight is exactly 30.0%</span>';
+      weightMsg.innerHTML = '<span class="text-success">Perfect! Total weight is exactly 30.0%</span>';
       weightMsg.className = 'weight-meter-status validation-success';
     }
   } else if (result.totalWeight > MSL_TOTAL_WEIGHT) {
@@ -225,7 +225,7 @@ function updateAllCalculations() {
     }
     if (weightMsg) {
       const overBy = (result.totalWeight - MSL_TOTAL_WEIGHT).toFixed(1);
-      weightMsg.innerHTML = `<span class="text-error">⚠ Total exceeds 30% (currently ${result.totalWeight.toFixed(1)}%, over by ${overBy}%)</span>`;
+      weightMsg.innerHTML = `<span class="text-error">Total exceeds 30% (currently ${result.totalWeight.toFixed(1)}%, over by ${overBy}%)</span>`;
       weightMsg.className = 'weight-meter-status validation-error';
     }
   } else {
@@ -241,7 +241,7 @@ function updateAllCalculations() {
         weightMsg.innerHTML = `<span class="text-info">Add measures to reach 30% (currently ${result.totalWeight.toFixed(1)}%, ${remaining}% left)</span>`;
         weightMsg.className = 'weight-meter-status validation-info';
       } else {
-        weightMsg.innerHTML = `<span class="text-error">⚠ Total must equal 30% (currently ${result.totalWeight.toFixed(1)}%, ${remaining}% left)</span>`;
+        weightMsg.innerHTML = `<span class="text-error">Total must equal 30% (currently ${result.totalWeight.toFixed(1)}%, ${remaining}% left)</span>`;
         weightMsg.className = 'weight-meter-status validation-error';
       }
     }
@@ -254,14 +254,14 @@ function updateAllCalculations() {
   if (statusWeights) {
     statusWeights.className = `status-item ${result.weightsValid ? 'complete' : 'incomplete'}`;
     const icon = statusWeights.querySelector('.status-icon');
-    if (icon) icon.textContent = result.weightsValid ? '✓' : '⚖️';
+    if (icon) icon.textContent = result.weightsValid ? '✓' : '';
   }
   
   if (statusScores) {
     const allFilled = result.measures.every(m => m.filled);
     statusScores.className = `status-item ${allFilled ? 'complete' : 'incomplete'}`;
     const icon = statusScores.querySelector('.status-icon');
-    if (icon) icon.textContent = allFilled ? '✓' : '🎯';
+    if (icon) icon.textContent = allFilled ? '✓' : '';
   }
 
   // Per-measure feedback and auto-derived values
@@ -324,7 +324,7 @@ function updateAllCalculations() {
         }
         feedbackEl.className = 'measure-feedback visible';
       } else if (m.invalidRange) {
-        feedbackEl.textContent = `⚠ Max Score (${m.maxScore}) must be greater than Goal Score (${m.goalScore})`;
+        feedbackEl.textContent = `Max Score (${m.maxScore}) must be greater than Goal Score (${m.goalScore})`;
         feedbackEl.className = 'measure-feedback visible validation-error';
       } else {
         feedbackEl.textContent = '';
@@ -399,11 +399,11 @@ function updateAllCalculations() {
     let guideMsg = '';
     
     if (!result.weightsValid) {
-      guideMsg = `📋 Set total MSL weight to 30.0% (currently ${result.totalWeight.toFixed(1)}%)`;
+      guideMsg = `Set total MSL weight to 30.0% (currently ${result.totalWeight.toFixed(1)}%)`;
     } else if (!result.goalsValid) {
-      guideMsg = `📋 Enter Goal Score and Max Score for all measures`;
+      guideMsg = `Enter Goal Score and Max Score for all measures`;
     } else {
-      guideMsg = `📋 Enter score achieved for all measures (${filledCount}/${totalCount} entered)`;
+      guideMsg = `Enter score achieved for all measures (${filledCount}/${totalCount} entered)`;
     }
 
     if (summaryOverlayContent) {
@@ -416,15 +416,15 @@ function updateAllCalculations() {
   // Update live print document status badge & instruction
   if (printBadge) {
     if (result.valid) {
-      printBadge.textContent = '📄 EOY Final Evaluation Report (Ready)';
+      printBadge.textContent = 'EOY Final Evaluation Report (Ready)';
       printBadge.className = 'print-mode-badge badge-eoy';
       if (printInstruction) printInstruction.style.display = 'block';
     } else if (result.goalsValid) {
-      printBadge.textContent = '📄 BOY Goal Plan & Agreement (Ready)';
+      printBadge.textContent = 'BOY Goal Plan & Agreement (Ready)';
       printBadge.className = 'print-mode-badge badge-boy';
       if (printInstruction) printInstruction.style.display = 'none';
     } else {
-      printBadge.textContent = '⚠️ Configuration Incomplete';
+      printBadge.textContent = 'Configuration Incomplete';
       printBadge.className = 'print-mode-badge badge-incomplete';
       if (printInstruction) printInstruction.style.display = 'none';
     }
@@ -451,7 +451,7 @@ function updatePrintSummary(result) {
     if (docTitleEl) docTitleEl.textContent = 'Measures of Student Learning (MSL) — Configuration Incomplete';
     container.innerHTML = `
       <div class="print-card" style="border: 1px solid #000000; padding: 15px; text-align: center; font-weight: bold; margin: 15px 0; background: #ffffff;">
-        ⚠️ Configuration incomplete: Ensure total MSL weight equals 30.0% and Goal/Max scores are set for all measures to generate print document.
+        Configuration incomplete: Ensure total MSL weight equals 30.0% and Goal/Max scores are set for all measures to generate print document.
       </div>
     `;
     return;
@@ -696,13 +696,13 @@ function createMeasureRow(index, isIPR = false) {
       ` : ''}
 
       <div class="form-group field-weight">
-        <label for="msl-weight-${index}">⚖️ Weight (%)</label>
+        <label for="msl-weight-${index}">Weight (%)</label>
         <input type="number" id="msl-weight-${index}" min="0" max="30" step="0.1" value="${weight}" ${weightReadonly} placeholder="0">
       </div>
 
       ${!isIPR ? `
       <div class="form-group field-range">
-        <label for="msl-goal-${index}">🎯 Goal Score</label>
+        <label for="msl-goal-${index}">Goal Score</label>
         <input type="number" id="msl-goal-${index}" step="any" value="${goalVal}" placeholder="85">
       </div>
 
@@ -713,7 +713,7 @@ function createMeasureRow(index, isIPR = false) {
       ` : ''}
 
       <div class="form-group field-actual">
-        <label for="msl-actual-${index}">📊 Score Achieved</label>
+        <label for="msl-actual-${index}">Score Achieved</label>
         <input type="number" id="msl-actual-${index}" step="any" placeholder="Enter score">
       </div>
     </div>
@@ -849,7 +849,7 @@ function resetAll() {
   updateAddButton();
   updateRemoveButtons();
   updateAllCalculations();
-  showToast('✓ All measures reset to default.');
+  showToast('All measures reset to default.');
 }
 
 // ===================================
@@ -965,7 +965,7 @@ function fallbackCopy(text) {
 function copySummary() {
   const result = calculateMSL();
   if (!result.valid) {
-    showToast('⚠️ Complete all measures before copying.');
+    showToast('Complete all measures before copying.');
     return;
   }
 
@@ -1009,12 +1009,12 @@ function copySummary() {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
       if (fallbackCopy(text)) onSuccess();
-      else showToast('⚠️ Could not copy to clipboard.');
+      else showToast('Could not copy to clipboard.');
     });
   } else if (fallbackCopy(text)) {
     onSuccess();
   } else {
-    showToast('⚠️ Could not copy to clipboard.');
+    showToast('Could not copy to clipboard.');
   }
 }
 
