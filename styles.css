@@ -925,8 +925,8 @@ input[type="number"].valid {
 }
 
 .auto-ribbon-pill-score300 {
-  background: #f0fdf4;
-  border: 1.5px solid #86efac;
+  background: #eff6ff;
+  border: 1.5px solid #93c5fd;
   flex: 1.5;
   min-width: 280px;
 }
@@ -960,9 +960,9 @@ input[type="number"].valid {
 }
 
 .auto-ribbon-value-primary {
-  color: #15803d;
-  font-size: 1.2rem;
-  font-weight: 800;
+  color: #475569;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 .auto-ribbon-value-contrib {
@@ -979,22 +979,23 @@ input[type="number"].valid {
 }
 
 .score-contrib-parenthetical {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: #475569;
+  order: -1;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1d4ed8;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(37, 99, 235, 0.07);
-  border: 1px solid rgba(59, 130, 246, 0.22);
-  padding: 2px 8px;
-  border-radius: 6px;
-  margin-left: 2px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin-left: 0;
 }
 
 .score-contrib-parenthetical strong {
-  color: #1d4ed8;
-  font-weight: 700;
+  color: #1e40af;
+  font-size: 1.35rem;
+  font-weight: 800;
 }
 
 .measure-rating-badge {

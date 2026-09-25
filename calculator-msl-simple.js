@@ -131,13 +131,15 @@ function calculateMSL() {
       allGoalsSet = false;
     }
 
+    const pool = round2((weight / MSL_TOTAL_WEIGHT) * MSL_MAX_SCALED);
+
     if (!hasGoalAndMax || !hasActual || weight <= 0) {
       allFilled = false;
       measures.push({
         name, desc, weight, goalScore: isNaN(goalScore) ? 0 : goalScore,
         maxScore: isNaN(maxScore) ? 0 : maxScore, minScore: isNaN(minScore) ? 0 : minScore,
         actual: hasActual ? actual : 0, hasActual, hasGoalAndMax, isIPR,
-        normalized: 0, scaled300: 0, weighted: 0, filled: false, invalidRange
+        normalized: 0, scaled300: 0, weighted: 0, pool, filled: false, invalidRange
       });
       return;
     }
@@ -163,6 +165,7 @@ function calculateMSL() {
       percentage: round2(normalized * 100),
       scaled300,
       weighted,
+      pool,
       filled: true,
       invalidRange: false
     });
@@ -275,7 +278,7 @@ function updateAllCalculations() {
       minValEl.textContent = (m.minScore !== undefined && m.minScore !== null && !isNaN(m.minScore)) ? m.minScore : '—';
     }
 
-    // Update Auto-Derived Primary Measure Score (300 Scale) & Rating Tag
+    // Update Auto-Derived Primary Measure Score (of Weighted Points) & Rating Tag
     const score300ValEl = row.querySelector(`#msl-score300-val-${row.dataset.index}`);
     const ratingBadgeEl = row.querySelector(`#msl-rating-badge-${row.dataset.index}`);
     const contribValEl = row.querySelector(`#msl-contrib-val-${row.dataset.index}`);
@@ -284,9 +287,9 @@ function updateAllCalculations() {
     if (m.filled) {
       const measureRating = getMSLRating(m.scaled300);
       const ratingCls = ratingToClass(measureRating);
-      
+
       if (score300ValEl) {
-        score300ValEl.textContent = `${m.scaled300.toFixed(2)} / 300`;
+        score300ValEl.textContent = `${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}`;
       }
       if (ratingBadgeEl) {
         ratingBadgeEl.textContent = measureRating;
@@ -297,7 +300,7 @@ function updateAllCalculations() {
         contribValEl.textContent = `+${m.weighted.toFixed(2)} pts`;
       }
       if (contribWrapEl) {
-        contribWrapEl.style.display = 'inline-flex';
+        contribWrapEl.style.display = 'none';
       }
     } else {
       if (score300ValEl) score300ValEl.textContent = '—';
@@ -318,9 +321,9 @@ function updateAllCalculations() {
         const isIPRRow = row.classList.contains('ipr-row') || row.dataset.index == 1;
         const measureRating = getMSLRating(m.scaled300);
         if (isIPRRow) {
-          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.scaled300.toFixed(2)} / 300</span> (${measureRating}, ${m.percentage.toFixed(1)}% of 0–100 range) &bull; <strong>Contributing to Final 300:</strong> <span class="feedback-highlight-contrib">+${m.weighted.toFixed(2)} pts</span> (${m.weight.toFixed(1)}% of 30% weight)`;
+          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}</span> (${measureRating}, ${m.percentage.toFixed(1)}% of 0–100 range) &bull; <strong>Weight:</strong> ${m.weight.toFixed(1)}% of 30% total`;
         } else {
-          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.scaled300.toFixed(2)} / 300</span> (${measureRating}, ${m.percentage.toFixed(1)}% of range [${m.minScore}–${m.maxScore}]) &bull; <strong>Contributing to Final 300:</strong> <span class="feedback-highlight-contrib">+${m.weighted.toFixed(2)} pts</span> (${m.weight.toFixed(1)}% of 30% weight)`;
+          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}</span> (${measureRating}, ${m.percentage.toFixed(1)}% of range [${m.minScore}–${m.maxScore}]) &bull; <strong>Weight:</strong> ${m.weight.toFixed(1)}% of 30% total`;
         }
         feedbackEl.className = 'measure-feedback visible';
       } else if (m.invalidRange) {
@@ -487,8 +490,7 @@ function updatePrintSummary(result) {
             <th style="width: 14%;">Range (Min–Max)</th>
             <th style="width: 11%;">Score Achieved</th>
             <th style="width: 9%;">% Range</th>
-            <th style="width: 19%; background: #f0fdf4; color: #166534;">MSL Score (300 Scale)</th>
-            <th style="width: 19%; background: #eff6ff; color: #1e40af;">Contribution to Final 300</th>
+            <th style="width: 38%; background: #eff6ff; color: #1e40af;">Measure Score (of Weighted Points)</th>
           </tr>
         </thead>
         <tbody>
@@ -508,15 +510,14 @@ function updatePrintSummary(result) {
           <td style="text-align: center;">${m.minScore} – ${m.maxScore}</td>
           <td style="text-align: center; font-weight: bold;">${m.actual}</td>
           <td style="text-align: center;">${m.percentage.toFixed(1)}%</td>
-          <td style="text-align: center; font-weight: bold; background: #f0fdf4; color: #166534;">${m.scaled300.toFixed(2)} / 300<br><span style="font-size: 7.5pt; font-weight: normal; color: #15803d;">(${measureRating})</span></td>
-          <td style="text-align: center; font-weight: bold; background: #eff6ff; color: #1e40af;">+${m.weighted.toFixed(2)} pts<br><span style="font-size: 7.5pt; font-weight: normal; color: #64748b;">(${m.weight.toFixed(1)}% of 30%)</span></td>
+          <td style="text-align: center; font-weight: bold; background: #eff6ff; color: #1e40af;">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}<br><span style="font-size: 7.5pt; font-weight: normal; color: #64748b;">(${measureRating}, ${m.weight.toFixed(1)}% of 30% weight)</span></td>
         </tr>
       `;
 
       if (descText) {
         html += `
           <tr>
-            <td colspan="9" style="text-align: left; font-size: 8.5pt; color: #333333; background: #fafafa; padding: 4px 8px 6px 16px; font-style: italic; border-top: none;">
+            <td colspan="8" style="text-align: left; font-size: 8.5pt; color: #333333; background: #fafafa; padding: 4px 8px 6px 16px; font-style: italic; border-top: none;">
               <strong>Description:</strong> ${descText}
             </td>
           </tr>
@@ -530,15 +531,14 @@ function updatePrintSummary(result) {
           <tr>
             <td style="text-align: left; font-weight: bold;">Total MSL Weight / Final MSL Score</td>
             <td style="text-align: center; font-weight: bold;">${result.totalWeight.toFixed(1)}%</td>
-            <td style="text-align: center;" colspan="5"></td>
-            <td style="text-align: center; font-size: 8pt; color: #64748b;">Sum of Contributions &rarr;</td>
-            <td style="text-align: center; font-weight: bold; font-size: 11pt; background: #dbeafe; color: #1e40af;">${result.score.toFixed(2)} / 300.00</td>
+            <td style="text-align: center;" colspan="4"></td>
+            <td style="text-align: center; font-weight: bold; font-size: 11pt; background: #dbeafe; color: #1e40af;">Final MSL Score: ${result.score.toFixed(2)} / 300.00</td>
           </tr>
         </tfoot>
       </table>
 
       <div class="print-footnote">
-        <strong>Scoring Methodology:</strong> Each measure's score achieved is evaluated on the standard 300-point educator scale (<code>Measure Score = % Range &times; 300</code>). Each measure's contribution to the final 300-point evaluation is then calculated proportionally based on its assigned weight (<code>Contribution = Measure Score &times; (Weight / 30)</code>). The final MSL score is the sum of all measure contributions. Minimum Score is calculated at an equal distance below Goal Score: <code>Min = 2 &times; Goal &minus; Max</code>.
+        <strong>Scoring Methodology:</strong> Each measure's score is evaluated on its own weighted point pool, sized by its share of the 30% MSL weight (<code>Weighted Points = Weight / 30 &times; 300</code>). Points earned within that pool are calculated from the measure's position within its [Min, Max] range (<code>Points Earned = % Range &times; Weighted Points</code>). The final MSL score is the sum of all measures' points earned, out of 300. Minimum Score is calculated at an equal distance below Goal Score: <code>Min = 2 &times; Goal &minus; Max</code>.
       </div>
     `;
 
@@ -743,12 +743,12 @@ function createMeasureRow(index, isIPR = false) {
       <div class="auto-ribbon-pill auto-ribbon-pill-score300">
         <span class="auto-badge auto-badge-primary">Score</span>
         <div class="auto-ribbon-content">
-          <span class="auto-ribbon-label">Measure Score (300 Scale):</span>
+          <span class="auto-ribbon-label">Measure Score:</span>
           <div class="score-with-badge">
             <strong id="msl-score300-val-${index}" class="auto-ribbon-value auto-ribbon-value-primary">—</strong>
             <span id="msl-rating-badge-${index}" class="measure-rating-badge" style="display: none;"></span>
             <span id="msl-contrib-wrap-${index}" class="score-contrib-parenthetical" style="display: none;">
-              (contributes <strong id="msl-contrib-val-${index}">+0.00 pts</strong> to final 300)
+              (<strong id="msl-contrib-val-${index}">+0.00 pts</strong> to final 300)
             </span>
           </div>
         </div>
@@ -873,15 +873,15 @@ function showCalculationDetails() {
 
   let html = '<div class="calc-section">';
   html += '<h3>MSL Score Calculation Methodology</h3>';
-  html += '<p><strong>Transparent 3-Stage Process:</strong></p>';
+  html += '<p><strong>Transparent 2-Stage Process:</strong></p>';
   html += '<ol style="margin-left: 1.25rem; margin-bottom: 1rem; line-height: 1.6;">';
-  html += '<li><strong>1. Measure Score (300 Scale):</strong> Each measure is evaluated on the standard 300-point educator scale based on its position within its [Min, Max] range: <code>Measure Score = ((Actual − Min) / (Max − Min)) × 300</code>.</li>';
-  html += '<li><strong>2. Contribution to Final 300:</strong> The 300-scale score is weighted by its share of the 30% evaluation: <code>Contribution = Measure Score × (Weight / 30)</code>.</li>';
-  html += '<li><strong>3. Final MSL Score:</strong> The sum of all contributing scores produces the Final MSL Score (out of 300): <code>Final MSL Score = Σ Contributing Scores</code>.</li>';
+  html += '<li><strong>1. Weighted Points:</strong> Each measure\'s weight determines its own point pool, sized as its share of the 300-point scale: <code>Weighted Points = (Weight / 30) × 300</code>.</li>';
+  html += '<li><strong>2. Measure Score:</strong> Points earned within that pool are based on the measure\'s position within its [Min, Max] range: <code>Measure Score = ((Actual − Min) / (Max − Min)) × Weighted Points</code>.</li>';
+  html += '<li><strong>3. Final MSL Score:</strong> The sum of all measures\' points earned produces the Final MSL Score (out of 300): <code>Final MSL Score = Σ Measure Scores</code>.</li>';
   html += '</ol>';
 
   html += '<div class="table-scroll"><table class="calc-table"><thead><tr>';
-  html += '<th>Measure</th><th>Actual</th><th>Goal (Midpoint)</th><th>Max</th><th>Min (Floor)</th><th>% of Range</th><th style="background: #ecfdf5; color: #166534;">Measure Score (300 Scale)</th><th>Weight</th><th style="background: #eff6ff; color: #1e40af;">Contribution to Final 300</th>';
+  html += '<th>Measure</th><th>Actual</th><th>Goal (Midpoint)</th><th>Max</th><th>Min (Floor)</th><th>% of Range</th><th>Weight</th><th style="background: #eff6ff; color: #1e40af;">Measure Score (of Weighted Points)</th>';
   html += '</tr></thead><tbody>';
 
   result.measures.forEach(m => {
@@ -893,9 +893,8 @@ function showCalculationDetails() {
       <td>${m.maxScore}</td>
       <td>${m.minScore}</td>
       <td>${(m.normalized * 100).toFixed(1)}%</td>
-      <td style="background: #ecfdf5; font-weight: 700; color: #166534;">${m.scaled300.toFixed(2)} / 300 <span style="font-size: 0.75rem; font-weight: normal; color: #15803d;">(${measureRating})</span></td>
       <td>${m.weight.toFixed(1)}%</td>
-      <td style="background: #eff6ff; font-weight: 700; color: #1e40af;">+${m.weighted.toFixed(2)} pts</td>
+      <td style="background: #eff6ff; font-weight: 700; color: #1e40af;">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)} <span style="font-size: 0.75rem; font-weight: normal; color: #64748b;">(${measureRating})</span></td>
     </tr>`;
   });
 
@@ -973,15 +972,14 @@ function copySummary() {
   text += 'MEASURES OF STUDENT LEARNING (MSL) SUMMARY\n';
   text += `School Year: ${getCurrentSchoolYear()}\n`;
   text += '=====================================\n\n';
-  text += 'MSL MEASURES (Individual 300 Scale & Contributions to Final 300):\n';
+  text += 'MSL MEASURES (Points Earned of Each Measure\'s Weighted Total):\n';
 
   result.measures.forEach((m, idx) => {
     const name = m.name || `Measure ${idx + 1}`;
     const rating = getMSLRating(m.scaled300);
     text += `• ${name} (Weight: ${m.weight.toFixed(1)}% of 30%):\n`;
     text += `    - Score Achieved: ${m.actual} (Range: ${m.minScore} – ${m.maxScore}, Goal: ${m.goalScore})\n`;
-    text += `    - MSL Measure Score (300 Scale): ${m.scaled300.toFixed(2)} / 300 (${rating})\n`;
-    text += `    - Contribution to Final 300 Total: +${m.weighted.toFixed(2)} pts\n`;
+    text += `    - Measure Score: ${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)} (${rating})\n`;
   });
 
   text += '\n-------------------------------------\n';

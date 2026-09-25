@@ -131,9 +131,9 @@
         <div class="tooltip-content">
           <strong>How scoring works:</strong> Each measure is defined by a Goal Score (midpoint) and Max Score. The
           Minimum Score is calculated as Goal − (Max − Goal). The actual score is converted to a percentage within this
-          range, then scaled to a 300-point scale and weighted.<br><br>
-          <strong>Example:</strong> Goal Score = 85, Max Score = 100 → Minimum Score = 70 (Range 70–100). An actual
-          score of 85 = 50% → 150 / 300.<br><br>
+          range, then applied to that measure's own weighted point pool (its share of the 300-point scale).<br><br>
+          <strong>Example:</strong> Weight = 20% → Weighted Points = 200. Goal Score = 85, Max Score = 100 → Minimum
+          Score = 70 (Range 70–100). An actual score of 85 = 50% → 100 / 200.<br><br>
           <strong>IPR:</strong> Instructional Program Review is the first measure,
           defaulting to 10% weight with a fixed 0–100 point scale (Goal = 50).<br><br>
           <strong>Weights:</strong> All measure weights must add up to exactly 30%.
@@ -239,12 +239,12 @@
             </div>
             <div>
               <h3>Scoring Method</h3>
-              <p>Each measure's score is normalized within its range and scaled to 300 points:</p>
+              <p>Each measure's weight sets its own point pool, and points earned are based on its position within its range:</p>
               <div class="calc-formula">
-                Scaled = ((Actual − Min) / (Max − Min)) × 300<br><br>
-                Weighted = Scaled × (Weight / 30)
+                Weighted Points = (Weight / 30) × 300<br><br>
+                Measure Score = ((Actual − Min) / (Max − Min)) × Weighted Points
               </div>
-              <p style="margin-top: var(--spacing-md);">The final score is the sum of all weighted contributions.</p>
+              <p style="margin-top: var(--spacing-md);">The final score (out of 300) is the sum of all measures' points earned.</p>
             </div>
           </div>
 
