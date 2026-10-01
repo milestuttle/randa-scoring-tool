@@ -29,10 +29,16 @@
           <p class="subtitle">Calculate MSL scores for COPMS RANDA entry</p>
         </div>
       </div>
-      <button type="button" id="btn-about-tool" class="btn btn-secondary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        About This Tool
-      </button>
+      <div class="header-actions">
+        <button type="button" id="btn-how-scoring" class="btn btn-header-accent" data-open-explainer>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+          How Scoring Works
+        </button>
+        <button type="button" id="btn-about-tool" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          About This Tool
+        </button>
+      </div>
     </div>
   </header>
 
@@ -137,7 +143,8 @@
           <strong>IPR:</strong> Instructional Program Review is the first measure,
           defaulting to 10% weight with a fixed 0–100 point scale (Goal = 50).<br><br>
           <strong>Weights:</strong> All measure weights must add up to exactly 30%.
-          IPR typically accounts for 10%, leaving 20% for your other measures.
+          IPR typically accounts for 10%, leaving 20% for your other measures.<br><br>
+          <button type="button" class="tooltip-link" data-open-explainer>See how scoring works &rarr;</button>
         </div>
       </div>
 
@@ -245,6 +252,9 @@
                 Measure Score = ((Actual − Min) / (Max − Min)) × Weighted Points
               </div>
               <p style="margin-top: var(--spacing-md);">The final score (out of 300) is the sum of all measures' points earned.</p>
+              <button type="button" class="btn btn-secondary" data-open-explainer style="margin-top: var(--spacing-xs);">
+                See a visual walkthrough &rarr;
+              </button>
             </div>
           </div>
 
@@ -268,6 +278,121 @@
       </div>
     </div>
 
+
+    <!-- How Scoring Works Modal -->
+    <div id="explainer-modal" class="modal" role="dialog" aria-labelledby="explainer-modal-title" aria-modal="true"
+      style="display: none;">
+      <div class="modal-overlay" id="explainer-modal-overlay"></div>
+      <div class="modal-content explainer-content">
+        <div class="modal-header">
+          <h2 id="explainer-modal-title">How Your MSL Score Works</h2>
+          <button type="button" class="modal-close" id="explainer-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body explainer-body">
+
+          <div class="ex-old">
+            <h3>How the old RANDA scoring worked</h3>
+            <p>In the old RANDA method, each measure was given one of three ratings using cut points set separately for
+              that measure. Each rating was worth a fixed share of the measure's points:</p>
+            <div class="ex-old-bands">
+              <div class="ex-old-band"><span>Less Than Expected</span><strong>No points</strong></div>
+              <div class="ex-old-band"><span>Expected</span><strong>Half the points</strong></div>
+              <div class="ex-old-band"><span>More Than Expected</span><strong>All the points</strong></div>
+            </div>
+            <p class="ex-old-foot">Where you landed within a rating didn't change your score. This tool keeps the same
+              300-point scale, rating ranges, and RANDA entry, but replaces the three fixed results with a sliding scale.
+              Hitting your Goal still earns half the points, and every point between Min and Max moves your score.</p>
+          </div>
+
+          <h3 class="ex-new-heading">How the new calculator works</h3>
+          <p class="ex-lead">Your Goal Score is the <strong>midpoint</strong>, not the finish line.</p>
+
+          <div class="ex-facts">
+            <div class="ex-fact">
+              <span class="ex-fact-num">1</span>
+              <div><strong>Reach your Goal</strong> and you earn <strong>half</strong> of that measure's points. That's the
+                "Expected" mark.</div>
+            </div>
+            <div class="ex-fact">
+              <span class="ex-fact-num">2</span>
+              <div><strong>Reach your Max</strong> and you earn <strong>all</strong> of that measure's points.</div>
+            </div>
+            <div class="ex-fact">
+              <span class="ex-fact-num">3</span>
+              <div><strong>Every point in between counts.</strong> Points rise steadily from Min to Max, so each point of improvement earns credit.</div>
+            </div>
+          </div>
+
+          <h3>Try it</h3>
+          <p class="ex-sub">Your MSL score is 30% (300 points) of your Final Effectiveness Rating. This can be split between collective and individual measures. The example tool below is a 20% measure, which makes it worth 200 points. Drag the slider or change the Goal and Max.</p>
+
+          <div class="ex-controls">
+            <label class="ex-field">
+              <span>Goal Score</span>
+              <input type="number" id="ex-goal" value="85" inputmode="decimal">
+            </label>
+            <label class="ex-field">
+              <span>Max Score</span>
+              <input type="number" id="ex-max" value="100" inputmode="decimal">
+            </label>
+            <div class="ex-field ex-field-auto">
+              <span>Min Score (auto)</span>
+              <output id="ex-min-out">70</output>
+            </div>
+            <button type="button" id="ex-reset" class="btn btn-secondary ex-reset">Reset example</button>
+          </div>
+          <p class="ex-min-note">Min sits the same distance below Goal as Max sits above it:
+            <code>Min = 2 × Goal − Max</code> → <code id="ex-min-formula">2 × 85 − 100 = 70</code></p>
+
+          <p id="ex-error" class="ex-error" hidden>Max Score must be higher than Goal Score.</p>
+
+          <div id="ex-live">
+            <div class="ex-slider-row">
+              <label for="ex-actual">Score achieved: <strong id="ex-actual-out">92</strong></label>
+              <input type="range" id="ex-actual" min="70" max="100" step="1" value="92">
+            </div>
+
+            <svg id="ex-numberline" class="ex-svg" viewBox="0 0 560 140" role="img"
+              aria-label="Number line from Min to Max with Goal at the midpoint and your score marked"></svg>
+
+            <div class="ex-result" aria-live="polite">
+              <span class="ex-result-label">Points earned for this measure</span>
+              <span class="ex-result-value" id="ex-new-pts">146.67 / 200.00</span>
+            </div>
+
+            <div class="ex-why">
+              <h3 id="ex-why-title">Why isn't 92 worth 92%?</h3>
+              <p id="ex-why"></p>
+              <p class="ex-why-foot">Scoring against 0–100 would ignore your goal. Someone who hit exactly their goal of 85
+                would get 85% instead of the intended 50%, and the goal would no longer be the midpoint.</p>
+            </div>
+
+            <h3>How it adds up to 300</h3>
+            <p class="ex-sub">Each measure is scored out of its own points: <code>Weight ÷ 30 × 300</code>. The measure
+              scores are added together for your MSL Score.</p>
+            <div class="ex-rollup">
+              <div class="ex-roll-row">
+                <div class="ex-roll-name">IPR <small>10% · example score 85</small></div>
+                <div class="ex-roll-track"><div class="ex-roll-bar" style="width: 50%;"><div class="ex-roll-fill" id="ex-roll-ipr-fill"></div></div></div>
+                <div class="ex-roll-pts">85.00 / 100.00</div>
+              </div>
+              <div class="ex-roll-row">
+                <div class="ex-roll-name">Your measure <small>20% · from the slider</small></div>
+                <div class="ex-roll-track"><div class="ex-roll-bar" style="width: 100%;"><div class="ex-roll-fill" id="ex-roll-m2-fill"></div></div></div>
+                <div class="ex-roll-pts" id="ex-roll-m2-pts">146.67 / 200.00</div>
+              </div>
+              <div class="ex-roll-total">
+                <div><span class="ex-roll-total-label">MSL Score</span><strong id="ex-roll-total">231.67</strong> / 300</div>
+                <div><span class="ex-roll-total-label">RANDA Entry</span><strong id="ex-roll-randa">2.32</strong></div>
+                <div><span class="ex-roll-total-label">Rating</span><strong id="ex-roll-rating">More Than Expected</strong></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <footer class="app-footer">
@@ -281,6 +406,7 @@
   </div>
 
   <script src="calculator-msl-simple.js"></script>
+  <script src="scoring-explainer.js"></script>
 </body>
 
 </html>

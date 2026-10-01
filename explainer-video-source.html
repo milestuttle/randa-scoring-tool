@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MSL Video Render</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5/build/mp4-muxer.js"></script>
+<style>
+  body { margin: 0; background: #222; font-family: Outfit, sans-serif; color: #fff; }
+  canvas { width: 100%; height: auto; display: block; }
+  #status { padding: 8px; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<div id="status">ready</div>
+<script>
+const W = 1920, H = 1080, FPS = 30;
+const C = {
+  maroon: '#8c2846', dark: '#461025', gold: '#b5872a', goldDark: '#8a6519',
+  bg: '#f9fafb', text: '#0f172a', muted: '#64748b', border: '#e2e8f0', white: '#ffffff',
+  orangeBg: '#fef3c7', greenBg: '#d1fae5', blueBg: '#dbeafe', pinkBg: '#fbf4f6'
+};
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const logo = new Image();
+logo.src = 'district-logo.png';
+
+// ---------- helpers ----------
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const prog = (t, a, b) => ease(clamp01((t - a) / (b - a)));
+const appear = (t, start, dur = 0.5) => prog(t, start, start + dur);
+const lerp = (a, b, p) => a + (b - a) * p;
+const f2 = n => n.toFixed(2);
+
+function font(size, weight = 500) { ctx.font = `${weight} ${size}px Outfit`; }
+
+function text(str, x, y, { size = 40, weight = 500, color = C.text, align = 'center', alpha = 1, dy = 0 } = {}) {
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  font(size, weight);
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(str, x, y + dy);
+  ctx.restore();
+}
+
+function rrect(x, y, w, h, r, fill, stroke, lw = 2) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+}
+
+function drawLogo(cx, cy, r) {
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, r - 3, 0, Math.PI * 2); ctx.clip();
+  ctx.drawImage(logo, cx - r + 3, cy - r + 3, (r - 3) * 2, (r - 3) * 2);
+  ctx.restore();
+}
+
+function caption(str, a) {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= a;
+  font(40, 500);
+  const w = ctx.measureText(str).width + 80;
+  rrect((W - w) / 2, 918, w, 84, 42, C.white, C.border, 2);
+  text(str, W / 2, 974, { size: 40, weight: 500 });
+  ctx.restore();
+}
+
+// captions: [[start, end, text], ...]
+function captions(lt, list) {
+  list.forEach(([s, e, str]) => {
+    const a = Math.min(appear(lt, s, 0.35), 1 - prog(lt, e - 0.35, e));
+    caption(str, a);
+  });
+}
+
+function sceneTitle(str, lt) {
+  const a = appear(lt, 0.1, 0.5);
+  text(str, W / 2, 245, { size: 68, weight: 700, color: C.dark, alpha: a, dy: (1 - a) * 20 });
+}
+
+function header() {
+  ctx.fillStyle = C.dark;
+  ctx.fillRect(0, 0, W, 120);
+  drawLogo(90, 60, 42);
+  text('How Your MSL Score Works', 156, 76, { size: 42, weight: 700, color: C.white, align: 'left' });
+  text('Cañon City Schools Fremont RE-1', W - 60, 74, { size: 30, weight: 400, color: '#e9d5da', align: 'right' });
+}
+
+// Number line. vals: {min, goal, max} are positions 0..1 (frac) with labels.
+function numberLine({ x0 = 360, x1 = 1560, y = 600, ticks = [], fill = 0, marker = null, markerLabel = '', markerAlpha = 1, trackAlpha = 1 }) {
+  ctx.save();
+  ctx.globalAlpha *= trackAlpha;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 16;
+  ctx.strokeStyle = C.border;
+  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+  if (fill > 0.001) {
+    ctx.strokeStyle = C.maroon;
+    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(lerp(x0, x1, fill), y); ctx.stroke();
+  }
+  ctx.restore();
+  ticks.forEach(t => {
+    const a = t.alpha ?? 1;
+    if (a <= 0) return;
+    const x = lerp(x0, x1, t.frac);
+    ctx.save();
+    ctx.globalAlpha *= a;
+    ctx.strokeStyle = C.text; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(x, y - 26); ctx.lineTo(x, y + 26); ctx.stroke();
+    ctx.restore();
+    if (t.value) text(t.value, x, y + 80, { size: 50, weight: 700, alpha: a });
+    if (t.label) text(t.label, x, y + (t.value ? 122 : 80), { size: 34, color: C.muted, alpha: a });
+    if (t.pts) text(t.pts, x, y + (t.value ? 170 : 128), { size: 34, weight: 600, color: C.dark, alpha: a });
+  });
+  if (marker != null && markerAlpha > 0) {
+    const x = lerp(x0, x1, marker);
+    ctx.save();
+    ctx.globalAlpha *= markerAlpha;
+    ctx.strokeStyle = C.gold; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(x, y - 48); ctx.lineTo(x, y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI * 2);
+    ctx.fillStyle = C.gold; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.stroke();
+    ctx.restore();
+    if (markerLabel) text(markerLabel, x, y - 64, { size: 38, weight: 700, color: C.goldDark, alpha: markerAlpha });
+  }
+}
+
+function bracket(xa, xb, y, label, a, color = C.maroon) {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= a;
+  ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(xa, y + 16); ctx.lineTo(xa, y); ctx.lineTo(xb, y); ctx.lineTo(xb, y + 16);
+  ctx.stroke();
+  ctx.restore();
+  text(label, (xa + xb) / 2, y - 16, { size: 36, weight: 700, color, alpha: a });
+}
+
+// ---------- scenes ----------
+const scenes = [
+  { // 1. Title
+    dur: 5, header: false, draw(lt) {
+      ctx.fillStyle = C.dark; ctx.fillRect(0, 0, W, H);
+      const a = appear(lt, 0.2, 0.8);
+      ctx.save(); ctx.globalAlpha = a; drawLogo(W / 2, 360, 120); ctx.restore();
+      text('How Your MSL Score Works', W / 2, 620, { size: 104, weight: 700, color: C.white, alpha: appear(lt, 0.6, 0.8), dy: (1 - appear(lt, 0.6, 0.8)) * 30 });
+      text('What changed, and how the new calculator does the math', W / 2, 710, { size: 46, weight: 400, color: '#e9d5da', alpha: appear(lt, 1.2, 0.8) });
+      ctx.fillStyle = C.gold;
+      const bw = 240 * appear(lt, 1.6, 0.8);
+      ctx.fillRect(W / 2 - bw / 2, 760, bw, 6);
+    }
+  },
+  { // 2. Old RANDA
+    dur: 12, header: true, draw(lt) {
+      sceneTitle('How the old RANDA scoring worked', lt);
+      const cards = [
+        ['Less Than Expected', 'No points', C.orangeBg],
+        ['Expected', 'Half the points', C.greenBg],
+        ['More Than Expected', 'All the points', C.blueBg]
+      ];
+      const cw = 500, gap = 50, x0 = (W - (cw * 3 + gap * 2)) / 2;
+      cards.forEach(([label, val, bg], i) => {
+        const a = appear(lt, 1.2 + i * 0.9, 0.6);
+        if (a <= 0) return;
+        const x = x0 + i * (cw + gap), y = 400 + (1 - a) * 40;
+        ctx.save(); ctx.globalAlpha *= a;
+        rrect(x, y, cw, 260, 24, bg);
+        ctx.restore();
+        text(label, x + cw / 2, y + 100, { size: 40, color: C.muted, alpha: a });
+        text(val, x + cw / 2, y + 180, { size: 60, weight: 700, alpha: a });
+      });
+      // "within a rating" illustration: dots inside Expected card all land on same result
+      const d = appear(lt, 7.2, 0.6);
+      if (d > 0) {
+        const x = x0 + cw + gap;
+        [0.2, 0.5, 0.8].forEach((f, i) => {
+          ctx.save(); ctx.globalAlpha *= d;
+          ctx.beginPath(); ctx.arc(x + cw * f, 400 + 225, 12, 0, Math.PI * 2);
+          ctx.fillStyle = C.maroon; ctx.fill(); ctx.restore();
+        });
+        text('3 different scores, same result', x + cw / 2, 720, { size: 34, weight: 600, color: C.maroon, alpha: d });
+      }
+      captions(lt, [
+        [0.6, 6.8, 'Each measure got one of three ratings, using cut points set separately for that measure.'],
+        [6.8, 12, "Where you landed within a rating didn't change your score."]
+      ]);
+    }
+  },
+  { // 3. New calculator: Goal is midpoint
+    dur: 11, header: true, draw(lt) {
+      sceneTitle('How the new calculator works', lt);
+      const la = appear(lt, 0.7, 0.6);
+      font(56, 500);
+      text('Your Goal Score is the midpoint, not the finish line.', W / 2, 345, { size: 54, weight: 500, color: C.text, alpha: la });
+      numberLine({
+        y: 590, trackAlpha: appear(lt, 1.2, 0.5),
+        fill: 0.5 * prog(lt, 2.0, 3.0) + 0.5 * prog(lt, 5.0, 6.0),
+        ticks: [
+          { frac: 0.5, label: 'Goal', pts: 'Half the points', alpha: appear(lt, 1.8, 0.5) },
+          { frac: 1, label: 'Max', pts: 'All the points', alpha: appear(lt, 4.8, 0.5) },
+          { frac: 0, label: 'Min', pts: 'No points', alpha: appear(lt, 7.6, 0.5) }
+        ]
+      });
+      captions(lt, [
+        [1.6, 4.6, "Reach your Goal and you earn half of that measure's points."],
+        [4.6, 7.4, 'Reach your Max and you earn all of them.'],
+        [7.4, 11, 'Min is the starting point, where the points begin.']
+      ]);
+    }
+  },
+  { // 4. Where Min comes from
+    dur: 10, header: true, draw(lt) {
+      sceneTitle('Where does Min come from?', lt);
+      const x0 = 360, x1 = 1560, y = 600;
+      const xs = f => lerp(x0, x1, f);
+      numberLine({
+        x0, x1, y, trackAlpha: appear(lt, 0.5, 0.5),
+        ticks: [
+          { frac: 0.5, value: '85', label: 'Goal', alpha: appear(lt, 0.8, 0.5) },
+          { frac: 1, value: '100', label: 'Max', alpha: appear(lt, 1.2, 0.5) },
+          { frac: 0, value: '70', label: 'Min', alpha: appear(lt, 5.0, 0.5) }
+        ]
+      });
+      bracket(xs(0.5), xs(1), y - 70, '15 points', appear(lt, 2.2, 0.5));
+      bracket(xs(0), xs(0.5), y - 70, '15 points', appear(lt, 3.8, 0.5));
+      const fa = appear(lt, 6.2, 0.6);
+      text('Min = 2 × Goal − Max', W / 2, 380, { size: 56, weight: 600, color: C.dark, alpha: fa });
+      text('2 × 85 − 100 = 70', W / 2, 850, { size: 50, weight: 700, color: C.maroon, alpha: appear(lt, 7.0, 0.6) });
+      captions(lt, [
+        [1.8, 6.0, 'Min sits the same distance below Goal as Max sits above it.'],
+        [7.6, 10, 'The calculator sets Min for you automatically.']
+      ]);
+    }
+  },
+  { // 5. Every point counts (slider)
+    dur: 15, header: true, draw(lt) {
+      sceneTitle('Every point in between counts', lt);
+      text('Example: a 20% measure is worth 200 points', W / 2, 340, { size: 46, weight: 500, color: C.muted, alpha: appear(lt, 0.6, 0.5) });
+      let score = 70;
+      if (lt < 1.5) score = 70;
+      else if (lt < 5) score = lerp(70, 100, prog(lt, 1.5, 5));
+      else if (lt < 7) score = lerp(100, 85, prog(lt, 5, 7));
+      else score = lerp(85, 92, prog(lt, 7.6, 9.6));
+      const frac = (score - 70) / 30;
+      const pts = frac * 200;
+      numberLine({
+        y: 560, fill: frac, marker: frac, markerLabel: `Score: ${Math.round(score)}`, markerAlpha: appear(lt, 1.0, 0.4),
+        ticks: [
+          { frac: 0, value: '70', label: 'Min', pts: '0 pts' },
+          { frac: 0.5, value: '85', label: 'Goal', pts: '100 pts' },
+          { frac: 1, value: '100', label: 'Max', pts: '200 pts' }
+        ]
+      });
+      const ra = appear(lt, 1.0, 0.4);
+      ctx.save(); ctx.globalAlpha *= ra;
+      rrect(W / 2 - 360, 790, 720, 100, 20, C.pinkBg, C.maroon, 3);
+      ctx.restore();
+      text('Points earned:', W / 2 - 320, 858, { size: 38, weight: 600, color: C.muted, align: 'left', alpha: ra });
+      text(`${f2(pts)} / 200`, W / 2 + 320, 862, { size: 56, weight: 700, color: C.maroon, align: 'right', alpha: ra });
+      captions(lt, [
+        [1.2, 7.2, 'Points rise steadily from Min to Max, so each point of improvement earns credit.'],
+        [9.8, 15, 'A score of 92 earns 146.67 of the 200 points.']
+      ]);
+    }
+  },
+  { // 6. Why isn't 92 worth 92%
+    dur: 12, header: true, draw(lt) {
+      sceneTitle("Why isn't 92 worth 92%?", lt);
+      text('The scale for this measure runs 70 → 100, not 0 → 100.', W / 2, 345, { size: 48, weight: 500, alpha: appear(lt, 0.7, 0.5) });
+      const x0 = 460, x1 = 1460, y = 490;
+      const f92 = 22 / 30;
+      numberLine({
+        x0, x1, y, fill: f92 * prog(lt, 1.6, 2.8), marker: f92, markerAlpha: appear(lt, 1.4, 0.4), trackAlpha: appear(lt, 1.2, 0.4),
+        ticks: [
+          { frac: 0, value: '70', alpha: appear(lt, 1.2, 0.4) },
+          { frac: 1, value: '100', alpha: appear(lt, 1.2, 0.4) }
+        ]
+      });
+      bracket(x0, lerp(x0, x1, f92), y - 60, '22 of the 30 points', appear(lt, 2.8, 0.5));
+      text('(92 − 70) ÷ (100 − 70) = 73.3%', W / 2, 700, { size: 58, weight: 600, color: C.dark, alpha: appear(lt, 4.2, 0.6) });
+      text('73.3% × 200 points = 146.67', W / 2, 800, { size: 58, weight: 700, color: C.maroon, alpha: appear(lt, 5.8, 0.6) });
+      captions(lt, [
+        [7.0, 12, 'Scored against 0–100, hitting a goal of 85 would earn 85%, not the intended 50%.']
+      ]);
+    }
+  },
+  { // 7. Adds up to 300
+    dur: 13, header: true, draw(lt) {
+      sceneTitle('How it adds up to 300', lt);
+      text("Each measure is scored out of its own points:  Weight ÷ 30 × 300", W / 2, 335, { size: 42, weight: 500, color: C.muted, alpha: appear(lt, 0.6, 0.5) });
+      const rows = [
+        { name: 'IPR', sub: '10% · score 85', pool: 100, frac: 0.85, y: 440, t: 1.2 },
+        { name: 'Example measure', sub: '20% · score 92', pool: 200, frac: 22 / 30, y: 560, t: 2.8 }
+      ];
+      const bx = 700, full = 580;
+      rows.forEach(r => {
+        const a = appear(lt, r.t - 0.4, 0.4);
+        const p = prog(lt, r.t, r.t + 1.4);
+        text(r.name, 300, r.y + 12, { size: 44, weight: 700, align: 'left', alpha: a });
+        text(r.sub, 300, r.y + 56, { size: 30, color: C.muted, align: 'left', alpha: a });
+        const w = full * r.pool / 200;
+        ctx.save(); ctx.globalAlpha *= a;
+        rrect(bx, r.y - 14, w, 34, 17, C.border);
+        if (p > 0) rrect(bx, r.y - 14, Math.max(34, w * r.frac * p), 34, 17, C.maroon);
+        ctx.restore();
+        text(`${f2(r.pool * r.frac * p)} / ${r.pool}`, 1620, r.y + 14, { size: 46, weight: 700, align: 'right', alpha: a });
+      });
+      const ta = appear(lt, 4.6, 0.5);
+      ctx.save(); ctx.globalAlpha *= ta;
+      ctx.strokeStyle = C.border; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(300, 650); ctx.lineTo(1620, 650); ctx.stroke();
+      ctx.restore();
+      const total = 231.67 * prog(lt, 4.8, 6.4);
+      const stats = [
+        ['MSL Score', `${f2(total)} / 300`, 300, 'left'],
+        ['RANDA entry (score ÷ 100)', (total / 100).toFixed(2), 820, 'left'],
+        ['Rating', 'More Than Expected', 1620, 'right']
+      ];
+      stats.forEach(([l, v, x, al], i) => {
+        const a = i === 2 ? appear(lt, 6.6, 0.5) : ta;
+        text(l, x, 705, { size: 32, color: C.muted, align: al, alpha: a });
+        text(v, x, 770, { size: 58, weight: 700, color: C.dark, align: al, alpha: a });
+      });
+      // range bar
+      const ra = appear(lt, 7.2, 0.5);
+      const rx = 300, rw = 1320, ry = 810;
+      ctx.save(); ctx.globalAlpha *= ra;
+      [[C.orangeBg, 'Less Than Expected 0–99'], [C.greenBg, 'Expected 100–200'], [C.blueBg, 'More Than Expected 201–300']].forEach(([bg, l], i) => {
+        ctx.fillStyle = bg; ctx.fillRect(rx + i * rw / 3, ry, rw / 3, 60);
+      });
+      ctx.restore();
+      [['Less Than Expected 0–99'], ['Expected 100–200'], ['More Than Expected 201–300']].forEach(([l], i) => {
+        text(l, rx + (i + 0.5) * rw / 3, ry + 41, { size: 28, weight: 600, alpha: ra });
+      });
+      const ma = appear(lt, 7.8, 0.4);
+      if (ma > 0) {
+        const mx = rx + rw * 231.67 / 300;
+        ctx.save(); ctx.globalAlpha *= ma;
+        ctx.fillStyle = C.maroon;
+        ctx.beginPath(); ctx.moveTo(mx, ry + 66); ctx.lineTo(mx - 14, ry + 90); ctx.lineTo(mx + 14, ry + 90); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+      captions(lt, [
+        [1.0, 4.6, 'IPR (10%) is worth 100 points. This 20% measure is worth 200.'],
+        [8.6, 13, 'Add the measures together for your MSL Score out of 300.']
+      ]);
+    }
+  },
+  { // 8. End card
+    dur: 6, header: false, draw(lt) {
+      ctx.fillStyle = C.dark; ctx.fillRect(0, 0, W, H);
+      ctx.save(); ctx.globalAlpha = appear(lt, 0.2, 0.6); drawLogo(W / 2, 330, 100); ctx.restore();
+      text('Try your own numbers', W / 2, 580, { size: 96, weight: 700, color: C.white, alpha: appear(lt, 0.5, 0.6) });
+      text('Open the MSL Score Calculator and click', W / 2, 680, { size: 46, color: '#e9d5da', alpha: appear(lt, 1.0, 0.6) });
+      const ba = appear(lt, 1.4, 0.6);
+      ctx.save(); ctx.globalAlpha *= ba;
+      rrect(W / 2 - 250, 720, 500, 96, 16, C.gold);
+      ctx.restore();
+      text('How Scoring Works', W / 2, 783, { size: 46, weight: 700, color: C.white, alpha: ba });
+    }
+  }
+];
+// Pacing: play every animation SLOW× slower, then hold each scene's final
+// state for a few seconds so viewers can finish reading before it changes.
+const SLOW = 1.4, HOLD = 2, CARD_HOLD = 1;
+scenes.forEach(s => { s.base = s.dur; s.dur = s.base * SLOW + (s.header ? HOLD : CARD_HOLD); });
+const TOTAL = scenes.reduce((s, x) => s + x.dur, 0);
+
+function render(t) {
+  let acc = 0, sc = scenes[scenes.length - 1], lt = 0;
+  for (const s of scenes) {
+    if (t < acc + s.dur) { sc = s; lt = t - acc; break; }
+    acc += s.dur;
+  }
+  if (sc === scenes[scenes.length - 1] && t >= acc) lt = t - (TOTAL - sc.dur);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  if (sc.header) header();
+  // scene fade in/out (content only)
+  const fade = Math.min(clamp01(lt / 0.4), clamp01((sc.dur - lt) / 0.4));
+  ctx.save();
+  ctx.globalAlpha = sc.header ? fade : 1;
+  sc.draw(Math.min(lt / SLOW, sc.base - 0.45));
+  ctx.restore();
+  if (!sc.header) { // fade to/from black-ish for title/end cards
+    ctx.fillStyle = `rgba(20,4,10,${1 - fade})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+  // progress bar
+  ctx.fillStyle = 'rgba(181,135,42,0.9)';
+  ctx.fillRect(0, H - 8, W * (t / TOTAL), 8);
+}
+
+async function ready() {
+  await document.fonts.load('700 40px Outfit');
+  await document.fonts.load('500 40px Outfit');
+  await document.fonts.load('600 40px Outfit');
+  await document.fonts.load('400 40px Outfit');
+  if (!logo.complete) await new Promise(r => logo.onload = r);
+}
+
+window.preview = async t => { await ready(); render(t); return TOTAL; };
+
+window.renderVideo = async (name = 'msl-explainer.mp4') => {
+  await ready();
+  const status = document.getElementById('status');
+  const muxer = new Mp4Muxer.Muxer({
+    target: new Mp4Muxer.ArrayBufferTarget(),
+    video: { codec: 'avc', width: W, height: H, frameRate: FPS },
+    fastStart: 'in-memory'
+  });
+  let err = null;
+  const enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => { err = e; } });
+  enc.configure({ codec: 'avc1.640028', width: W, height: H, bitrate: 6_000_000, framerate: FPS });
+  const N = Math.round(TOTAL * FPS);
+  for (let i = 0; i < N; i++) {
+    render(i / FPS);
+    const fr = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+    enc.encode(fr, { keyFrame: i % (FPS * 2) === 0 });
+    fr.close();
+    if (i % 30 === 0) { await enc.flush(); status.textContent = `frame ${i}/${N}`; }
+    if (err) throw err;
+  }
+  await enc.flush();
+  muxer.finalize();
+  const buf = muxer.target.buffer;
+  await fetch('/save?name=' + encodeURIComponent(name), { method: 'POST', body: buf });
+  status.textContent = `saved ${name} (${buf.byteLength} bytes)`;
+  return buf.byteLength;
+};
+
+ready().then(() => render(0));
+
+// Headless render: open with ?render=<filename>.mp4
+const autoName = new URLSearchParams(location.search).get('render');
+if (autoName) {
+  renderVideo(autoName).catch(e =>
+    fetch('/save?name=render-error.txt', { method: 'POST', body: String(e && e.stack || e) }));
+}
+</script>
+</body>
+</html>
