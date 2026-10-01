@@ -2679,8 +2679,6 @@ input[type="number"].valid {
     border: 1px solid #000000 !important;
     border-radius: 0 !important;
     margin-bottom: 18px !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
     padding: 12px !important;
     background: #ffffff !important;
   }
@@ -2723,8 +2721,30 @@ input[type="number"].valid {
     margin-top: 10px !important;
     margin-bottom: 12px !important;
     font-size: 9.5pt !important;
+  }
+
+  /* Break between rows, never inside one. Keeping the whole card or table
+     together pushed long goal plans off page 1, leaving it blank. */
+  .results-table tr {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  /* Long description rows may flow onto the next page instead of leaving a gap */
+  .results-table tbody tr:has(> td[colspan]) {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* Print the totals row once at the end, not at the foot of every page */
+  .results-table tfoot {
+    display: table-row-group !important;
+  }
+
+  /* Keep a measure's description row with the measure row above it */
+  .results-table tbody tr:has(+ tr > td[colspan]) {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .results-table th,
