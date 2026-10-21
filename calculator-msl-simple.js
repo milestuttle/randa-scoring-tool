@@ -45,6 +45,10 @@ const MSL_MAX_SCALED = 300;
 const IPR_WEIGHT = 10;
 const IPR_MIN = 0;
 const IPR_MAX = 100;
+// IPR is each school's collective measure; CDE caps collective measures at 1–10%
+const COLLECTIVE_MIN_WEIGHT = 1;
+const COLLECTIVE_MAX_WEIGHT = 10;
+const MIN_MEASURES = 2; // IPR + at least one individual measure
 const MAX_ADDITIONAL_MEASURES = 3;
 const STORAGE_KEY = 'msl_simple_calc_v1';
 
@@ -100,6 +104,7 @@ function calculateMSL() {
   const measures = [];
   let allFilled = true;
   let allGoalsSet = true;
+  let iprWeight = 0;
 
   rows.forEach(row => {
     const idx = row.dataset.index;
@@ -122,6 +127,7 @@ function calculateMSL() {
     const actual = parseFloat(actualRaw);
 
     totalWeight += weight;
+    if (isIPR) iprWeight = weight;
 
     const hasGoalAndMax = isIPR || (!isNaN(goalScore) && goalEl?.value !== '' && !isNaN(maxScore) && maxEl?.value !== '' && maxScore > goalScore);
     const hasActual = !isNaN(actual) && actualRaw !== '';
@@ -172,8 +178,18 @@ function calculateMSL() {
   });
 
   const weightsValid = Math.abs(totalWeight - MSL_TOTAL_WEIGHT) < 0.01;
-  const goalsValid = weightsValid && allGoalsSet && rows.length >= 1;
-  const valid = allFilled && weightsValid && rows.length >= 1;
+
+  // CDE structure rules: collective (IPR) weight 1–10%, plus at least one individual measure
+  let structureMsg = '';
+  if (iprWeight < COLLECTIVE_MIN_WEIGHT || iprWeight > COLLECTIVE_MAX_WEIGHT) {
+    structureMsg = `IPR is the collective measure and must be ${COLLECTIVE_MIN_WEIGHT}–${COLLECTIVE_MAX_WEIGHT}% (currently ${round2(iprWeight).toFixed(1)}%)`;
+  } else if (rows.length < MIN_MEASURES) {
+    structureMsg = 'Add at least one individual measure alongside IPR';
+  }
+  const structureValid = structureMsg === '';
+
+  const goalsValid = weightsValid && structureValid && allGoalsSet;
+  const valid = allFilled && weightsValid && structureValid;
   const mslScore = round2(totalWeightedScore);
 
   const rating = valid ? getMSLRating(mslScore) : '—';
@@ -185,6 +201,8 @@ function calculateMSL() {
     measures,
     totalWeight: round2(totalWeight),
     weightsValid,
+    structureValid,
+    structureMsg,
     goalsValid,
     valid
   };
@@ -210,7 +228,17 @@ function updateAllCalculations() {
     weightMeterFill.style.width = `${fillPct}%`;
   }
 
-  if (result.weightsValid) {
+  if (result.weightsValid && !result.structureValid) {
+    if (weightMeterFill) weightMeterFill.className = 'weight-meter-fill fill-over';
+    if (weightMeterBadge) {
+      weightMeterBadge.className = 'weight-meter-badge badge-over';
+      weightMeterBadge.innerHTML = `<span>30.0% / 30.0%</span>`;
+    }
+    if (weightMsg) {
+      weightMsg.innerHTML = `<span class="text-error">${result.structureMsg}</span>`;
+      weightMsg.className = 'weight-meter-status validation-error';
+    }
+  } else if (result.weightsValid) {
     if (weightMeterFill) weightMeterFill.className = 'weight-meter-fill fill-complete';
     if (weightMeterBadge) {
       weightMeterBadge.className = 'weight-meter-badge badge-complete';
@@ -403,6 +431,8 @@ function updateAllCalculations() {
     
     if (!result.weightsValid) {
       guideMsg = `Set total MSL weight to 30.0% (currently ${result.totalWeight.toFixed(1)}%)`;
+    } else if (!result.structureValid) {
+      guideMsg = result.structureMsg;
     } else if (!result.goalsValid) {
       guideMsg = `Enter Goal Score and Max Score for all measures`;
     } else {
@@ -454,7 +484,7 @@ function updatePrintSummary(result) {
     if (docTitleEl) docTitleEl.textContent = 'Measures of Student Learning (MSL) — Configuration Incomplete';
     container.innerHTML = `
       <div class="print-card" style="border: 1px solid #000000; padding: 15px; text-align: center; font-weight: bold; margin: 15px 0; background: #ffffff;">
-        Configuration incomplete: Ensure total MSL weight equals 30.0% and Goal/Max scores are set for all measures to generate print document.
+        Configuration incomplete: Ensure total MSL weight equals 30.0%, IPR (collective) is 1–10%, at least one individual measure is included, and Goal/Max scores are set for all measures to generate print document.
       </div>
     `;
     return;
@@ -677,7 +707,7 @@ function createMeasureRow(index, isIPR = false) {
   row.innerHTML = `
     <div class="msl-measure-header">
       <span class="msl-measure-number">
-        ${isIPR ? 'Measure 1 — IPR <span class="ipr-badge">Foundational</span>' : `Measure ${index}`}
+        ${isIPR ? 'Measure 1 — IPR <span class="ipr-badge">Collective</span>' : `Measure ${index}`}
       </span>
       ${!isIPR ? `<button type="button" class="btn-remove" data-remove-index="${index}" aria-label="Remove measure">Remove</button>` : ''}
     </div>
@@ -690,14 +720,14 @@ function createMeasureRow(index, isIPR = false) {
 
       ${!isIPR ? `
       <div class="form-group" style="grid-column: 1 / -1;">
-        <label for="msl-desc-${index}">Description <span style="font-weight: normal; color: var(--color-text-muted);">(optional)</span></label>
+        <label for="msl-desc-${index}">Description</label>
         <textarea id="msl-desc-${index}" class="msl-desc" rows="2" placeholder="Brief note about this measure, e.g. district benchmark, grade level, subject"></textarea>
       </div>
       ` : ''}
 
       <div class="form-group field-weight">
         <label for="msl-weight-${index}">Weight (%)</label>
-        <input type="number" id="msl-weight-${index}" min="0" max="30" step="0.1" value="${weight}" ${weightReadonly} placeholder="0">
+        <input type="number" id="msl-weight-${index}" min="${isIPR ? COLLECTIVE_MIN_WEIGHT : 0}" max="${isIPR ? COLLECTIVE_MAX_WEIGHT : 30}" step="0.1" value="${weight}" ${weightReadonly} placeholder="0">
       </div>
 
       ${!isIPR ? `
