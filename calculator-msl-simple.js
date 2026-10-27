@@ -49,7 +49,7 @@ const IPR_MAX = 100;
 const COLLECTIVE_MIN_WEIGHT = 1;
 const COLLECTIVE_MAX_WEIGHT = 10;
 const MIN_MEASURES = 2; // IPR + at least one individual measure
-const MAX_ADDITIONAL_MEASURES = 3;
+const MAX_ADDITIONAL_MEASURES = 2; // District cap: three measures total
 const STORAGE_KEY = 'msl_simple_calc_v1';
 
 // ===================================
@@ -185,6 +185,8 @@ function calculateMSL() {
     structureMsg = `IPR is the collective measure and must be ${COLLECTIVE_MIN_WEIGHT}–${COLLECTIVE_MAX_WEIGHT}% (currently ${round2(iprWeight).toFixed(1)}%)`;
   } else if (rows.length < MIN_MEASURES) {
     structureMsg = 'Add at least one individual measure alongside IPR';
+  } else if (rows.length > 1 + MAX_ADDITIONAL_MEASURES) {
+    structureMsg = `The district allows at most ${1 + MAX_ADDITIONAL_MEASURES} measures; remove one`;
   }
   const structureValid = structureMsg === '';
 
@@ -808,7 +810,7 @@ function addMeasure() {
   const container = document.getElementById('msl-list');
   const currentCount = container.querySelectorAll('.msl-measure-row').length;
   if (currentCount >= 1 + MAX_ADDITIONAL_MEASURES) {
-    return; // Max 4 total (1 IPR + 3 additional)
+    return; // Max 3 total (1 IPR + 2 additional)
   }
 
   rowCounter++;
