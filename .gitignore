@@ -16,3 +16,6 @@
 
 # Excel temporary files
 ~$*.xlsx
+
+# Playwright MCP logs and snapshots
+.playwright-mcp/
