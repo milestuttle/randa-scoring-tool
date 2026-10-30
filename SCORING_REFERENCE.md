@@ -1,127 +1,53 @@
-# SMES Scoring Quick Reference
+# MSL Scoring Reference
 
-## Element Level to Points Mapping
+How the MSL Score Calculator turns measures into a score, a rating, and a RANDA entry.
 
-| Level | Points per Element |
-|-------|-------------------|
-| Level 1 | 0 points |
-| Level 2 | 1 point |
-| Level 3 | 2 points |
-| Level 4 | 3 points |
-| Level 5 | 4 points (max) |
+## Measure rules
 
-## Professional Practices Calculation
+- Weights must total 30%.
+- IPR is the school's collective measure. It must be 1–10%, and it defaults to 10%.
+- At least one individual measure is required.
+- Three measures are allowed in total, per district decision.
 
-### Formula (per CDE document page 3):
+The collective weight limit and the individual measure requirement come from CDE's District/BOCES Guide to Creating MSLs/MSOs (Summer 2023). That guide allows 2–5 measures in RANDA, and the district caps that at three.
+
+## Formula
+
 ```
-Weighted Standard Score = (Earned Points / Possible Points) × (Weight % / 100) × 700
-
-Total PP Score = Sum of all 4 standard scores
-```
-
-### Example: Standard 1 (3 elements, 25% weight)
-- **All Level 5s**: (12/12) × 0.25 × 700 = **175 points**
-- **All Level 4s**: (9/12) × 0.25 × 700 = **131.25 points**
-- **All Level 3s**: (6/12) × 0.25 × 700 = **87.5 points**
-- **All Level 2s**: (3/12) × 0.25 × 700 = **43.75 points**
-- **All Level 1s**: (0/12) × 0.25 × 700 = **0 points**
-
-### PP Rating Ranges (700-point scale):
-| Rating | Points Range |
-|--------|-------------|
-| Exemplary | 657 - 700 |
-| Accomplished | 482 - 656 |
-| Proficient ⭐ | 307 - 481 |
-| Partially Proficient | 132 - 306 |
-| Basic | 0 - 131 |
-
-⭐ = Meets state standard
-
-### Standard Rating Ranges (20-point base scale):
-Used for per-standard ratings displayed in Step 2:
-
-| Rating | Base Points Range |
-|--------|------------------|
-| Exemplary | 18.75 - 20 |
-| Accomplished | 13.75 - 18.74 |
-| Proficient ⭐ | 8.75 - 13.74 |
-| Partially Proficient | 3.75 - 8.74 |
-| Basic | 0 - 3.74 |
-
-## Measures of Student Learning Calculation
-
-### Formula (per CDE document page 4):
-```
-Weighted MSL Score = (Weight % / 30) × Rating Value × 100
-
-Total MSL Score = Sum of all measure scores
+Min = 2 × Goal − Max
+Weighted Points = (Weight ÷ 30) × 300
+Measure Score = ((Score − Min) ÷ (Max − Min)) × Weighted Points
+MSL Score = sum of all Measure Scores
+RANDA Entry = MSL Score ÷ 100
 ```
 
-### Rating Values:
-- **Less Than Expected** = 0
-- **Expected** = 1.5
-- **More Than Expected** = 3
+- IPR uses a fixed scale: Goal 50, Max 100, and Min 0.
+- A score above Max earns full points and no more. A score below Min earns zero. These scores can be legitimate, so the calculator doesn't warn about them.
 
-### Example: Two measures at 15% each
-- **Both "Expected"**: (15/30 × 1.5 × 100) + (15/30 × 1.5 × 100) = **150 points**
-- **Both "More Than Expected"**: (15/30 × 3 × 100) + (15/30 × 3 × 100) = **300 points**
-- **Both "Less Than Expected"**: (15/30 × 0 × 100) + (15/30 × 0 × 100) = **0 points**
+## Rating ranges (300-point scale)
 
-### MSL Rating Ranges (300-point scale):
-| Rating | Points Range |
-|--------|-------------|
-| More Than Expected | 201 - 300 |
-| Expected ⭐ | 100 - 200 |
-| Less Than Expected | 0 - 99 |
+| Rating | Points |
+|---|---|
+| More Than Expected | 201–300 |
+| Expected | 100–200 |
+| Less Than Expected | 0–99 |
 
-⭐ = Meets state standard
+If the MSL rating is Less Than Expected, the Final Effectiveness rating is capped at Effective.
 
-## Final Effectiveness Rating
+## Worked example
 
-### Formula:
-```
-Final Score = PP Score + MSL Score
-Maximum = 700 + 300 = 1000 points
-```
+IPR at 10% with a score of 85, plus a 20% measure with Goal 85, Max 100, and a score of 92:
 
-### Final Rating Ranges (1000-point scale):
-| Rating | Points Range |
-|--------|-------------|
-| Highly Effective | 801 - 1000 |
-| Effective ⭐ | 407 - 800 |
-| Partially Effective | 188 - 406 |
-| Ineffective | 0 - 187 |
-
-⭐ = Meets state standard
-
-### Special Constraint:
-**If MSL rating is "Less Than Expected", the maximum Final Effectiveness rating is capped at "Effective" regardless of point total.**
-
-## Test Examples
-
-### Test 1: All Level 3s, Equal Weights
-- **Inputs**: All elements Level 3, all weights 25%
-- **PP Calculation**:
-  - Standard 1: (6/12) × 0.25 × 700 = 87.5
-  - Standard 2: (8/16) × 0.25 × 700 = 87.5
-  - Standard 3: (12/24) × 0.25 × 700 = 87.5
-  - Standard 4: (8/16) × 0.25 × 700 = 87.5
-  - **Total PP: 350 points (Proficient)**
-- **MSL**: Two measures, 15% each, both "Expected" = **150 points (Expected)**
-- **Final**: 350 + 150 = **500 points (Effective)**
-
-### Test 2: All Level 5s, Equal Weights
-- **Inputs**: All elements Level 5, all weights 25%
-- **PP**: 175 + 175 + 175 + 175 = **700 points (Exemplary)**
-- **MSL**: Two measures, 15% each, both "More Than Expected" = **300 points**
-- **Final**: 700 + 300 = **1000 points (Highly Effective)**
-
-### Test 3: MSL Constraint
-- **Inputs**: All Level 5s (PP = 700), MSL "Less Than Expected" (0 points)
-- **PP**: **700 points (Exemplary)**
-- **MSL**: **0 points (Less Than Expected)**
-- **Final**: 700 + 0 = 700 points
-- **Rating**: **Effective** (capped, NOT Highly Effective)
+| Step | Result |
+|---|---|
+| IPR | 85% of 100 points = 85.00 |
+| Measure Min | 2 × 85 − 100 = 70 |
+| Measure position | (92 − 70) ÷ (100 − 70) = 73.33% |
+| Measure Score | 73.33% of 200 points = 146.67 |
+| MSL Score | 85.00 + 146.67 = 231.67 |
+| RANDA Entry | 2.32 |
+| Rating | More Than Expected |
 
 ## Source
-Based on: [CDE SB22-070 SMES Revised Scoring and Cut Points (May 2023)](https://www.cde.state.co.us/educatoreffectiveness/smes-revised-scoring-cut-points-pdf)
+
+The rating ranges and cap come from [CDE SB22-070 SMES Revised Scoring and Cut Points (May 2023)](https://www.cde.state.co.us/educatoreffectiveness/smes-revised-scoring-cut-points-pdf). The sliding-scale method is a district decision and isn't defined by CDE. The older three-rating method is kept on the `archive/legacy-tools` branch.
