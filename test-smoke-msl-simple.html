@@ -178,22 +178,23 @@
       // Group 2: Measure Addition & Removal
       const btnAdd = doc.getElementById('btn-add-measure');
       btnAdd.click(); // Add Measure 2
-      btnAdd.click(); // Add Measure 3
-      btnAdd.click(); // Add Measure 4 (Total 4 = 1 IPR + 3 additional)
-      
-      const rowCount4 = doc.querySelectorAll('.msl-measure-row').length;
-      assert('Measure Management', 'Can add up to 4 total measures (1 IPR + 3 additional)', rowCount4 === 4, `Rows count: ${rowCount4}`);
-      assert('Measure Management', 'Add button is disabled at max 4 measures', btnAdd.disabled && btnAdd.textContent.includes('Maximum'));
+      btnAdd.click(); // Add Measure 3 (Total 3 = 1 IPR + 2 additional)
+      btnAdd.click(); // Over the cap; should be ignored
+
+      const rowCountMax = doc.querySelectorAll('.msl-measure-row').length;
+      assert('Measure Management', 'Can add up to 3 total measures (1 IPR + 2 additional)', rowCountMax === 3, `Rows count: ${rowCountMax}`);
+      assert('Measure Management', 'Add button is disabled at max 3 measures', btnAdd.disabled && btnAdd.textContent.includes('Maximum'));
 
       // Test Removal
       const removeBtns = doc.querySelectorAll('.btn-remove');
       if (removeBtns.length > 0) {
-        removeBtns[removeBtns.length - 1].click(); // Remove 4th measure
+        removeBtns[removeBtns.length - 1].click(); // Remove 3rd measure
         await new Promise(r => setTimeout(r, 350));
       }
-      const rowCount3 = doc.querySelectorAll('.msl-measure-row:not(.is-removing)').length;
-      assert('Measure Management', 'Can remove measure via delegated button', rowCount3 === 3, `Rows count: ${rowCount3}`);
+      const rowCountAfterRemove = doc.querySelectorAll('.msl-measure-row:not(.is-removing)').length;
+      assert('Measure Management', 'Can remove measure via delegated button', rowCountAfterRemove === 2, `Rows count: ${rowCountAfterRemove}`);
       assert('Measure Management', 'Add button re-enabled after removal', !btnAdd.disabled);
+      btnAdd.click(); // Re-add the 3rd measure (gets row index 4)
 
       // Group 3: XSS Protection Check
       const m2NameInput = doc.getElementById('msl-name-2');
@@ -214,7 +215,7 @@
       // Set weights: IPR=10%, Measure 2=10%, Measure 3=10% (Total=30%)
       const w1 = doc.getElementById('msl-weight-1');
       const w2 = doc.getElementById('msl-weight-2');
-      const w3 = doc.getElementById('msl-weight-3');
+      const w3 = doc.getElementById('msl-weight-4');
       if (w1) { w1.value = '10'; w1.dispatchEvent(new Event('input', { bubbles: true })); }
       if (w2) { w2.value = '10'; w2.dispatchEvent(new Event('input', { bubbles: true })); }
       if (w3) { w3.value = '10'; w3.dispatchEvent(new Event('input', { bubbles: true })); }
@@ -222,8 +223,8 @@
       // Set Goals and Max
       const g2 = doc.getElementById('msl-goal-2');
       const max2 = doc.getElementById('msl-max-2');
-      const g3 = doc.getElementById('msl-goal-3');
-      const max3 = doc.getElementById('msl-max-3');
+      const g3 = doc.getElementById('msl-goal-4');
+      const max3 = doc.getElementById('msl-max-4');
       if (g2 && max2) {
         g2.value = '80'; g2.dispatchEvent(new Event('input', { bubbles: true }));
         max2.value = '100'; max2.dispatchEvent(new Event('input', { bubbles: true }));
@@ -247,7 +248,7 @@
       // Total expected = 150 / 300 (Rating: "Expected", RANDA: 1.50)
       const act1 = doc.getElementById('msl-actual-1');
       const act2 = doc.getElementById('msl-actual-2');
-      const act3 = doc.getElementById('msl-actual-3');
+      const act3 = doc.getElementById('msl-actual-4');
       if (act1) { act1.value = '50'; act1.dispatchEvent(new Event('input', { bubbles: true })); }
       if (act2) { act2.value = '80'; act2.dispatchEvent(new Event('input', { bubbles: true })); }
       if (act3) { act3.value = '70'; act3.dispatchEvent(new Event('input', { bubbles: true })); }
