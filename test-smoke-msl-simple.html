@@ -239,6 +239,22 @@
       const printDocTitle = doc.getElementById('print-doc-title');
       assert('BOY Mode', 'Print doc title indicates Goal Plan & Agreement', printDocTitle?.textContent.includes('Goal Plan & Agreement'));
 
+      // Unusual Goal and Max settings get a note on the measure and the Goal Plan
+      const setupNote = doc.getElementById('msl-setup-note-2');
+      assert('Goal Notes', 'Typical Goal and Max show no note', setupNote?.hidden === true && !doc.querySelector('.print-setup-note'));
+      if (g2 && max2) {
+        g2.value = '30'; g2.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await new Promise(r => setTimeout(r, 150));
+      assert('Goal Notes', 'Min below zero shows a note on the measure', setupNote?.hidden === false && setupNote?.textContent.includes('below zero'));
+      assert('Goal Notes', 'Min below zero prints on the Goal Plan', doc.querySelector('.print-setup-note')?.textContent.includes('below zero'));
+      assert('Goal Notes', 'A note does not block the Goal Plan', printBadge?.className.includes('badge-boy'));
+      if (g2 && max2) {
+        g2.value = '80'; g2.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await new Promise(r => setTimeout(r, 150));
+      assert('Goal Notes', 'Note clears when Goal and Max are corrected', setupNote?.hidden === true && !doc.querySelector('.print-setup-note'));
+
       // Group 5: EOY Final Evaluation & Scoring
       // Enter scores: IPR actual = 50 (normalized 0.5 -> 150 scale * (10/30) = 50 pts)
       // Measure 2 actual = 80 (Goal midpoint -> normalized 0.5 -> 150 scale * (10/30) = 50 pts)

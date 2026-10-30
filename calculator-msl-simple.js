@@ -50,6 +50,7 @@ const COLLECTIVE_MIN_WEIGHT = 1;
 const COLLECTIVE_MAX_WEIGHT = 10;
 const MIN_MEASURES = 2; // IPR + at least one individual measure
 const MAX_ADDITIONAL_MEASURES = 2; // District cap: three measures total
+const NARROW_RANGE_PERCENT = 1; // Note a Max this close to Goal
 const STORAGE_KEY = 'msl_simple_calc_v1';
 
 // School year these measures belong to; kept with saved data so last year's
@@ -108,6 +109,23 @@ function normalize(actual, min, max) {
 }
 
 /**
+ * Returns a note for Goal and Max settings that may surprise people, or '' if none.
+ * Skips zero and negative goals, since those scales don't start at zero.
+ */
+function getGoalSetupNote(goal, max) {
+  if (goal <= 0) return '';
+  const min = 2 * goal - max;
+  if (min < 0) {
+    const zeroPercent = (normalize(0, min, max) * 100).toFixed(1);
+    return `Calculated Min (${round2(min)}) is below zero, so a score of 0 would earn ${zeroPercent}% of this measure's points. Check that Max is correct.`;
+  }
+  if (max - goal < goal * (NARROW_RANGE_PERCENT / 100)) {
+    return `Max is within ${NARROW_RANGE_PERCENT}% of Goal, so a very small change in score moves this measure from half to full points. Check that Max is correct.`;
+  }
+  return '';
+}
+
+/**
  * Calculate MSL score from all measures.
  * Returns { score, rating, percentage, measures[], valid }
  */
@@ -150,6 +168,7 @@ function calculateMSL() {
     const hasGoalAndMax = isIPR || (!isNaN(goalScore) && goalEl?.value !== '' && !isNaN(maxScore) && maxEl?.value !== '' && maxScore > goalScore);
     const hasActual = !isNaN(actual) && actualRaw !== '';
     const invalidRange = !isIPR && !isNaN(goalScore) && !isNaN(maxScore) && maxScore <= goalScore;
+    const setupNote = !isIPR && hasGoalAndMax ? getGoalSetupNote(goalScore, maxScore) : '';
 
     if (!hasGoalAndMax || weight <= 0) {
       allGoalsSet = false;
@@ -163,7 +182,7 @@ function calculateMSL() {
         name, desc, weight, goalScore: isNaN(goalScore) ? 0 : goalScore,
         maxScore: isNaN(maxScore) ? 0 : maxScore, minScore: isNaN(minScore) ? 0 : minScore,
         actual: hasActual ? actual : 0, hasActual, hasGoalAndMax, isIPR,
-        normalized: 0, scaled300: 0, weighted: 0, pool, filled: false, invalidRange
+        normalized: 0, scaled300: 0, weighted: 0, pool, filled: false, invalidRange, setupNote
       });
       return;
     }
@@ -191,7 +210,8 @@ function calculateMSL() {
       weighted,
       pool,
       filled: true,
-      invalidRange: false
+      invalidRange: false,
+      setupNote
     });
   });
 
@@ -324,6 +344,12 @@ function updateAllCalculations() {
     const minValEl = row.querySelector(`#msl-min-val-${row.dataset.index}`);
     if (minValEl) {
       minValEl.textContent = (m.minScore !== undefined && m.minScore !== null && !isNaN(m.minScore)) ? m.minScore : '—';
+    }
+
+    const setupNoteEl = row.querySelector(`#msl-setup-note-${row.dataset.index}`);
+    if (setupNoteEl) {
+      setupNoteEl.hidden = !m.setupNote;
+      setupNoteEl.textContent = m.setupNote;
     }
 
     // Update Auto-Derived Primary Measure Score (of Weighted Points) & Rating Tag
@@ -646,6 +672,16 @@ function updatePrintSummary(result) {
       </tr>
     `;
 
+    if (m.setupNote) {
+      html += `
+        <tr class="print-setup-note">
+          <td colspan="7" style="text-align: left; font-size: 8.5pt; font-weight: bold; color: #000000; background: #ffffff; padding: 4px 8px 6px 16px; border-top: none;">
+            Note: ${m.setupNote}
+          </td>
+        </tr>
+      `;
+    }
+
     if (descText) {
       html += `
         <tr>
@@ -804,6 +840,8 @@ function createMeasureRow(index, isIPR = false) {
         </div>
       </div>
     </div>
+
+    ${!isIPR ? `<p id="msl-setup-note-${index}" class="goal-setup-note" role="status" hidden></p>` : ''}
 
     <div class="measure-visual-feedback">
       <div class="measure-range-bar-container">

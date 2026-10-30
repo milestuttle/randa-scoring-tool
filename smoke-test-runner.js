@@ -151,7 +151,20 @@ assert('Above Max earns full points and no more', aboveMax.valid && aboveMax.mea
 const belowMin = calc.setMeasures([ipr(85), measure(50)]);
 assert('Below Min earns zero', belowMin.valid && belowMin.measures[1].weighted === 0, `Got: ${belowMin.measures[1].weighted}`);
 
-// 6. Structure rules
+// 6. Notes on unusual Goal and Max settings
+console.log('\nGoal and Max notes');
+const noteFor = (goal, max) => calc.setMeasures([ipr(50), measure(undefined, 20, goal, max)]).measures[1].setupNote;
+assert('Goal 30, Max 100 notes a Min below zero', noteFor(30, 100).includes('Calculated Min (-40)') && noteFor(30, 100).includes('28.6%'), `Got: ${noteFor(30, 100)}`);
+assert('Goal 85, Max 85.1 notes a narrow range', noteFor(85, 85.1).includes('within 1% of Goal'), `Got: ${noteFor(85, 85.1)}`);
+assert('Goal 85, Max 100 has no note', noteFor(85, 100) === '', `Got: ${noteFor(85, 100)}`);
+assert('Goal 50, Max 100 (Min exactly 0) has no note', noteFor(50, 100) === '', `Got: ${noteFor(50, 100)}`);
+assert('Goal 750, Max 770 has no note', noteFor(750, 770) === '', `Got: ${noteFor(750, 770)}`);
+assert('Goal 100, Max 101 (exactly 1%) has no note', noteFor(100, 101) === '', `Got: ${noteFor(100, 101)}`);
+assert('Goal 0 has no note', noteFor(0, 10) === '', `Got: ${noteFor(0, 10)}`);
+assert('Notes do not block a valid result', calc.setMeasures([ipr(50), measure(0, 20, 30, 100)]).valid);
+assert('IPR never gets a note', calc.setMeasures([ipr(50), measure(85)]).measures[0].setupNote === '');
+
+// 7. Structure rules
 console.log('\nStructure rules');
 assert('IPR alone is not valid', !calc.setMeasures([ipr(50, 30)]).valid);
 assert('IPR above 10% is not valid', !calc.setMeasures([ipr(50, 11), measure(85, 19)]).valid);
