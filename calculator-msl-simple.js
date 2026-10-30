@@ -50,7 +50,12 @@ const COLLECTIVE_MIN_WEIGHT = 1;
 const COLLECTIVE_MAX_WEIGHT = 10;
 const MIN_MEASURES = 2; // IPR + at least one individual measure
 const MAX_ADDITIONAL_MEASURES = 2; // District cap: three measures total
+const NARROW_RANGE_PERCENT = 1; // Note a Max this close to Goal
 const STORAGE_KEY = 'msl_simple_calc_v1';
+
+// School year these measures belong to; kept with saved data so last year's
+// scores can't print under this year's heading
+let planSchoolYear = getCurrentSchoolYear();
 
 // ===================================
 // HELPERS
@@ -76,6 +81,20 @@ function getCurrentSchoolYear() {
   return now.getMonth() >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
 }
 
+/**
+ * Shows the plan's school year on the report, with a notice if it isn't the current year.
+ */
+function updateSchoolYearDisplay() {
+  const schoolYearEl = document.getElementById('print-school-year');
+  if (schoolYearEl) schoolYearEl.textContent = planSchoolYear;
+
+  const notice = document.getElementById('saved-year-notice');
+  if (notice) {
+    notice.hidden = planSchoolYear === getCurrentSchoolYear();
+    notice.textContent = `These measures were saved for the ${planSchoolYear} school year, so the report will show that year. To start a new plan, click Reset All.`;
+  }
+}
+
 // ===================================
 // CALCULATION
 // ===================================
@@ -87,6 +106,23 @@ function getCurrentSchoolYear() {
 function normalize(actual, min, max) {
   if (max <= min) return 0;
   return clamp((actual - min) / (max - min), 0, 1);
+}
+
+/**
+ * Returns a note for Goal and Max settings that may surprise people, or '' if none.
+ * Skips zero and negative goals, since those scales don't start at zero.
+ */
+function getGoalSetupNote(goal, max) {
+  if (goal <= 0) return '';
+  const min = 2 * goal - max;
+  if (min < 0) {
+    const zeroPercent = (normalize(0, min, max) * 100).toFixed(1);
+    return `Calculated Min (${round2(min)}) is below zero, so a score of 0 would earn ${zeroPercent}% of this measure's points. Check that Max is correct.`;
+  }
+  if (max - goal < goal * (NARROW_RANGE_PERCENT / 100)) {
+    return `Max is within ${NARROW_RANGE_PERCENT}% of Goal, so a very small change in score moves this measure from half to full points. Check that Max is correct.`;
+  }
+  return '';
 }
 
 /**
@@ -132,6 +168,7 @@ function calculateMSL() {
     const hasGoalAndMax = isIPR || (!isNaN(goalScore) && goalEl?.value !== '' && !isNaN(maxScore) && maxEl?.value !== '' && maxScore > goalScore);
     const hasActual = !isNaN(actual) && actualRaw !== '';
     const invalidRange = !isIPR && !isNaN(goalScore) && !isNaN(maxScore) && maxScore <= goalScore;
+    const setupNote = !isIPR && hasGoalAndMax ? getGoalSetupNote(goalScore, maxScore) : '';
 
     if (!hasGoalAndMax || weight <= 0) {
       allGoalsSet = false;
@@ -145,7 +182,7 @@ function calculateMSL() {
         name, desc, weight, goalScore: isNaN(goalScore) ? 0 : goalScore,
         maxScore: isNaN(maxScore) ? 0 : maxScore, minScore: isNaN(minScore) ? 0 : minScore,
         actual: hasActual ? actual : 0, hasActual, hasGoalAndMax, isIPR,
-        normalized: 0, scaled300: 0, weighted: 0, pool, filled: false, invalidRange
+        normalized: 0, scaled300: 0, weighted: 0, pool, filled: false, invalidRange, setupNote
       });
       return;
     }
@@ -173,7 +210,8 @@ function calculateMSL() {
       weighted,
       pool,
       filled: true,
-      invalidRange: false
+      invalidRange: false,
+      setupNote
     });
   });
 
@@ -306,6 +344,12 @@ function updateAllCalculations() {
     const minValEl = row.querySelector(`#msl-min-val-${row.dataset.index}`);
     if (minValEl) {
       minValEl.textContent = (m.minScore !== undefined && m.minScore !== null && !isNaN(m.minScore)) ? m.minScore : '—';
+    }
+
+    const setupNoteEl = row.querySelector(`#msl-setup-note-${row.dataset.index}`);
+    if (setupNoteEl) {
+      setupNoteEl.hidden = !m.setupNote;
+      setupNoteEl.textContent = m.setupNote;
     }
 
     // Update Auto-Derived Primary Measure Score (of Weighted Points) & Rating Tag
@@ -628,6 +672,16 @@ function updatePrintSummary(result) {
       </tr>
     `;
 
+    if (m.setupNote) {
+      html += `
+        <tr class="print-setup-note">
+          <td colspan="7" style="text-align: left; font-size: 8.5pt; font-weight: bold; color: #000000; background: #ffffff; padding: 4px 8px 6px 16px; border-top: none;">
+            Note: ${m.setupNote}
+          </td>
+        </tr>
+      `;
+    }
+
     if (descText) {
       html += `
         <tr>
@@ -787,6 +841,8 @@ function createMeasureRow(index, isIPR = false) {
       </div>
     </div>
 
+    ${!isIPR ? `<p id="msl-setup-note-${index}" class="goal-setup-note" role="status" hidden></p>` : ''}
+
     <div class="measure-visual-feedback">
       <div class="measure-range-bar-container">
         <div class="measure-range-bar"></div>
@@ -878,6 +934,8 @@ function resetAll() {
   setTimeout(() => iprRow.classList.add('visible'), 10);
 
   localStorage.removeItem(STORAGE_KEY);
+  planSchoolYear = getCurrentSchoolYear();
+  updateSchoolYearDisplay();
   updateAddButton();
   updateRemoveButtons();
   updateAllCalculations();
@@ -924,7 +982,7 @@ function showCalculationDetails() {
       <td>${m.goalScore}</td>
       <td>${m.maxScore}</td>
       <td>${m.minScore}</td>
-      <td>${(m.normalized * 100).toFixed(1)}%</td>
+      <td>${m.percentage.toFixed(1)}%</td>
       <td>${m.weight.toFixed(1)}%</td>
       <td style="background: #eff6ff; font-weight: 700; color: #1e40af;">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)} <span style="font-size: 0.75rem; font-weight: normal; color: #64748b;">(${measureRating})</span></td>
     </tr>`;
@@ -1002,7 +1060,7 @@ function copySummary() {
 
   let text = '=====================================\n';
   text += 'MEASURES OF STUDENT LEARNING (MSL) SUMMARY\n';
-  text += `School Year: ${getCurrentSchoolYear()}\n`;
+  text += `School Year: ${planSchoolYear}\n`;
   text += '=====================================\n\n';
   text += 'MSL MEASURES (Points Earned of Each Measure\'s Weighted Total):\n';
 
@@ -1054,7 +1112,7 @@ function copySummary() {
 
 function saveState() {
   const rows = document.querySelectorAll('.msl-measure-row:not(.is-removing)');
-  const state = { measures: [] };
+  const state = { schoolYear: planSchoolYear, measures: [] };
 
   rows.forEach(row => {
     const idx = row.dataset.index;
@@ -1079,6 +1137,7 @@ function loadState() {
   try {
     const state = JSON.parse(saved);
     if (!state.measures || state.measures.length === 0) return false;
+    planSchoolYear = state.schoolYear || getCurrentSchoolYear();
     const container = document.getElementById('msl-list');
     container.innerHTML = '';
 
@@ -1161,9 +1220,7 @@ function init() {
     if (btn) removeMeasure(btn.dataset.removeIndex);
   });
 
-  // Set dynamic school year in print header
-  const schoolYearEl = document.getElementById('print-school-year');
-  if (schoolYearEl) schoolYearEl.textContent = getCurrentSchoolYear();
+  updateSchoolYearDisplay();
 
   // Modal close
   document.getElementById('modal-close')?.addEventListener('click', closeModal);

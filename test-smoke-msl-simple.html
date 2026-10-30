@@ -110,11 +110,12 @@
 
     <div class="iframe-wrapper">
       <h2>Live Component Preview</h2>
-      <iframe id="app-frame" src="index-msl-simple.html"></iframe>
+      <iframe id="app-frame" title="MSL Score Calculator under test"></iframe>
     </div>
   </div>
 
   <script>
+    const STORAGE_KEY = 'msl_simple_calc_v1';
     const tests = [];
     let passCount = 0;
     let failCount = 0;
@@ -208,9 +209,6 @@
         m2DescInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
-      await new Promise(r => setTimeout(r, 100));
-      assert('Security', 'XSS scripts not executed from measure name or description', win.__xssTest === undefined && win.__xssTest2 === undefined);
-
       // Group 4: BOY Plan Ready State
       // Set weights: IPR=10%, Measure 2=10%, Measure 3=10% (Total=30%)
       const w1 = doc.getElementById('msl-weight-1');
@@ -241,6 +239,22 @@
       const printDocTitle = doc.getElementById('print-doc-title');
       assert('BOY Mode', 'Print doc title indicates Goal Plan & Agreement', printDocTitle?.textContent.includes('Goal Plan & Agreement'));
 
+      // Unusual Goal and Max settings get a note on the measure and the Goal Plan
+      const setupNote = doc.getElementById('msl-setup-note-2');
+      assert('Goal Notes', 'Typical Goal and Max show no note', setupNote?.hidden === true && !doc.querySelector('.print-setup-note'));
+      if (g2 && max2) {
+        g2.value = '30'; g2.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await new Promise(r => setTimeout(r, 150));
+      assert('Goal Notes', 'Min below zero shows a note on the measure', setupNote?.hidden === false && setupNote?.textContent.includes('below zero'));
+      assert('Goal Notes', 'Min below zero prints on the Goal Plan', doc.querySelector('.print-setup-note')?.textContent.includes('below zero'));
+      assert('Goal Notes', 'A note does not block the Goal Plan', printBadge?.className.includes('badge-boy'));
+      if (g2 && max2) {
+        g2.value = '80'; g2.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await new Promise(r => setTimeout(r, 150));
+      assert('Goal Notes', 'Note clears when Goal and Max are corrected', setupNote?.hidden === true && !doc.querySelector('.print-setup-note'));
+
       // Group 5: EOY Final Evaluation & Scoring
       // Enter scores: IPR actual = 50 (normalized 0.5 -> 150 scale * (10/30) = 50 pts)
       // Measure 2 actual = 80 (Goal midpoint -> normalized 0.5 -> 150 scale * (10/30) = 50 pts)
@@ -265,12 +279,18 @@
       assert('Calculations', 'MSL Rating displays Expected', summaryRating?.textContent.trim() === 'Expected');
       assert('Visual Theme', 'Summary rating has theme color class rating-expected', summaryRating?.classList.contains('rating-expected'));
 
+      // The measure name and description now appear on the report, so check escaping here
+      await new Promise(r => setTimeout(r, 100));
+      const printTable = doc.getElementById('print-measures-table-container');
+      assert('Security', 'Report shows name and description as plain text', printTable?.querySelectorAll('img, script, b').length === 0 && printTable?.textContent.includes('<b>Math Growth</b>') && printTable?.textContent.includes('District SLO'));
+      assert('Security', 'Scripts did not run from name or description on the report', win.__xssTest === undefined && win.__xssTest2 === undefined);
+
       // Verify Primary 300-Point Scale Score Focus & Contribution Readouts
       const m1Score300 = doc.getElementById('msl-score300-val-1');
       const m1Contrib = doc.getElementById('msl-contrib-val-1');
       const m1Badge = doc.getElementById('msl-rating-badge-1');
-      assert('300 Scale Focus', 'Primary measure score displays on 300-point scale (150.00 / 300)', m1Score300?.textContent.includes('150.00 / 300'), `Got: "${m1Score300?.textContent}"`);
-      assert('300 Scale Focus', 'Measure rating tag displays Expected on card', m1Badge?.textContent.trim() === 'Expected', `Got: "${m1Badge?.textContent}"`);
+      assert('Measure Score', 'Measure score displays points earned of its own pool (50.00 / 100.00)', m1Score300?.textContent.includes('50.00 / 100.00'), `Got: "${m1Score300?.textContent}"`);
+      assert('Measure Score', 'Measure rating tag displays Expected on card', m1Badge?.textContent.trim() === 'Expected', `Got: "${m1Badge?.textContent}"`);
       assert('Contributing Score', 'Contributing score clearly indicates points towards final 300 (+50.00 pts)', m1Contrib?.textContent.includes('50.00 pts'), `Got: "${m1Contrib?.textContent}"`);
 
       // Group 6: Boundary & Rating Scale Tests
@@ -293,11 +313,26 @@
       const floatScore = parseFloat(summaryScore?.textContent || '0');
       assert('Rating Boundaries', 'Boundary scores below 100 return Less Than Expected (no gap)', floatScore < 100 && summaryRating?.textContent.trim() === 'Less Than Expected', `Score: ${floatScore}, Rating: "${summaryRating?.textContent}"`);
 
+      const setActuals = async (a1, a2, a3) => {
+        [[act1, a1], [act2, a2], [act3, a3]].forEach(([el, v]) => {
+          el.value = v;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        await new Promise(r => setTimeout(r, 150));
+      };
+
       // Group 7: Modals & Escape Key
+      // Measure 2 at 89.33 is 73.3% of its 60-100 range; the modal must match the report
+      await setActuals('50', '89.33', '70');
       const btnShowCalc = doc.getElementById('btn-show-calculations');
       const calcModal = doc.getElementById('calculation-modal');
       btnShowCalc.click();
       assert('Modals', 'Show Calculations modal opens on click', calcModal?.style.display === 'flex');
+      const modalRow = doc.querySelector('#calculation-details tbody tr:nth-child(2)');
+      const reportRow = [...doc.querySelectorAll('#print-measures-table-container tbody tr')].find(tr => tr.textContent.includes('89.33'));
+      assert('Consistency', 'Modal and report show the same % of range (73.3%)', modalRow?.textContent.includes('73.3%') && reportRow?.textContent.includes('73.3%'), `Modal: "${modalRow?.textContent.trim().replace(/\s+/g, ' ')}"`);
+      await new Promise(r => setTimeout(r, 100));
+      assert('Security', 'Modal shows the name as plain text', doc.querySelectorAll('#calculation-details img, #calculation-details script').length === 0 && win.__xssTest === undefined && win.__xssTest2 === undefined);
 
       // Test Escape key close
       doc.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -310,14 +345,54 @@
       doc.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       assert('Modals', 'Escape key closes About modal', aboutModal?.style.display === 'none');
 
-      renderResults();
+      // Group 8: Saved School Year
+      const reloadApp = async (state) => {
+        await new Promise(r => setTimeout(r, 150));
+        win.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        await new Promise(resolve => {
+          iframe.addEventListener('load', resolve, { once: true });
+          win.location.reload();
+        });
+        await new Promise(r => setTimeout(r, 250));
+        return iframe.contentDocument;
+      };
+      const savedIPR = { index: '1', name: '', desc: '', weight: '10', goal: '', max: '', actual: '50' };
+
+      let yearDoc = await reloadApp({ schoolYear: '2000-2001', measures: [savedIPR] });
+      assert('Saved Data', 'Notice appears for measures saved in an earlier school year', yearDoc.getElementById('saved-year-notice')?.hidden === false && yearDoc.getElementById('saved-year-notice')?.textContent.includes('2000-2001'));
+      assert('Saved Data', 'Report keeps the school year the measures were saved for', yearDoc.getElementById('print-school-year')?.textContent === '2000-2001');
+
+      yearDoc = await reloadApp({ measures: [savedIPR] });
+      assert('Saved Data', 'Older saved data without a year shows no notice', yearDoc.getElementById('saved-year-notice')?.hidden === true);
     }
 
+    // The tool saves to this site's browser storage, so a run would overwrite someone's
+    // real entries on the live site. Run only locally, from a clean start, and put back
+    // whatever was saved before.
     window.addEventListener('DOMContentLoaded', () => {
+      const summaryEl = document.getElementById('summary');
+      if (!['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        summaryEl.textContent = 'These tests only run on a local copy, because they would overwrite entries saved in this browser.';
+        return;
+      }
+
+      const savedBeforeRun = localStorage.getItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY);
+
       const iframe = document.getElementById('app-frame');
-      iframe.onload = () => {
-        setTimeout(runTestSuite, 400);
-      };
+      iframe.addEventListener('load', async () => {
+        await new Promise(r => setTimeout(r, 400));
+        try {
+          await runTestSuite();
+        } catch (e) {
+          assert('Harness', 'Suite finished without an error', false, e.message);
+        }
+        await new Promise(r => setTimeout(r, 150));
+        if (savedBeforeRun === null) localStorage.removeItem(STORAGE_KEY);
+        else localStorage.setItem(STORAGE_KEY, savedBeforeRun);
+        renderResults();
+      }, { once: true });
+      iframe.src = 'index-msl-simple.html';
     });
   </script>
 </body>
