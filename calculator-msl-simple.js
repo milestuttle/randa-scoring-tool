@@ -52,6 +52,10 @@ const MIN_MEASURES = 2; // IPR + at least one individual measure
 const MAX_ADDITIONAL_MEASURES = 2; // District cap: three measures total
 const STORAGE_KEY = 'msl_simple_calc_v1';
 
+// School year these measures belong to; kept with saved data so last year's
+// scores can't print under this year's heading
+let planSchoolYear = getCurrentSchoolYear();
+
 // ===================================
 // HELPERS
 // ===================================
@@ -74,6 +78,20 @@ function getCurrentSchoolYear() {
   const now = new Date();
   const year = now.getFullYear();
   return now.getMonth() >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+}
+
+/**
+ * Shows the plan's school year on the report, with a notice if it isn't the current year.
+ */
+function updateSchoolYearDisplay() {
+  const schoolYearEl = document.getElementById('print-school-year');
+  if (schoolYearEl) schoolYearEl.textContent = planSchoolYear;
+
+  const notice = document.getElementById('saved-year-notice');
+  if (notice) {
+    notice.hidden = planSchoolYear === getCurrentSchoolYear();
+    notice.textContent = `These measures were saved for the ${planSchoolYear} school year, so the report will show that year. To start a new plan, click Reset All.`;
+  }
 }
 
 // ===================================
@@ -878,6 +896,8 @@ function resetAll() {
   setTimeout(() => iprRow.classList.add('visible'), 10);
 
   localStorage.removeItem(STORAGE_KEY);
+  planSchoolYear = getCurrentSchoolYear();
+  updateSchoolYearDisplay();
   updateAddButton();
   updateRemoveButtons();
   updateAllCalculations();
@@ -924,7 +944,7 @@ function showCalculationDetails() {
       <td>${m.goalScore}</td>
       <td>${m.maxScore}</td>
       <td>${m.minScore}</td>
-      <td>${(m.normalized * 100).toFixed(1)}%</td>
+      <td>${m.percentage.toFixed(1)}%</td>
       <td>${m.weight.toFixed(1)}%</td>
       <td style="background: #eff6ff; font-weight: 700; color: #1e40af;">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)} <span style="font-size: 0.75rem; font-weight: normal; color: #64748b;">(${measureRating})</span></td>
     </tr>`;
@@ -1002,7 +1022,7 @@ function copySummary() {
 
   let text = '=====================================\n';
   text += 'MEASURES OF STUDENT LEARNING (MSL) SUMMARY\n';
-  text += `School Year: ${getCurrentSchoolYear()}\n`;
+  text += `School Year: ${planSchoolYear}\n`;
   text += '=====================================\n\n';
   text += 'MSL MEASURES (Points Earned of Each Measure\'s Weighted Total):\n';
 
@@ -1054,7 +1074,7 @@ function copySummary() {
 
 function saveState() {
   const rows = document.querySelectorAll('.msl-measure-row:not(.is-removing)');
-  const state = { measures: [] };
+  const state = { schoolYear: planSchoolYear, measures: [] };
 
   rows.forEach(row => {
     const idx = row.dataset.index;
@@ -1079,6 +1099,7 @@ function loadState() {
   try {
     const state = JSON.parse(saved);
     if (!state.measures || state.measures.length === 0) return false;
+    planSchoolYear = state.schoolYear || getCurrentSchoolYear();
     const container = document.getElementById('msl-list');
     container.innerHTML = '';
 
@@ -1161,9 +1182,7 @@ function init() {
     if (btn) removeMeasure(btn.dataset.removeIndex);
   });
 
-  // Set dynamic school year in print header
-  const schoolYearEl = document.getElementById('print-school-year');
-  if (schoolYearEl) schoolYearEl.textContent = getCurrentSchoolYear();
+  updateSchoolYearDisplay();
 
   // Modal close
   document.getElementById('modal-close')?.addEventListener('click', closeModal);

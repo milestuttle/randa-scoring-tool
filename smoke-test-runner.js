@@ -1,6 +1,9 @@
-// Headless Smoke Test Runner for MSL Simple Engine
+// Command-line tests for the MSL Simple calculator.
+// Loads the real calculator-msl-simple.js with a minimal stand-in for the page,
+// so these tests fail if the shipped code changes. Run: node smoke-test-runner.js
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 console.log('🧪 Running CLI Smoke Tests for MSL Simple Engine...\n');
 
@@ -17,82 +20,148 @@ function assert(name, condition, details = '') {
   }
 }
 
-// 1. Test XSS escaping
-function escapeHTML(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+const source = fs.readFileSync(path.join(__dirname, 'calculator-msl-simple.js'), 'utf8');
+
+/**
+ * Loads a fresh copy of the calculator. `now` sets the date the code sees.
+ */
+function loadCalculator(now = new Date(2026, 9, 15)) {
+  const elements = {};
+  const rows = [];
+  const storage = {};
+
+  class FixedDate extends Date {
+    constructor(...args) {
+      if (args.length) super(...args);
+      else super(now.getTime());
+    }
+  }
+
+  const context = vm.createContext({
+    console,
+    setTimeout,
+    clearTimeout,
+    Date: FixedDate,
+    localStorage: {
+      getItem: key => (key in storage ? storage[key] : null),
+      setItem: (key, value) => { storage[key] = value; },
+      removeItem: key => { delete storage[key]; }
+    },
+    document: {
+      readyState: 'loading', // keeps init() from running against the stand-in page
+      addEventListener() {},
+      getElementById: id => elements[id] || null,
+      querySelectorAll: () => rows
+    }
+  });
+  vm.runInContext(source, context);
+
+  // Each measure: { w, g, x, a }. The first is IPR, which has a fixed scale.
+  context.setMeasures = measures => {
+    rows.length = 0;
+    measures.forEach((m, i) => {
+      const index = String(i + 1);
+      const isIPR = i === 0;
+      rows.push({ dataset: { index }, classList: { contains: cls => isIPR && cls === 'ipr-row' } });
+      const field = (name, value) => {
+        elements[`msl-${name}-${index}`] = { value: value === undefined ? '' : String(value) };
+      };
+      field('name', isIPR ? 'IPR' : `Measure ${index}`);
+      field('desc', '');
+      field('weight', m.w);
+      if (!isIPR) {
+        field('goal', m.g);
+        field('max', m.x);
+      }
+      field('actual', m.a);
+    });
+    return context.calculateMSL();
+  };
+  context.storage = storage;
+  return context;
 }
 
-assert('escapeHTML handles scripts', escapeHTML('<script>alert(1)</script>') === '&lt;script&gt;alert(1)&lt;/script&gt;');
-assert('escapeHTML handles quotes and ampersands', escapeHTML('A & B "C"') === 'A &amp; B &quot;C&quot;');
-assert('escapeHTML handles null/undefined', escapeHTML(null) === '' && escapeHTML(undefined) === '');
+const calc = loadCalculator();
+const ipr = (a, w = 10) => ({ w, a });
+const measure = (a, w = 20, g = 85, x = 100) => ({ w, g, x, a });
 
-// 2. Test getMSLRating with continuous boundary checks
-function getMSLRating(score) {
-  if (score > 200) return 'More Than Expected';
-  if (score >= 100) return 'Expected';
-  return 'Less Than Expected';
-}
+// 1. Escaping
+console.log('Escaping');
+assert('escapeHTML handles scripts', calc.escapeHTML('<script>alert(1)</script>') === '&lt;script&gt;alert(1)&lt;/script&gt;');
+assert('escapeHTML handles quotes and ampersands', calc.escapeHTML('A & B "C"') === 'A &amp; B &quot;C&quot;');
+assert('escapeHTML handles null/undefined', calc.escapeHTML(null) === '' && calc.escapeHTML(undefined) === '');
 
-assert('Rating 0 -> Less Than Expected', getMSLRating(0) === 'Less Than Expected');
-assert('Rating 99 -> Less Than Expected', getMSLRating(99) === 'Less Than Expected');
-assert('Rating 99.5 -> Less Than Expected (no float gap)', getMSLRating(99.5) === 'Less Than Expected');
-assert('Rating 99.99 -> Less Than Expected', getMSLRating(99.99) === 'Less Than Expected');
-assert('Rating 100 -> Expected', getMSLRating(100) === 'Expected');
-assert('Rating 150 -> Expected', getMSLRating(150) === 'Expected');
-assert('Rating 200 -> Expected', getMSLRating(200) === 'Expected');
-assert('Rating 200.01 -> More Than Expected', getMSLRating(200.01) === 'More Than Expected');
-assert('Rating 300 -> More Than Expected', getMSLRating(300) === 'More Than Expected');
+// 2. Rating
+console.log('\nRating');
+[
+  [0, 'Less Than Expected'],
+  [99, 'Less Than Expected'],
+  [99.99, 'Less Than Expected'],
+  [100, 'Expected'],
+  [150, 'Expected'],
+  [200, 'Expected'],
+  [200.01, 'More Than Expected'],
+  [300, 'More Than Expected']
+].forEach(([score, rating]) => {
+  const got = calc.getMSLRating(score);
+  assert(`${score} -> ${rating}`, got === rating, `Got: ${got}`);
+});
 
-// 3. Test School Year helper
-function getCurrentSchoolYear(dateObj) {
-  const now = dateObj || new Date();
-  const year = now.getFullYear();
-  return now.getMonth() >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
-}
+// 3. School year
+console.log('\nSchool year');
+[
+  [new Date(2026, 7, 15), '2026-2027'],
+  [new Date(2026, 6, 1), '2026-2027'],
+  [new Date(2026, 5, 30), '2025-2026'],
+  [new Date(2027, 0, 15), '2026-2027']
+].forEach(([date, expected]) => {
+  const got = loadCalculator(date).getCurrentSchoolYear();
+  assert(`${date.toDateString()} -> ${expected}`, got === expected, `Got: ${got}`);
+});
 
-assert('School Year in August 2026 -> 2026-2027', getCurrentSchoolYear(new Date(2026, 7, 15)) === '2026-2027');
-assert('School Year on July 1, 2026 -> 2026-2027', getCurrentSchoolYear(new Date(2026, 6, 1)) === '2026-2027');
-assert('School Year on June 30, 2026 -> 2025-2026', getCurrentSchoolYear(new Date(2026, 5, 30)) === '2025-2026');
-assert('School Year on January 15, 2027 -> 2026-2027', getCurrentSchoolYear(new Date(2027, 0, 15)) === '2026-2027');
+const saver = loadCalculator();
+saver.setMeasures([ipr(50), measure(85)]);
+saver.saveState();
+const savedState = JSON.parse(saver.storage[vm.runInContext('STORAGE_KEY', saver)]);
+assert('Saved data records the school year', savedState.schoolYear === '2026-2027', `Got: ${savedState.schoolYear}`);
 
-// 4. Test Calculation Formula & Normalization
-function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
-function normalize(actual, min, max) {
-  if (max <= min) return 0;
-  return clamp((actual - min) / (max - min), 0, 1);
-}
-function round2(x) { return Math.round(x * 100) / 100; }
+// 4. Scoring through the real calculateMSL
+console.log('\nScoring');
+const flagship = calc.setMeasures([ipr(85), measure(92)]);
+assert('Explainer example: 85.00 + 146.67 = 231.67', flagship.score === 231.67 && flagship.measures[1].weighted === 146.67, `Got: ${flagship.score}`);
+assert('Explainer example: 73.33% of range', flagship.measures[1].percentage === 73.33, `Got: ${flagship.measures[1].percentage}`);
+assert('Min = 2 x Goal - Max', flagship.measures[1].minScore === 70, `Got: ${flagship.measures[1].minScore}`);
 
-// Scenario A: Standard 3 measures balanced to 30%
-// IPR (weight 10%): goal=50, max=100 -> min=0. Actual=50 -> norm=0.5 -> 150 scale -> 50 pts
-// M2 (weight 10%): goal=85, max=100 -> min=70. Actual=85 -> norm=0.5 -> 150 scale -> 50 pts
-// M3 (weight 10%): goal=75, max=90 -> min=60. Actual=75 -> norm=0.5 -> 150 scale -> 50 pts
-const sA_ipr = round2(round2(normalize(50, 0, 100) * 300) * (10 / 30));
-const sA_m2  = round2(round2(normalize(85, 70, 100) * 300) * (10 / 30));
-const sA_m3  = round2(round2(normalize(75, 60, 90) * 300) * (10 / 30));
-const totalScoreA = sA_ipr + sA_m2 + sA_m3;
+const atGoal = calc.setMeasures([ipr(50), measure(85)]);
+assert('Every measure at Goal = 150', atGoal.score === 150 && atGoal.rating === 'Expected', `Got: ${atGoal.score}, ${atGoal.rating}`);
 
-assert('Scenario A: Total score at midpoint goals = 150.00', totalScoreA === 150, `Got: ${totalScoreA}`);
-assert('Scenario A: COPMS RANDA entry = 1.50', (totalScoreA / 100).toFixed(2) === '1.50');
-assert('Scenario A: Rating = Expected', getMSLRating(totalScoreA) === 'Expected');
+const atMax = calc.setMeasures([ipr(100), measure(100)]);
+assert('Every measure at Max = 300', atMax.score === 300 && atMax.rating === 'More Than Expected', `Got: ${atMax.score}, ${atMax.rating}`);
 
-// Scenario B: High Performance (All at max)
-const sB_ipr = round2(round2(normalize(100, 0, 100) * 300) * (10 / 30));
-const sB_m2  = round2(round2(normalize(100, 70, 100) * 300) * (10 / 30));
-const sB_m3  = round2(round2(normalize(90, 60, 90) * 300) * (10 / 30));
-const totalScoreB = sB_ipr + sB_m2 + sB_m3;
-assert('Scenario B: Total score at max = 300.00', totalScoreB === 300, `Got: ${totalScoreB}`);
-assert('Scenario B: Rating = More Than Expected', getMSLRating(totalScoreB) === 'More Than Expected');
+const atMin = calc.setMeasures([ipr(0), measure(70)]);
+assert('Every measure at Min = 0', atMin.score === 0 && atMin.rating === 'Less Than Expected', `Got: ${atMin.score}, ${atMin.rating}`);
 
-// Scenario C: Clamping below min / above max
-const sC_low = normalize(50, 70, 100); // 50 is below min 70
-const sC_high = normalize(110, 70, 100); // 110 is above max 100
-assert('Scenario C: Score below min clamps to 0', sC_low === 0);
-assert('Scenario C: Score above max clamps to 1', sC_high === 1);
+const threeMeasures = calc.setMeasures([ipr(50), measure(70, 10), measure(100, 10)]);
+assert('Three measures add up', threeMeasures.valid && threeMeasures.score === 150, `Got: ${threeMeasures.score}`);
+
+// 5. Scores outside the range are legitimate and count at the limit
+console.log('\nScores outside the range');
+const aboveMax = calc.setMeasures([ipr(85), measure(120)]);
+assert('Above Max earns full points and no more', aboveMax.valid && aboveMax.measures[1].weighted === 200, `Got: ${aboveMax.measures[1].weighted}`);
+const belowMin = calc.setMeasures([ipr(85), measure(50)]);
+assert('Below Min earns zero', belowMin.valid && belowMin.measures[1].weighted === 0, `Got: ${belowMin.measures[1].weighted}`);
+
+// 6. Structure rules
+console.log('\nStructure rules');
+assert('IPR alone is not valid', !calc.setMeasures([ipr(50, 30)]).valid);
+assert('IPR above 10% is not valid', !calc.setMeasures([ipr(50, 11), measure(85, 19)]).valid);
+assert('IPR below 1% is not valid', !calc.setMeasures([ipr(50, 0.5), measure(85, 29.5)]).valid);
+assert('IPR at 1% is valid', calc.setMeasures([ipr(50, 1), measure(85, 29)]).valid);
+assert('Four measures are not valid', !calc.setMeasures([ipr(50), measure(85, 10), measure(85, 5), measure(85, 5)]).valid);
+assert('Weights under 30% are not valid', !calc.setMeasures([ipr(50), measure(85, 15)]).valid);
+assert('Weights over 30% are not valid', !calc.setMeasures([ipr(50), measure(85, 25)]).valid);
+assert('Max at or below Goal is not valid', !calc.setMeasures([ipr(50), measure(85, 20, 85, 85)]).valid);
+assert('Missing score is not valid', !calc.setMeasures([ipr(50), measure(undefined)]).valid);
 
 console.log(`\n========================================`);
 console.log(`Total: ${passed + failed} | Passed: ${passed} | Failed: ${failed}`);
