@@ -164,7 +164,38 @@ assert('Goal 0 has no note', noteFor(0, 10) === '', `Got: ${noteFor(0, 10)}`);
 assert('Notes do not block a valid result', calc.setMeasures([ipr(50), measure(0, 20, 30, 100)]).valid);
 assert('IPR never gets a note', calc.setMeasures([ipr(50), measure(85)]).measures[0].setupNote === '');
 
-// 7. Structure rules
+// 7. Weights and display
+console.log('\nWeights and display');
+assert('Weights with decimals can total exactly 30', calc.setMeasures([ipr(50, 10.1), measure(85, 9.9), measure(85, 10)]).weightsValid);
+assert('Total of 30.008% is not valid', !calc.setMeasures([ipr(100), measure(100, 10.004), measure(100, 10.004)]).valid);
+assert('Total of 29.992% is not valid', !calc.setMeasures([ipr(100), measure(100, 9.996), measure(100, 9.996)]).valid);
+assert('A total just off 30 shows its real value', calc.formatWeight(30.008) === '30.008', `Got: ${calc.formatWeight(30.008)}`);
+assert('Ordinary weights keep one decimal', calc.formatWeight(10) === '10.0' && calc.formatWeight(10.3) === '10.3');
+// These weights total exactly 30, but rounding each measure's points adds up to 300.01
+const maxedSplit = calc.setMeasures([ipr(100), measure(100, 10.0025), measure(100, 9.9975)]);
+const rawPoints = maxedSplit.measures.reduce((sum, m) => sum + m.weighted, 0);
+assert('Score never exceeds 300', maxedSplit.valid && rawPoints > 300 && maxedSplit.score === 300, `Got: ${maxedSplit.score} from ${rawPoints}`);
+const decimalMin = calc.setMeasures([ipr(50), measure(1.2, 20, 1.1, 1.3)]);
+assert('Min has no floating-point noise', decimalMin.measures[1].minScore === 0.9, `Got: ${decimalMin.measures[1].minScore}`);
+assert('Name of only spaces counts as blank', (() => {
+  const c = loadCalculator();
+  c.setMeasures([ipr(50), measure(85)]);
+  c.document.getElementById('msl-name-2').value = '   ';
+  return c.calculateMSL().measures[1].name === '';
+})());
+
+// 8. Saved data checks
+console.log('\nSaved data checks');
+const savedRow = index => ({ index, name: '', desc: '', weight: '10', goal: '', max: '', actual: '' });
+assert('Normal saved data is accepted', calc.isValidSavedState({ measures: [savedRow('1'), savedRow('3')] }));
+assert('Numeric indexes are accepted', calc.isValidSavedState({ measures: [savedRow(1), savedRow(2)] }));
+assert('Empty data is rejected', !calc.isValidSavedState(null) && !calc.isValidSavedState({}) && !calc.isValidSavedState({ measures: [] }));
+assert('A missing row is rejected', !calc.isValidSavedState({ measures: [savedRow('1'), null] }));
+assert('A first row that is not IPR is rejected', !calc.isValidSavedState({ measures: [savedRow('2')] }));
+assert('Repeated rows are rejected', !calc.isValidSavedState({ measures: [savedRow('1'), savedRow('1')] }));
+assert('Markup in an index is rejected', !calc.isValidSavedState({ measures: [savedRow('1"><img src=x>')] }));
+
+// 9. Structure rules
 console.log('\nStructure rules');
 assert('IPR alone is not valid', !calc.setMeasures([ipr(50, 30)]).valid);
 assert('IPR above 10% is not valid', !calc.setMeasures([ipr(50, 11), measure(85, 19)]).valid);

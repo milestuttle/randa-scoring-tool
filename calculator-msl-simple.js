@@ -24,6 +24,22 @@ function round2(x) {
 }
 
 /**
+ * Removes floating-point noise, e.g. 0.9000000000000001 -> 0.9.
+ */
+function cleanNumber(x) {
+  return Number(x.toFixed(10));
+}
+
+/**
+ * Formats a weight with at least one decimal and no hidden precision, so 30.008 never reads as 30.0.
+ */
+function formatWeight(weight) {
+  const clean = cleanNumber(weight);
+  const oneDecimal = clean.toFixed(1);
+  return Number(oneDecimal) === clean ? oneDecimal : String(clean);
+}
+
+/**
  * Escape user-supplied strings before inserting into innerHTML.
  */
 function escapeHTML(str) {
@@ -154,11 +170,11 @@ function calculateMSL() {
     const descEl = document.getElementById(`msl-desc-${idx}`);
     const desc = descEl ? descEl.value.trim() : '';
 
-    const name = nameEl ? nameEl.value : `Measure ${idx}`;
+    const name = nameEl ? nameEl.value.trim() : '';
     const weight = parseFloat(weightEl?.value) || 0;
     const goalScore = isIPR ? 50 : parseFloat(goalEl?.value);
     const maxScore = isIPR ? 100 : parseFloat(maxEl?.value);
-    const minScore = 2 * goalScore - maxScore;
+    const minScore = cleanNumber(2 * goalScore - maxScore);
     const actualRaw = actualEl?.value;
     const actual = parseFloat(actualRaw);
 
@@ -215,12 +231,12 @@ function calculateMSL() {
     });
   });
 
-  const weightsValid = Math.abs(totalWeight - MSL_TOTAL_WEIGHT) < 0.01;
+  const weightsValid = cleanNumber(totalWeight) === MSL_TOTAL_WEIGHT;
 
   // CDE structure rules: collective (IPR) weight 1–10%, plus at least one individual measure
   let structureMsg = '';
   if (iprWeight < COLLECTIVE_MIN_WEIGHT || iprWeight > COLLECTIVE_MAX_WEIGHT) {
-    structureMsg = `IPR is the collective measure and must be ${COLLECTIVE_MIN_WEIGHT}–${COLLECTIVE_MAX_WEIGHT}% (currently ${round2(iprWeight).toFixed(1)}%)`;
+    structureMsg = `IPR is the collective measure and must be ${COLLECTIVE_MIN_WEIGHT}–${COLLECTIVE_MAX_WEIGHT}% (currently ${formatWeight(iprWeight)}%)`;
   } else if (rows.length < MIN_MEASURES) {
     structureMsg = 'Add at least one individual measure alongside IPR';
   } else if (rows.length > 1 + MAX_ADDITIONAL_MEASURES) {
@@ -230,7 +246,7 @@ function calculateMSL() {
 
   const goalsValid = weightsValid && structureValid && allGoalsSet;
   const valid = allFilled && weightsValid && structureValid;
-  const mslScore = round2(totalWeightedScore);
+  const mslScore = Math.min(round2(totalWeightedScore), MSL_MAX_SCALED);
 
   const rating = valid ? getMSLRating(mslScore) : '—';
 
@@ -239,7 +255,7 @@ function calculateMSL() {
     rating,
     percentage: round2((mslScore / MSL_MAX_SCALED) * 100),
     measures,
-    totalWeight: round2(totalWeight),
+    totalWeight: cleanNumber(totalWeight),
     weightsValid,
     structureValid,
     structureMsg,
@@ -261,7 +277,7 @@ function updateAllCalculations() {
   const weightMeterFill = document.getElementById('weight-meter-fill');
   const weightMeterBadge = document.getElementById('weight-meter-badge');
 
-  if (weightTotal) weightTotal.textContent = result.totalWeight.toFixed(1);
+  if (weightTotal) weightTotal.textContent = formatWeight(result.totalWeight);
 
   const fillPct = clamp((result.totalWeight / MSL_TOTAL_WEIGHT) * 100, 0, 100);
   if (weightMeterFill) {
@@ -292,27 +308,27 @@ function updateAllCalculations() {
     if (weightMeterFill) weightMeterFill.className = 'weight-meter-fill fill-over';
     if (weightMeterBadge) {
       weightMeterBadge.className = 'weight-meter-badge badge-over';
-      weightMeterBadge.innerHTML = `<span>${result.totalWeight.toFixed(1)}% / 30.0%</span>`;
+      weightMeterBadge.innerHTML = `<span>${formatWeight(result.totalWeight)}% / 30.0%</span>`;
     }
     if (weightMsg) {
-      const overBy = (result.totalWeight - MSL_TOTAL_WEIGHT).toFixed(1);
-      weightMsg.innerHTML = `<span class="text-error">Total exceeds 30% (currently ${result.totalWeight.toFixed(1)}%, over by ${overBy}%)</span>`;
+      const overBy = formatWeight(result.totalWeight - MSL_TOTAL_WEIGHT);
+      weightMsg.innerHTML = `<span class="text-error">Total exceeds 30% (currently ${formatWeight(result.totalWeight)}%, over by ${overBy}%)</span>`;
       weightMsg.className = 'weight-meter-status validation-error';
     }
   } else {
     if (weightMeterFill) weightMeterFill.className = 'weight-meter-fill fill-progress';
     if (weightMeterBadge) {
       weightMeterBadge.className = 'weight-meter-badge badge-incomplete';
-      weightMeterBadge.innerHTML = `<span>${result.totalWeight.toFixed(1)}% / 30.0%</span>`;
+      weightMeterBadge.innerHTML = `<span>${formatWeight(result.totalWeight)}% / 30.0%</span>`;
     }
     if (weightMsg) {
-      const remaining = (MSL_TOTAL_WEIGHT - result.totalWeight).toFixed(1);
+      const remaining = formatWeight(MSL_TOTAL_WEIGHT - result.totalWeight);
       const rowCount = document.querySelectorAll('.msl-measure-row').length;
       if (rowCount <= 1) {
-        weightMsg.innerHTML = `<span class="text-info">Add measures to reach 30% (currently ${result.totalWeight.toFixed(1)}%, ${remaining}% left)</span>`;
+        weightMsg.innerHTML = `<span class="text-info">Add measures to reach 30% (currently ${formatWeight(result.totalWeight)}%, ${remaining}% left)</span>`;
         weightMsg.className = 'weight-meter-status validation-info';
       } else {
-        weightMsg.innerHTML = `<span class="text-error">Total must equal 30% (currently ${result.totalWeight.toFixed(1)}%, ${remaining}% left)</span>`;
+        weightMsg.innerHTML = `<span class="text-error">Total must equal 30% (currently ${formatWeight(result.totalWeight)}%, ${remaining}% left)</span>`;
         weightMsg.className = 'weight-meter-status validation-error';
       }
     }
@@ -337,13 +353,17 @@ function updateAllCalculations() {
 
   // Per-measure feedback and auto-derived values
   result.measures.forEach((m, i) => {
-    const row = document.querySelectorAll('.msl-measure-row')[i];
+    const row = document.querySelectorAll('.msl-measure-row:not(.is-removing)')[i];
     if (!row) return;
+
+    // Number measures by position, since row indexes can skip after a removal
+    const numberEl = row.querySelector('.msl-measure-number');
+    if (numberEl && !m.isIPR) numberEl.textContent = `Measure ${i + 1}`;
     
     // Update Auto-Derived Min Score readout
     const minValEl = row.querySelector(`#msl-min-val-${row.dataset.index}`);
     if (minValEl) {
-      minValEl.textContent = (m.minScore !== undefined && m.minScore !== null && !isNaN(m.minScore)) ? m.minScore : '—';
+      minValEl.textContent = m.hasGoalAndMax ? m.minScore : '—';
     }
 
     const setupNoteEl = row.querySelector(`#msl-setup-note-${row.dataset.index}`);
@@ -395,9 +415,9 @@ function updateAllCalculations() {
         const isIPRRow = row.classList.contains('ipr-row') || row.dataset.index == 1;
         const measureRating = getMSLRating(m.scaled300);
         if (isIPRRow) {
-          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}</span> (${measureRating}, ${m.percentage.toFixed(1)}% of 0–100 range) &bull; <strong>Weight:</strong> ${m.weight.toFixed(1)}% of 30% total`;
+          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}</span> (${measureRating}, ${m.percentage.toFixed(1)}% of 0–100 range) &bull; <strong>Weight:</strong> ${formatWeight(m.weight)}% of 30% total`;
         } else {
-          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}</span> (${measureRating}, ${m.percentage.toFixed(1)}% of range [${m.minScore}–${m.maxScore}]) &bull; <strong>Weight:</strong> ${m.weight.toFixed(1)}% of 30% total`;
+          feedbackEl.innerHTML = `<strong>Measure Score:</strong> <span class="feedback-highlight-score">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}</span> (${measureRating}, ${m.percentage.toFixed(1)}% of range [${m.minScore}–${m.maxScore}]) &bull; <strong>Weight:</strong> ${formatWeight(m.weight)}% of 30% total`;
         }
         feedbackEl.className = 'measure-feedback visible';
       } else if (m.invalidRange) {
@@ -476,7 +496,7 @@ function updateAllCalculations() {
     let guideMsg = '';
     
     if (!result.weightsValid) {
-      guideMsg = `Set total MSL weight to 30.0% (currently ${result.totalWeight.toFixed(1)}%)`;
+      guideMsg = `Set total MSL weight to 30.0% (currently ${formatWeight(result.totalWeight)}%)`;
     } else if (!result.structureValid) {
       guideMsg = result.structureMsg;
     } else if (!result.goalsValid) {
@@ -580,13 +600,13 @@ function updatePrintSummary(result) {
       html += `
         <tr>
           <td style="text-align: left; font-weight: bold;">${displayName}</td>
-          <td style="text-align: center;">${m.weight.toFixed(1)}%</td>
+          <td style="text-align: center;">${formatWeight(m.weight)}%</td>
           <td style="text-align: center;">${m.goalScore}</td>
           <td style="text-align: center;">${m.maxScore}</td>
           <td style="text-align: center;">${m.minScore} – ${m.maxScore}</td>
           <td style="text-align: center; font-weight: bold;">${m.actual}</td>
           <td style="text-align: center;">${m.percentage.toFixed(1)}%</td>
-          <td style="text-align: center; font-weight: bold; background: #eff6ff; color: #1e40af;">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}<br><span style="font-size: 7.5pt; font-weight: normal; color: #64748b;">(${measureRating}, ${m.weight.toFixed(1)}% of 30% weight)</span></td>
+          <td style="text-align: center; font-weight: bold; background: #eff6ff; color: #1e40af;">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)}<br><span style="font-size: 7.5pt; font-weight: normal; color: #64748b;">(${measureRating}, ${formatWeight(m.weight)}% of 30% weight)</span></td>
         </tr>
       `;
 
@@ -606,8 +626,8 @@ function updatePrintSummary(result) {
         <tfoot>
           <tr>
             <td style="text-align: left; font-weight: bold;">Total MSL Weight / Final MSL Score</td>
-            <td style="text-align: center; font-weight: bold;">${result.totalWeight.toFixed(1)}%</td>
-            <td style="text-align: center;" colspan="4"></td>
+            <td style="text-align: center; font-weight: bold;">${formatWeight(result.totalWeight)}%</td>
+            <td style="text-align: center;" colspan="5"></td>
             <td style="text-align: center; font-weight: bold; font-size: 11pt; background: #dbeafe; color: #1e40af;">Final MSL Score: ${result.score.toFixed(2)} / 300.00</td>
           </tr>
         </tfoot>
@@ -629,7 +649,7 @@ function updatePrintSummary(result) {
     <div class="print-summary-box">
       <div class="print-summary-item">
         <div class="print-summary-label">Target Evaluation Weight</div>
-        <div class="print-summary-value">${result.totalWeight.toFixed(1)}% of Overall Evaluation</div>
+        <div class="print-summary-value">${formatWeight(result.totalWeight)}% of Overall Evaluation</div>
       </div>
       <div class="print-summary-item">
         <div class="print-summary-label">Configured Measures</div>
@@ -663,7 +683,7 @@ function updatePrintSummary(result) {
     html += `
       <tr>
         <td style="text-align: left; font-weight: bold;">${displayName}</td>
-        <td style="text-align: center;">${m.weight.toFixed(1)}%</td>
+        <td style="text-align: center;">${formatWeight(m.weight)}%</td>
         <td style="text-align: center;">${m.goalScore}</td>
         <td style="text-align: center;">${m.maxScore}</td>
         <td style="text-align: center;">${m.minScore}</td>
@@ -706,7 +726,7 @@ function updatePrintSummary(result) {
       <tfoot>
         <tr>
           <td style="text-align: left;">Total Configured Weight</td>
-          <td style="text-align: center;">${result.totalWeight.toFixed(1)}%</td>
+          <td style="text-align: center;">${formatWeight(result.totalWeight)}%</td>
           <td style="text-align: center;" colspan="4"></td>
           <td style="text-align: center;">Pending EOY</td>
         </tr>
@@ -963,27 +983,27 @@ function showCalculationDetails() {
 
   let html = '<div class="calc-section">';
   html += '<h3>MSL Score Calculation Methodology</h3>';
-  html += '<p><strong>Transparent 2-Stage Process:</strong></p>';
+  html += '<p><strong>How the score is calculated:</strong></p>';
   html += '<ol style="margin-left: 1.25rem; margin-bottom: 1rem; line-height: 1.6;">';
-  html += '<li><strong>1. Weighted Points:</strong> Each measure\'s weight determines its own point pool, sized as its share of the 300-point scale: <code>Weighted Points = (Weight / 30) × 300</code>.</li>';
-  html += '<li><strong>2. Measure Score:</strong> Points earned within that pool are based on the measure\'s position within its [Min, Max] range: <code>Measure Score = ((Actual − Min) / (Max − Min)) × Weighted Points</code>.</li>';
-  html += '<li><strong>3. Final MSL Score:</strong> The sum of all measures\' points earned produces the Final MSL Score (out of 300): <code>Final MSL Score = Σ Measure Scores</code>.</li>';
+  html += '<li><strong>Weighted Points:</strong> Each measure\'s weight determines its own point pool, sized as its share of the 300-point scale: <code>Weighted Points = (Weight / 30) × 300</code>.</li>';
+  html += '<li><strong>Measure Score:</strong> Points earned within that pool are based on the measure\'s position within its [Min, Max] range: <code>Measure Score = ((Actual − Min) / (Max − Min)) × Weighted Points</code>.</li>';
+  html += '<li><strong>Final MSL Score:</strong> The sum of all measures\' points earned produces the Final MSL Score (out of 300): <code>Final MSL Score = Σ Measure Scores</code>.</li>';
   html += '</ol>';
 
   html += '<div class="table-scroll"><table class="calc-table"><thead><tr>';
   html += '<th>Measure</th><th>Actual</th><th>Goal (Midpoint)</th><th>Max</th><th>Min (Floor)</th><th>% of Range</th><th>Weight</th><th style="background: #eff6ff; color: #1e40af;">Measure Score (of Weighted Points)</th>';
   html += '</tr></thead><tbody>';
 
-  result.measures.forEach(m => {
+  result.measures.forEach((m, idx) => {
     const measureRating = getMSLRating(m.scaled300);
     html += `<tr>
-      <td style="font-weight: 600;">${escapeHTML(m.name || '—')}</td>
+      <td style="font-weight: 600;">${escapeHTML(m.name || `Measure ${idx + 1}`)}</td>
       <td>${m.actual}</td>
       <td>${m.goalScore}</td>
       <td>${m.maxScore}</td>
       <td>${m.minScore}</td>
       <td>${m.percentage.toFixed(1)}%</td>
-      <td>${m.weight.toFixed(1)}%</td>
+      <td>${formatWeight(m.weight)}%</td>
       <td style="background: #eff6ff; font-weight: 700; color: #1e40af;">${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)} <span style="font-size: 0.75rem; font-weight: normal; color: #64748b;">(${measureRating})</span></td>
     </tr>`;
   });
@@ -1067,14 +1087,14 @@ function copySummary() {
   result.measures.forEach((m, idx) => {
     const name = m.name || `Measure ${idx + 1}`;
     const rating = getMSLRating(m.scaled300);
-    text += `• ${name} (Weight: ${m.weight.toFixed(1)}% of 30%):\n`;
+    text += `• ${name} (Weight: ${formatWeight(m.weight)}% of 30%):\n`;
     text += `    - Score Achieved: ${m.actual} (Range: ${m.minScore} – ${m.maxScore}, Goal: ${m.goalScore})\n`;
     text += `    - Measure Score: ${m.weighted.toFixed(2)} / ${m.pool.toFixed(2)} (${rating})\n`;
   });
 
   text += '\n-------------------------------------\n';
   text += 'FINAL MSL EVALUATION TOTALS:\n';
-  text += `• Total MSL Weight: ${result.totalWeight.toFixed(1)}% / 30.0%\n`;
+  text += `• Total MSL Weight: ${formatWeight(result.totalWeight)}% / 30.0%\n`;
   text += `• Final MSL Score: ${result.score.toFixed(2)} / 300.00 (Sum of Contributions)\n`;
   text += `• COPMS RANDA Entry Value: ${(result.score / 100).toFixed(2)}\n`;
   text += `• Final MSL Rating: ${result.rating}\n`;
@@ -1130,13 +1150,23 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+/**
+ * Checks saved data before any of it reaches the page. Row indexes end up in
+ * markup, so they must be plain numbers, and the first row must be IPR.
+ */
+function isValidSavedState(state) {
+  if (!state || !Array.isArray(state.measures) || state.measures.length === 0) return false;
+  const indexes = state.measures.map(m => (m && typeof m === 'object' ? String(m.index) : ''));
+  return indexes[0] === '1' && indexes.every(i => /^\d+$/.test(i)) && new Set(indexes).size === indexes.length;
+}
+
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (!saved) return false;
 
   try {
     const state = JSON.parse(saved);
-    if (!state.measures || state.measures.length === 0) return false;
+    if (!isValidSavedState(state)) return false;
     planSchoolYear = state.schoolYear || getCurrentSchoolYear();
     const container = document.getElementById('msl-list');
     container.innerHTML = '';
@@ -1182,6 +1212,17 @@ function loadState() {
 // INIT
 // ===================================
 
+function updatePrintDate() {
+  const dateEl = document.getElementById('print-date');
+  if (dateEl) {
+    dateEl.textContent = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+}
+
 function init() {
   const loaded = loadState();
 
@@ -1200,17 +1241,11 @@ function init() {
   document.getElementById('btn-reset')?.addEventListener('click', resetAll);
   document.getElementById('btn-show-calculations')?.addEventListener('click', showCalculationDetails);
   document.getElementById('btn-copy-summary')?.addEventListener('click', copySummary);
-  document.getElementById('btn-print')?.addEventListener('click', () => {
-    const dateEl = document.getElementById('print-date');
-    if (dateEl) {
-      dateEl.textContent = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
-    window.print();
-  });
+  document.getElementById('btn-print')?.addEventListener('click', () => window.print());
+
+  // Date the report however it's printed, including from the browser menu or Ctrl+P
+  updatePrintDate();
+  window.addEventListener('beforeprint', updatePrintDate);
 
   document.getElementById('btn-about-tool')?.addEventListener('click', openAboutModal);
 

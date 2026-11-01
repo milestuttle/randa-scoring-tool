@@ -196,6 +196,10 @@
       assert('Measure Management', 'Can remove measure via delegated button', rowCountAfterRemove === 2, `Rows count: ${rowCountAfterRemove}`);
       assert('Measure Management', 'Add button re-enabled after removal', !btnAdd.disabled);
       btnAdd.click(); // Re-add the 3rd measure (gets row index 4)
+      await new Promise(r => setTimeout(r, 100));
+      const measureLabels = [...doc.querySelectorAll('.msl-measure-number')].map(el => el.textContent.trim());
+      assert('Measure Management', 'Labels follow position after re-adding a measure', measureLabels[1] === 'Measure 2' && measureLabels[2] === 'Measure 3', `Labels: ${measureLabels.join(', ')}`);
+      assert('Measure Management', 'Calculated Min shows a dash until Goal and Max are entered', doc.getElementById('msl-min-val-2')?.textContent === '—');
 
       // Group 3: XSS Protection Check
       const m2NameInput = doc.getElementById('msl-name-2');
@@ -285,6 +289,13 @@
       assert('Security', 'Report shows name and description as plain text', printTable?.querySelectorAll('img, script, b').length === 0 && printTable?.textContent.includes('<b>Math Growth</b>') && printTable?.textContent.includes('District SLO'));
       assert('Security', 'Scripts did not run from name or description on the report', win.__xssTest === undefined && win.__xssTest2 === undefined);
 
+      const finalReportTable = printTable?.querySelector('.results-table');
+      const headerCols = finalReportTable?.querySelectorAll('thead th').length;
+      const footerCells = [...(finalReportTable?.querySelectorAll('tfoot td') || [])];
+      assert('Print', 'Final report footer covers every column', footerCells.reduce((sum, td) => sum + td.colSpan, 0) === headerCols, `Header: ${headerCols}`);
+      assert('Print', 'Final score sits in the last column', footerCells[footerCells.length - 1]?.textContent.includes('Final MSL Score'));
+      assert('Print', 'Print date is filled in without the Print button', doc.getElementById('print-date')?.textContent.trim() !== '');
+
       // Verify Primary 300-Point Scale Score Focus & Contribution Readouts
       const m1Score300 = doc.getElementById('msl-score300-val-1');
       const m1Contrib = doc.getElementById('msl-contrib-val-1');
@@ -364,6 +375,13 @@
 
       yearDoc = await reloadApp({ measures: [savedIPR] });
       assert('Saved Data', 'Older saved data without a year shows no notice', yearDoc.getElementById('saved-year-notice')?.hidden === true);
+
+      yearDoc = await reloadApp({ measures: [savedIPR, null] });
+      assert('Saved Data', 'Damaged saved data starts fresh with one IPR row', yearDoc.querySelectorAll('.msl-measure-row').length === 1 && yearDoc.querySelectorAll('#msl-actual-1').length === 1);
+
+      yearDoc = await reloadApp({ measures: [{ ...savedIPR, index: '1"><img src=x onerror="window.__xssTest3=true">' }] });
+      await new Promise(r => setTimeout(r, 100));
+      assert('Saved Data', 'Markup in saved data does not reach the page', iframe.contentWindow.__xssTest3 === undefined && yearDoc.querySelectorAll('.msl-measure-row img').length === 0);
     }
 
     // The tool saves to this site's browser storage, so a run would overwrite someone's
