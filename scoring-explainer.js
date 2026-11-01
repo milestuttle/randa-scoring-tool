@@ -19,11 +19,16 @@
 
   function derive() {
     const { goal, max } = state;
-    const min = 2 * goal - max;
+    const min = cleanNumber(2 * goal - max);
     const actual = Math.min(Math.max(state.actual, min), max);
     const pct = (actual - min) / (max - min);
     const newPts = pct * DEMO_POOL;
     return { goal, max, min, actual, pct, newPts };
+  }
+
+  // Gives the slider at least 20 stops on small scales, such as AP mean scores
+  function sliderStep(span) {
+    return span >= 20 ? 1 : Math.pow(10, Math.floor(Math.log10(span / 20)));
   }
 
   function el(tag, attrs, text) {
@@ -83,7 +88,7 @@
     const slider = $('ex-actual');
     slider.min = d.min;
     slider.max = d.max;
-    slider.step = (d.max - d.min) >= 20 ? 1 : 0.5;
+    slider.step = sliderStep(d.max - d.min);
     slider.value = d.actual;
     $('ex-actual-out').textContent = fmt(d.actual);
     $('ex-min-out').textContent = fmt(d.min);
