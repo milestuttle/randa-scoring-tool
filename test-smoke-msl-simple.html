@@ -324,6 +324,7 @@
       const floatScore = parseFloat(summaryScore?.textContent || '0');
       assert('Rating Boundaries', 'Boundary scores below 100 return Less Than Expected (no gap)', floatScore < 100 && summaryRating?.textContent.trim() === 'Less Than Expected', `Score: ${floatScore}, Rating: "${summaryRating?.textContent}"`);
 
+      // Rating and RANDA entry must agree near the cutoffs
       const setActuals = async (a1, a2, a3) => {
         [[act1, a1], [act2, a2], [act3, a3]].forEach(([el, v]) => {
           el.value = v;
@@ -331,6 +332,10 @@
         });
         await new Promise(r => setTimeout(r, 150));
       };
+      await setActuals('49.6', '80', '50');
+      assert('Rating Boundaries', '99.60 shows entry 1.00 and Expected', summaryScore?.textContent.trim() === '99.6' && summaryRanda?.textContent.trim() === '1.00' && summaryRating?.textContent.trim() === 'Expected', `Score: ${summaryScore?.textContent}, Entry: ${summaryRanda?.textContent}, Rating: ${summaryRating?.textContent}`);
+      await setActuals('100', '100', '50.16');
+      assert('Rating Boundaries', '200.40 shows entry 2.00 and Expected', summaryScore?.textContent.trim() === '200.4' && summaryRanda?.textContent.trim() === '2.00' && summaryRating?.textContent.trim() === 'Expected', `Score: ${summaryScore?.textContent}, Entry: ${summaryRanda?.textContent}, Rating: ${summaryRating?.textContent}`);
 
       // Group 7: Modals & Escape Key
       // Measure 2 at 89.33 is 73.3% of its 60-100 range; the modal must match the report
