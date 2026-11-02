@@ -78,12 +78,28 @@ let planSchoolYear = getCurrentSchoolYear();
 // ===================================
 
 /**
- * Returns rating label for a given MSL score.
- * Uses floating-point-safe boundaries (>200, >=100, else).
+ * Whole-point score behind the RANDA entry. Rating and entry both use this,
+ * so they can't disagree near a cutoff (99.60 is entry 1.00 and Expected).
+ */
+function getRandaPoints(score) {
+  return Math.round(round2(score));
+}
+
+/**
+ * Returns the RANDA entry for an MSL score, e.g. 231.67 -> "2.32".
+ */
+function formatRandaEntry(score) {
+  return (getRandaPoints(score) / 100).toFixed(2);
+}
+
+/**
+ * Returns rating label for a given MSL score, using the whole-point bands
+ * 0–99, 100–200, and 201–300.
  */
 function getMSLRating(score) {
-  if (score > 200) return 'More Than Expected';
-  if (score >= 100) return 'Expected';
+  const points = getRandaPoints(score);
+  if (points > 200) return 'More Than Expected';
+  if (points >= 100) return 'Expected';
   return 'Less Than Expected';
 }
 
@@ -470,7 +486,7 @@ function updateAllCalculations() {
 
   if (result.valid) {
     if (summaryScore) summaryScore.textContent = result.score;
-    if (summaryRanda) summaryRanda.textContent = (result.score / 100).toFixed(2);
+    if (summaryRanda) summaryRanda.textContent = formatRandaEntry(result.score);
     if (summaryRating) {
       summaryRating.textContent = result.rating;
       stripRatingClasses(summaryRating);
@@ -568,7 +584,7 @@ function updatePrintSummary(result) {
         </div>
         <div class="print-summary-item">
           <div class="print-summary-label">COPMS RANDA Entry Value</div>
-          <div class="print-summary-value">${(result.score / 100).toFixed(2)}</div>
+          <div class="print-summary-value">${formatRandaEntry(result.score)}</div>
         </div>
         <div class="print-summary-item">
           <div class="print-summary-label">Final MSL Rating</div>
@@ -1013,7 +1029,7 @@ function showCalculationDetails() {
   html += '<div class="final-calc-box">';
   html += `<div class="calc-row total"><span>Final MSL Score (Sum of Contributions):</span><span>${result.score.toFixed(2)} / 300.00</span></div>`;
   html += `<div class="calc-row"><span>Overall Percentage:</span><span>${result.percentage.toFixed(1)}%</span></div>`;
-  html += `<div class="calc-row randa"><span>COPMS RANDA Entry Value:</span><span class="randa-value">${(result.score / 100).toFixed(2)}</span></div>`;
+  html += `<div class="calc-row randa"><span>COPMS RANDA Entry Value:</span><span class="randa-value">${formatRandaEntry(result.score)}</span></div>`;
   html += `<div class="calc-row result"><span>Final MSL Rating:</span><span>${result.rating}</span></div>`;
   html += '</div></div>';
 
@@ -1096,7 +1112,7 @@ function copySummary() {
   text += 'FINAL MSL EVALUATION TOTALS:\n';
   text += `• Total MSL Weight: ${formatWeight(result.totalWeight)}% / 30.0%\n`;
   text += `• Final MSL Score: ${result.score.toFixed(2)} / 300.00 (Sum of Contributions)\n`;
-  text += `• COPMS RANDA Entry Value: ${(result.score / 100).toFixed(2)}\n`;
+  text += `• COPMS RANDA Entry Value: ${formatRandaEntry(result.score)}\n`;
   text += `• Final MSL Rating: ${result.rating}\n`;
   text += `• Percentage of Max: ${result.percentage.toFixed(1)}%\n`;
   text += '=====================================\n';

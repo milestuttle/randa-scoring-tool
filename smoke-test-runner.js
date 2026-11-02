@@ -91,20 +91,25 @@ assert('escapeHTML handles scripts', calc.escapeHTML('<script>alert(1)</script>'
 assert('escapeHTML handles quotes and ampersands', calc.escapeHTML('A & B "C"') === 'A &amp; B &quot;C&quot;');
 assert('escapeHTML handles null/undefined', calc.escapeHTML(null) === '' && calc.escapeHTML(undefined) === '');
 
-// 2. Rating
-console.log('\nRating');
+// 2. Rating and RANDA entry
+console.log('\nRating and RANDA entry');
 [
-  [0, 'Less Than Expected'],
-  [99, 'Less Than Expected'],
-  [99.99, 'Less Than Expected'],
-  [100, 'Expected'],
-  [150, 'Expected'],
-  [200, 'Expected'],
-  [200.01, 'More Than Expected'],
-  [300, 'More Than Expected']
-].forEach(([score, rating]) => {
-  const got = calc.getMSLRating(score);
-  assert(`${score} -> ${rating}`, got === rating, `Got: ${got}`);
+  [0, '0.00', 'Less Than Expected'],
+  [99, '0.99', 'Less Than Expected'],
+  [99.49, '0.99', 'Less Than Expected'],
+  [99.5, '1.00', 'Expected'],
+  [100, '1.00', 'Expected'],
+  [150, '1.50', 'Expected'],
+  [200, '2.00', 'Expected'],
+  [200.4, '2.00', 'Expected'],
+  [200.5, '2.01', 'More Than Expected'],
+  [231.5, '2.32', 'More Than Expected'],
+  [231.67, '2.32', 'More Than Expected'],
+  [300, '3.00', 'More Than Expected']
+].forEach(([score, entry, rating]) => {
+  const gotEntry = calc.formatRandaEntry(score);
+  const gotRating = calc.getMSLRating(score);
+  assert(`${score} -> entry ${entry}, ${rating}`, gotEntry === entry && gotRating === rating, `Got: ${gotEntry}, ${gotRating}`);
 });
 
 // 3. School year

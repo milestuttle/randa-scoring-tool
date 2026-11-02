@@ -73,9 +73,8 @@
     $('ex-roll-m2-fill').style.width = `${d.pct * 100}%`;
     $('ex-roll-m2-pts').textContent = `${fmt2(d.newPts)} / ${fmt2(DEMO_POOL)}`;
     $('ex-roll-total').textContent = fmt2(total);
-    $('ex-roll-randa').textContent = (total / 100).toFixed(2);
-    $('ex-roll-rating').textContent =
-      total > 200 ? 'More Than Expected' : total >= 100 ? 'Expected' : 'Less Than Expected';
+    $('ex-roll-randa').textContent = formatRandaEntry(total);
+    $('ex-roll-rating').textContent = getMSLRating(total);
   }
 
   function render() {
